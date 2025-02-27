@@ -13,7 +13,7 @@ db_config = {
     "database": "Local_Pump_Info"
 }
 
-def find_best_pump(gph=None, lph=None, psi=None, bar=None, simplex_duplex=None, want_motor=None, motor_type=None, motor_power=None, hz=None):
+def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_duplex=None, want_motor=None, motor_type=None, motor_power=None):
     # Ensure GPH or LPH is required
     if gph is None and lph is None:
         return {"error": "Either GPH or LPH is required. Please provide one."}
@@ -22,13 +22,13 @@ def find_best_pump(gph=None, lph=None, psi=None, bar=None, simplex_duplex=None, 
     if psi is None and bar is None:
         return {"error": "Either PSI or Bar is required. Please provide one."}
 
-    # Ensure Hz is either 50 or 60
+    # Ensure Hz is required and valid
     if hz not in [50, 60]:
         return {"error": "Hz is required and must be either 50 or 60."}
 
     # Ensure Simplex/Duplex is required
     if not simplex_duplex:
-        return {"error": "Simplex/Duplex is required. Please provide either 'Simplex' or 'Duplex'."}
+        return {"error": "Simplex/Duplex is required. Please provide either 'Simplex', 'Duplex', or 'Both' (one of them)."}
 
     # Ensure want_motor is provided and is either "yes" or "no"
     if want_motor not in ["yes", "no"]:
@@ -38,6 +38,7 @@ def find_best_pump(gph=None, lph=None, psi=None, bar=None, simplex_duplex=None, 
     if want_motor == "yes" and (motor_type is None or motor_power is None):
         return {"error": "Motor type (TEFC/XPFC) and motor power (AC/DC) must be provided when selecting a motor."}
 
+    # Connect to MySQL database
     conn = mysql.connector.connect(**db_config)
     cursor = conn.cursor(dictionary=True)
     query = "SELECT * FROM pumps"
@@ -48,37 +49,36 @@ def find_best_pump(gph=None, lph=None, psi=None, bar=None, simplex_duplex=None, 
 
     filtered_pumps = []
     for pump in pumps:
-        # Select GPH or LPH based on user input
-        if hz == 60:
-            pump_gph = pump["GPH_60Hz"]
-            pump_lph = pump["LPH_60Hz"]
-        else:
-            pump_gph = pump["GPH_50Hz"]
-            pump_lph = pump["LPH_50Hz"]
+        # Select the correct column for GPH/LPH based on Hz
+        pump_gph = pump["GPH_60Hz"] if hz == 60 else pump["GPH_50Hz"]
+        pump_lph = pump["LPH_60Hz"] if hz == 60 else pump["LPH_50Hz"]
 
-        if gph and (pump_gph is None or pump_gph < gph):
+        # Ensure input GPH/LPH is always ≤ database values
+        if gph and (pump_gph is None or gph > pump_gph):
             continue
-        if lph and (pump_lph is None or pump_lph < lph):
+        if lph and (pump_lph is None or lph > pump_lph):
             continue
 
-        # Select PSI or Bar based on user input
-        if bar:
-            psi = bar * 14.5  # Convert bar to PSI (needed for comparison)
-
+        # Ensure input PSI/Bar is always ≤ database values
         max_psi = pump["Max_Pressure_PSI"]
         max_bar = pump["Max_Pressure_Bar"]
         high_pressure_psi = pump["Max_Pressure_PSI_HP_Adder"]
         high_pressure_bar = pump["Max_Pressure_Bar_HP_Adder"]
-        use_hp = psi > max_psi if psi else False
 
+        if bar:
+            psi = bar * 14.5  # Convert bar to PSI for comparison
+
+        use_hp = psi > max_psi if psi else False
         if psi and psi > max_psi and (not high_pressure_psi or psi > high_pressure_psi):
             continue  # Skip if PSI exceeds even high-pressure max
 
         final_model = pump["Model"] + ("HP" if use_hp else "")
 
-        if pump["Simplex_Duplex"].lower() != simplex_duplex.lower():
+        # Ensure Simplex/Duplex matches or allow "both"
+        if simplex_duplex.lower() != "both" and pump["Simplex_Duplex"].lower() != simplex_duplex.lower():
             continue
 
+        # Start total price calculation
         total_price = pump["Pump_Price"] if pump["Pump_Price"] is not None else 0
 
         # Determine correct motor price column
@@ -121,7 +121,20 @@ def find_best_pump(gph=None, lph=None, psi=None, bar=None, simplex_duplex=None, 
         })
 
     if filtered_pumps:
-        return min(filtered_pumps, key=lambda x: x["price"])
+        # ✅ Always return the **cheapest** pump that meets all conditions
+        best_pump = min(filtered_pumps, key=lambda x: x["price"])
+        return {
+            "model": best_pump["model"],
+            "series": best_pump["series"],
+            "simplex_duplex": best_pump["simplex_duplex"],
+            "gph": best_pump["gph"],
+            "lph": best_pump["lph"],
+            "psi": best_pump["psi"],
+            "bar": best_pump["bar"],
+            "high_pressure_psi": best_pump["high_pressure_psi"],
+            "high_pressure_bar": best_pump["high_pressure_bar"],
+            "total_price": best_pump["price"]
+        }
     else:
         return {"error": "No suitable pump found for the given specifications."}
 
@@ -138,7 +151,7 @@ def get_pump():
         motor_type = request.args.get('motor_type', type=str)  # TEFC or XPFC
         motor_power = request.args.get('motor_power', type=str)  # AC or DC
 
-        result = find_best_pump(gph, lph, psi, bar, simplex_duplex, want_motor, motor_type, motor_power, hz)
+        result = find_best_pump(gph, lph, psi, bar, hz, simplex_duplex, want_motor, motor_type, motor_power)
         return jsonify(result)
 
     except Exception as e:
