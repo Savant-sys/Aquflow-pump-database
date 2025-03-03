@@ -23,5 +23,6 @@ CREATE TABLE `pumps` (
     `Max_Pressure_Bar` DECIMAL(10,2) NULL,
     `Max_Pressure_PSI_HP_Adder` DECIMAL(10,2) NULL,
     `Max_Pressure_Bar_HP_Adder` DECIMAL(10,2) NULL,
-    `HP_Adder_Price` DECIMAL(10,2) NULL
+    `HP_Adder_Price` DECIMAL(10,2) NULL,
+    `Max_SPM` INT NULL
 );
