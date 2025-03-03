@@ -10,11 +10,11 @@ CREATE TABLE `pumps` (
     `Model` VARCHAR(255),
     `Series` VARCHAR(255),
     `Simplex_Duplex` VARCHAR(50),
-    `Pump_Price` DECIMAL(10,2) NULL,
-    `TEFC_AC_Price` DECIMAL(10,2) NULL,
-    `XPFC_AC_Price` DECIMAL(10,2) NULL,
-    `TEFC_DC_Price` DECIMAL(10,2) NULL,
-    `XPFC_DC_Price` DECIMAL(10,2) NULL,
+    `Pump_Price` DECIMAL(10,3) NULL,
+    `TEFC_AC_Price` DECIMAL(10,3) NULL,
+    `XPFC_AC_Price` DECIMAL(10,3) NULL,
+    `TEFC_DC_Price` DECIMAL(10,3) NULL,
+    `XPFC_DC_Price` DECIMAL(10,3) NULL,
     `GPH_60Hz` DECIMAL(10,2) NULL,
     `GPH_50Hz` DECIMAL(10,2) NULL,
     `LPH_60Hz` DECIMAL(10,2) NULL,
@@ -23,6 +23,9 @@ CREATE TABLE `pumps` (
     `Max_Pressure_Bar` DECIMAL(10,2) NULL,
     `Max_Pressure_PSI_HP_Adder` DECIMAL(10,2) NULL,
     `Max_Pressure_Bar_HP_Adder` DECIMAL(10,2) NULL,
-    `HP_Adder_Price` DECIMAL(10,2) NULL,
-    `Max_SPM` INT NULL
+    `HP_Adder_Price` DECIMAL(10,3) NULL,
+    `Max_SPM` INT NULL,
+    `Viton` DECIMAL(10,3) NULL,
+    `Hypalon` DECIMAL(10,3) NULL,
+    `EPDM` DECIMAL(10,3) NULL
 );
