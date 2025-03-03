@@ -40,9 +40,9 @@ def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_dupl
         return {"error": "Motor type (TEFC/XPFC) and motor power (AC/DC) must be provided when selecting a motor."}
 
     # Ensure SPM is provided and is one of the valid options
-    valid_spm_options = [29, 44, 58, 88, 97, 117, 140, 170, 190]
+    valid_spm_options = [29, 44, 58, 88, 97, 117, 140, 170, 191]
     if spm is None or spm not in valid_spm_options:
-        return {"error": "SPM is required and must be one of the following: 29, 44, 58, 88, 97, 117, 140, 170, 190."}
+        return {"error": "SPM is required and must be one of the following: 29, 44, 58, 88, 97, 117, 140, 170, 191."}
 
     # Ensure diaphragm is provided and is one of the valid options
     valid_diaphragm_options = ["ptfe", "viton", "hypalon", "epdm"]
@@ -137,7 +137,7 @@ def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_dupl
 
         # Determine diaphragm price
         if diaphragm.lower() == "viton":
-            diaphragm_price = float(pump["Viton"]) if pump["Viton"] is not None else 0
+            diaphragm_price = float(pump["Viton"])
         elif diaphragm.lower() == "hypalon":
             diaphragm_price = float(pump["Hypalon"]) if pump["Hypalon"] is not None else 0
         elif diaphragm.lower() == "epdm":

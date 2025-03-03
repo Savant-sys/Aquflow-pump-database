@@ -27,5 +27,5 @@ CREATE TABLE `pumps` (
     `Max_SPM` INT NULL,
     `Viton` DECIMAL(10,3) NULL,
     `Hypalon` DECIMAL(10,3) NULL,
-    `EPDM` DECIMAL(10,3) NULL
+    `EPDM` DECIMAL(10,3) NULL,
 );
