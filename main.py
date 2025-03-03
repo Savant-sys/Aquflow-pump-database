@@ -99,10 +99,12 @@ def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_dupl
                 return {"error": "Invalid motor type or power. Choose TEFC/XPFC and AC/DC correctly."}
 
             motor_price = pump[motor_price_column] if pump[motor_price_column] is not None else 0
-            total_price += motor_price
 
-            if motor_price == 0:
-                return {"error": f"Motor price for {motor_power.upper()} {motor_type.upper()} is zero in column {motor_price_column}."}
+            # Skip this pump if motor price is 0 for DC motor
+            if motor_power == "dc" and motor_price == 0:
+                continue
+
+            total_price += motor_price
 
         if use_hp and pump["HP_Adder_Price"] is not None and pump["HP_Adder_Price"] > 0:
             total_price += pump["HP_Adder_Price"]
@@ -121,7 +123,7 @@ def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_dupl
         })
 
     if filtered_pumps:
-        # ✅ Always return the **cheapest** pump that meets all conditions
+        # ✅ Always return the cheapest pump that meets all conditions
         best_pump = min(filtered_pumps, key=lambda x: x["price"])
         return {
             "model": best_pump["model"],
@@ -147,9 +149,9 @@ def get_pump():
         bar = request.args.get('bar', type=float)
         hz = request.args.get('hz', type=int)
         simplex_duplex = request.args.get('simplex_duplex', type=str)
-        want_motor = request.args.get('want_motor', type=str)  # "yes" or "no"
-        motor_type = request.args.get('motor_type', type=str)  # TEFC or XPFC
-        motor_power = request.args.get('motor_power', type=str)  # AC or DC
+        want_motor = request.args.get('want_motor', type=str)
+        motor_type = request.args.get('motor_type', type=str)
+        motor_power = request.args.get('motor_power', type=str)
 
         result = find_best_pump(gph, lph, psi, bar, hz, simplex_duplex, want_motor, motor_type, motor_power)
         return jsonify(result)
