@@ -28,4 +28,5 @@ CREATE TABLE `pumps` (
     `Viton` DECIMAL(10,3) NULL,
     `Hypalon` DECIMAL(10,3) NULL,
     `EPDM` DECIMAL(10,3) NULL,
+    `Liquid_End_Material` VARCHAR(255) NULL
 );
