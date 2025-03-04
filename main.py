@@ -1,13 +1,15 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_file
 import mysql.connector
 from flask_cors import CORS
-import math  # For rounding up
-from fpdf import FPDF # type: ignore
+import math
+from fpdf import FPDF
+import os
 
 app = Flask(__name__)
 CORS(app)  # Allows frontend access to API
 
 # MySQL Database Configuration
+
 # db_config = {
 #     "host": "your_godaddy_mysql_host",
 #     "user": "your_godaddy_mysql_user",
@@ -73,17 +75,9 @@ def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_dupl
 
     filtered_pumps = []
     for pump in pumps:
-        # Debug: Print pump model and Max_SPM
-        print(f"Checking pump: {pump['Model']}, Max_SPM: {pump['Max_SPM']}")
-
         # Ensure Liquid End Material matches (case-insensitive)
         if pump["Liquid_End_Material"].lower() != liquid_end_material.lower():
-            print(f"Skipping pump {pump['Model']} due to Liquid End Material mismatch")
-            print(f"TEST: Pump Liquid End Material: {pump['Liquid_End_Material']}, User Input: {liquid_end_material}")
             continue
-        else:
-            print(f"TEST: Pump Liquid End Material: {pump['Liquid_End_Material']}, User Input: {liquid_end_material}")
-            print("GOOD: Liquid End Material matches")
 
         # Select the correct column for GPH/LPH based on Hz
         if gph is not None:
@@ -95,7 +89,6 @@ def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_dupl
 
         # Ensure input flow is always ≤ database values
         if pump_flow is None or input_flow > pump_flow:
-            print(f"Skipping pump {pump['Model']} due to flow rate mismatch")
             continue
 
         # Convert Bar to PSI if Bar is provided
@@ -113,22 +106,17 @@ def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_dupl
         use_hp = psi > max_pressure if psi is not None else bar > max_pressure
         if (psi is not None and psi > max_pressure and (not high_pressure or psi > high_pressure)) or \
            (bar is not None and bar > max_pressure and (not high_pressure or bar > high_pressure)):
-            print(f"Skipping pump {pump['Model']} due to pressure mismatch")
             continue  # Skip if pressure exceeds even high-pressure max
 
         # Ensure pump's Max_SPM is <= user-input SPM
         max_spm = float(pump["Max_SPM"]) if pump["Max_SPM"] is not None else 0
         if max_spm > spm:
-            print(f"Skipping pump {pump['Model']} due to SPM mismatch (pump Max_SPM: {max_spm}, user-input SPM: {spm})")
             continue  # Skip if pump's Max_SPM exceeds user-input SPM
 
         final_model = pump["Model"] + ("HP" if use_hp else "")
-        print("FINAL PUMP:")
-        print(final_model)
 
         # Ensure Simplex/Duplex matches or allow "both"
         if simplex_duplex.lower() != "both" and pump["Simplex_Duplex"].lower() != simplex_duplex.lower():
-            print(f"Skipping pump {pump['Model']} due to Simplex/Duplex mismatch")
             continue
 
         # Start total price calculation
@@ -156,7 +144,6 @@ def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_dupl
 
             # Skip this pump if motor price is 0 for DC motor
             if motor_power == "dc" and motor_price == 0:
-                print(f"Skipping pump {pump['Model']} due to DC motor price being 0")
                 continue
 
         # Determine diaphragm price
@@ -170,10 +157,7 @@ def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_dupl
             diaphragm_price = 1
 
         if diaphragm_price == 0:
-            print(f"Skipping pump {pump['Model']} due to Diaphragm price being 0")
             continue
-        else:
-            diaphragm_price = 0
 
         # Calculate total price
         total_price = pump_price + motor_price + diaphragm_price if diaphragm != "ptfe" else pump_price + motor_price
@@ -204,56 +188,74 @@ def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_dupl
 
     if filtered_pumps:
         # Always return the first cheapest pump that meets all conditions
-        # Sort by price and then select the first one
         filtered_pumps.sort(key=lambda x: x["total_price"])
         best_pump = filtered_pumps[0]
-        # return {
-        #     "model": best_pump["model"],
-        #     "series": best_pump["series"],
-        #     "simplex_duplex": best_pump["simplex_duplex"],
-        #     "gph": best_pump["gph"],
-        #     "lph": best_pump["lph"],
-        #     "psi": best_pump["psi"],
-        #     "bar": best_pump["bar"],
-        #     "high_pressure_psi": best_pump["high_pressure_psi"],
-        #     "high_pressure_bar": best_pump["high_pressure_bar"],
-        #     "max_spm": best_pump["max_spm"],
-        #     "liquid_end_material": best_pump["liquid_end_material"],
-        #     "pump_price": best_pump["pump_price"],
-        #     "motor_price": best_pump["motor_price"],
-        #     "diaphragm_price": best_pump["diaphragm_price"],
-        #     "total_price": best_pump["total_price"]
-        # }
-        # Generate PDF
-        pdf_filename = generate_pdf(best_pump)
-        best_pump["pdf_url"] = f"/download_pdf/{pdf_filename}"
-
         return best_pump
     else:
         return {"error": "No suitable pump found for the given specifications."}
 
-def generate_pdf(pump_data, filename="pump_details_quote_PDF.pdf"):
+def generate_pdf(pump_data, filename="pump_quote.pdf"):
+    # Create a PDF object
     pdf = FPDF()
     pdf.add_page()
+
+    # Set font for the entire document
     pdf.set_font("Arial", size=12)
 
-    # Add a title
-    pdf.cell(200, 10, txt="Pump Details", ln=True, align="C")
+    # Add a header with a logo
+    pdf.image("logo.png", x=10, y=8, w=30)  # Replace "logo.png" with your logo file
+    pdf.set_font("Arial", "B", 16)
+    pdf.cell(0, 10, txt="Pump Quote", ln=True, align="C")
+    pdf.ln(10)  # Add some space
 
-    # Add pump details
-    pdf.cell(200, 10, txt=f"Model: {pump_data['model']}", ln=True)
-    pdf.cell(200, 10, txt=f"Series: {pump_data['series']}", ln=True)
-    pdf.cell(200, 10, txt=f"Simplex/Duplex: {pump_data['simplex_duplex']}", ln=True)
-    pdf.cell(200, 10, txt=f"GPH: {pump_data['gph']}", ln=True)
-    pdf.cell(200, 10, txt=f"LPH: {pump_data['lph']}", ln=True)
-    pdf.cell(200, 10, txt=f"PSI: {pump_data['psi']}", ln=True)
-    pdf.cell(200, 10, txt=f"Bar: {pump_data['bar']}", ln=True)
-    pdf.cell(200, 10, txt=f"Max SPM: {pump_data['max_spm']}", ln=True)
-    pdf.cell(200, 10, txt=f"Liquid End Material: {pump_data['liquid_end_material']}", ln=True)
-    pdf.cell(200, 10, txt=f"Pump Price: ${pump_data['pump_price']}", ln=True)
-    pdf.cell(200, 10, txt=f"Motor Price: ${pump_data['motor_price']}", ln=True)
-    pdf.cell(200, 10, txt=f"Diaphragm Price: ${pump_data['diaphragm_price']}", ln=True)
-    pdf.cell(200, 10, txt=f"Total Price: ${pump_data['total_price']}", ln=True)
+    # Add customer details section
+    pdf.set_font("Arial", "B", 12)
+    pdf.cell(0, 10, txt="Customer Details", ln=True)
+    pdf.set_font("Arial", size=12)
+    pdf.cell(0, 10, txt="Name: John Doe", ln=True)
+    pdf.cell(0, 10, txt="Email: john.doe@example.com", ln=True)
+    pdf.cell(0, 10, txt="Phone: +1 234 567 890", ln=True)
+    pdf.ln(10)  # Add some space
+
+    # Add pump details section
+    pdf.set_font("Arial", "B", 12)
+    pdf.cell(0, 10, txt="Pump Details", ln=True)
+    pdf.set_font("Arial", size=12)
+
+    # Create a table for pump details
+    pdf.cell(60, 10, txt="Model", border=1)
+    pdf.cell(60, 10, txt="Series", border=1)
+    pdf.cell(60, 10, txt="Simplex/Duplex", border=1, ln=True)
+
+    pdf.cell(60, 10, txt=pump_data["model"], border=1)
+    pdf.cell(60, 10, txt=pump_data["series"], border=1)
+    pdf.cell(60, 10, txt=pump_data["simplex_duplex"], border=1, ln=True)
+
+    pdf.ln(10)  # Add some space
+
+    # Add pricing details
+    pdf.set_font("Arial", "B", 12)
+    pdf.cell(0, 10, txt="Pricing Details", ln=True)
+    pdf.set_font("Arial", size=12)
+
+    pdf.cell(100, 10, txt="Pump Price", border=1)
+    pdf.cell(80, 10, txt=f"${pump_data['pump_price']}", border=1, ln=True)
+
+    pdf.cell(100, 10, txt="Motor Price", border=1)
+    pdf.cell(80, 10, txt=f"${pump_data['motor_price']}", border=1, ln=True)
+
+    pdf.cell(100, 10, txt="Diaphragm Price", border=1)
+    pdf.cell(80, 10, txt=f"${pump_data['diaphragm_price']}", border=1, ln=True)
+
+    pdf.cell(100, 10, txt="Total Price", border=1)
+    pdf.cell(80, 10, txt=f"${pump_data['total_price']}", border=1, ln=True)
+
+    pdf.ln(10)  # Add some space
+
+    # Add a footer
+    pdf.set_font("Arial", "I", 10)
+    pdf.cell(0, 10, txt="Thank you for choosing us!", ln=True, align="C")
+    pdf.cell(0, 10, txt="Terms and conditions apply.", ln=True, align="C")
 
     # Save the PDF
     pdf.output(filename)
@@ -262,24 +264,37 @@ def generate_pdf(pump_data, filename="pump_details_quote_PDF.pdf"):
 @app.route('/get_pump', methods=['GET'])
 def get_pump():
     try:
+        # Get parameters from the request
         gph = request.args.get('gph', type=float)
-        lph = request.args.get('lph', type=float)
         psi = request.args.get('psi', type=float)
-        bar = request.args.get('bar', type=float)
         hz = request.args.get('hz', type=int)
         simplex_duplex = request.args.get('simplex_duplex', type=str)
         want_motor = request.args.get('want_motor', type=str)
-        motor_type = request.args.get('motor_type', type=str)  # TEFC or XPFC
-        motor_power = request.args.get('motor_power', type=str)  # AC or DC
+        motor_type = request.args.get('motor_type', type=str)
+        motor_power = request.args.get('motor_power', type=str)
         spm = request.args.get('spm', type=int)
         diaphragm = request.args.get('diaphragm', type=str)
         liquid_end_material = request.args.get('liquid_end_material', type=str)
 
-        result = find_best_pump(gph, lph, psi, bar, hz, simplex_duplex, want_motor, motor_type, motor_power, spm, diaphragm, liquid_end_material)
+        # Find the best pump
+        result = find_best_pump(gph, None, psi, None, hz, simplex_duplex, want_motor, motor_type, motor_power, spm, diaphragm, liquid_end_material)
+
+        # Generate PDF
+        if "error" not in result:
+            pdf_filename = generate_pdf(result)
+            result["pdf_url"] = f"/download_pdf/{pdf_filename}"
+
         return jsonify(result)
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+@app.route('/download_pdf/<filename>', methods=['GET'])
+def download_pdf(filename):
+    try:
+        return send_file(filename, as_attachment=True)
+    except FileNotFoundError:
+        return jsonify({"error": "PDF not found"}), 404
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=5000, debug=True)
