@@ -1,3 +1,1 @@
-http://127.0.0.1:5000/get_pump?gph=85&psi=150&hz=60&simplex_duplex=simplex&want_motor=yes&motor_type=tefc&motor_power=ac&diaphragm=ptfe&spm=191&liquid_end_material=316ss
-
-
+http://127.0.0.1:5000/get_pump?gph=85&psi=150&hz=60&simplex_duplex=simplex&want_motor=yes&motor_type=tefc&motor_power=ac&diaphragm=ptfe&spm=191&liquid_end_material=pvc
