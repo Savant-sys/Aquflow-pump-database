@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify
 import mysql.connector
 from flask_cors import CORS
 from decimal import Decimal
+import math  # For rounding up
 
 app = Flask(__name__)
 CORS(app)  # Allows frontend access to API
@@ -14,7 +15,7 @@ db_config = {
     "database": "Local_Pump_Info"
 }
 
-def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_duplex=None, want_motor=None, motor_type=None, motor_power=None, spm=None, diaphragm=None):
+def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_duplex=None, want_motor=None, motor_type=None, motor_power=None, spm=None, diaphragm=None, liquid_end_material=None):
     # Ensure either GPH or LPH is provided
     if gph is None and lph is None:
         return {"error": "Either GPH or LPH is required. Please provide one."}
@@ -46,8 +47,13 @@ def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_dupl
 
     # Ensure diaphragm is provided and is one of the valid options
     valid_diaphragm_options = ["ptfe", "viton", "hypalon", "epdm"]
-    if diaphragm.lower() is None or diaphragm not in valid_diaphragm_options:
+    if diaphragm is None or diaphragm.lower() not in valid_diaphragm_options:
         return {"error": "Diaphragm is required and must be one of the following: PTFE, Viton, Hypalon, EPDM."}
+
+    # Ensure liquid end material is provided and is one of the valid options
+    valid_liquid_end_material = ["316ss", "alloy 20", "hast c.", "pvc", "pvdf"]
+    if liquid_end_material is None or liquid_end_material.lower() not in valid_liquid_end_material:
+        return {"error": "Liquid End Material is required and must be one of the following: 316SS, Alloy 20, Hast C., PVC, PVDF."}
 
     # Connect to MySQL database
     conn = mysql.connector.connect(**db_config)
@@ -62,6 +68,14 @@ def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_dupl
     for pump in pumps:
         # Debug: Print pump model and Max_SPM
         print(f"Checking pump: {pump['Model']}, Max_SPM: {pump['Max_SPM']}")
+
+        # Ensure Liquid End Material matches (case-insensitive)
+        if pump["Liquid_End_Material"].lower() != liquid_end_material.lower():
+            print(f"Skipping pump {pump['Model']} due to Liquid End Material mismatch")
+            print(f"TEST: Pump Liquid End Material: {pump['Liquid_End_Material']}, User Input: {liquid_end_material}")
+            continue
+        else:
+            print("GOOD: Liquid End Material matches")
 
         # Select the correct column for GPH/LPH based on Hz
         if gph is not None:
@@ -137,18 +151,25 @@ def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_dupl
 
         # Determine diaphragm price
         if diaphragm.lower() == "viton":
-            diaphragm_price = float(pump["Viton"])
+            diaphragm_price = float(pump["Viton"]) if pump["Viton"] is not None else 0
         elif diaphragm.lower() == "hypalon":
             diaphragm_price = float(pump["Hypalon"]) if pump["Hypalon"] is not None else 0
         elif diaphragm.lower() == "epdm":
             diaphragm_price = float(pump["EPDM"]) if pump["EPDM"] is not None else 0
         # PTFE has no charge
 
+        if diaphragm_price == 0:
+            print(f"Skipping pump {pump['Model']} due to Diaphragm price being 0")
+            continue
+
         # Calculate total price
         total_price = pump_price + motor_price + diaphragm_price
 
         if use_hp and pump["HP_Adder_Price"] is not None and pump["HP_Adder_Price"] > 0:
             total_price += float(pump["HP_Adder_Price"])
+
+        # Round up the total price to the nearest whole number
+        total_price_rounded = math.ceil(total_price)
 
         filtered_pumps.append({
             "model": final_model,
@@ -164,7 +185,7 @@ def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_dupl
             "pump_price": pump_price,
             "motor_price": motor_price,
             "diaphragm_price": diaphragm_price,
-            "total_price": total_price
+            "total_price": total_price_rounded  # Use the rounded-up price
         })
 
     if filtered_pumps:
@@ -205,8 +226,9 @@ def get_pump():
         motor_power = request.args.get('motor_power', type=str)  # AC or DC
         spm = request.args.get('spm', type=int)  # SPM input
         diaphragm = request.args.get('diaphragm', type=str)  # Diaphragm option
+        liquid_end_material = request.args.get('liquid_end_material', type=str)  # Liquid End Material option
 
-        result = find_best_pump(gph, lph, psi, bar, hz, simplex_duplex, want_motor, motor_type, motor_power, spm, diaphragm)
+        result = find_best_pump(gph, lph, psi, bar, hz, simplex_duplex, want_motor, motor_type, motor_power, spm, diaphragm, liquid_end_material)
         return jsonify(result)
 
     except Exception as e:
