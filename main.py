@@ -1,13 +1,20 @@
 from flask import Flask, request, jsonify
 import mysql.connector
 from flask_cors import CORS
-from decimal import Decimal
 import math  # For rounding up
+from fpdf import FPDF # type: ignore
 
 app = Flask(__name__)
 CORS(app)  # Allows frontend access to API
 
 # MySQL Database Configuration
+# db_config = {
+#     "host": "your_godaddy_mysql_host",
+#     "user": "your_godaddy_mysql_user",
+#     "password": "your_godaddy_mysql_password",
+#     "database": "your_godaddy_mysql_database"
+# }
+
 db_config = {
     "host": "localhost",
     "user": "root",
@@ -200,25 +207,57 @@ def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_dupl
         # Sort by price and then select the first one
         filtered_pumps.sort(key=lambda x: x["total_price"])
         best_pump = filtered_pumps[0]
-        return {
-            "model": best_pump["model"],
-            "series": best_pump["series"],
-            "simplex_duplex": best_pump["simplex_duplex"],
-            "gph": best_pump["gph"],
-            "lph": best_pump["lph"],
-            "psi": best_pump["psi"],
-            "bar": best_pump["bar"],
-            "high_pressure_psi": best_pump["high_pressure_psi"],
-            "high_pressure_bar": best_pump["high_pressure_bar"],
-            "max_spm": best_pump["max_spm"],
-            "liquid_end_material": best_pump["liquid_end_material"],
-            "pump_price": best_pump["pump_price"],
-            "motor_price": best_pump["motor_price"],
-            "diaphragm_price": best_pump["diaphragm_price"],
-            "total_price": best_pump["total_price"]
-        }
+        # return {
+        #     "model": best_pump["model"],
+        #     "series": best_pump["series"],
+        #     "simplex_duplex": best_pump["simplex_duplex"],
+        #     "gph": best_pump["gph"],
+        #     "lph": best_pump["lph"],
+        #     "psi": best_pump["psi"],
+        #     "bar": best_pump["bar"],
+        #     "high_pressure_psi": best_pump["high_pressure_psi"],
+        #     "high_pressure_bar": best_pump["high_pressure_bar"],
+        #     "max_spm": best_pump["max_spm"],
+        #     "liquid_end_material": best_pump["liquid_end_material"],
+        #     "pump_price": best_pump["pump_price"],
+        #     "motor_price": best_pump["motor_price"],
+        #     "diaphragm_price": best_pump["diaphragm_price"],
+        #     "total_price": best_pump["total_price"]
+        # }
+        # Generate PDF
+        pdf_filename = generate_pdf(best_pump)
+        best_pump["pdf_url"] = f"/download_pdf/{pdf_filename}"
+
+        return best_pump
     else:
         return {"error": "No suitable pump found for the given specifications."}
+
+def generate_pdf(pump_data, filename="pump_details_quote_PDF.pdf"):
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font("Arial", size=12)
+
+    # Add a title
+    pdf.cell(200, 10, txt="Pump Details", ln=True, align="C")
+
+    # Add pump details
+    pdf.cell(200, 10, txt=f"Model: {pump_data['model']}", ln=True)
+    pdf.cell(200, 10, txt=f"Series: {pump_data['series']}", ln=True)
+    pdf.cell(200, 10, txt=f"Simplex/Duplex: {pump_data['simplex_duplex']}", ln=True)
+    pdf.cell(200, 10, txt=f"GPH: {pump_data['gph']}", ln=True)
+    pdf.cell(200, 10, txt=f"LPH: {pump_data['lph']}", ln=True)
+    pdf.cell(200, 10, txt=f"PSI: {pump_data['psi']}", ln=True)
+    pdf.cell(200, 10, txt=f"Bar: {pump_data['bar']}", ln=True)
+    pdf.cell(200, 10, txt=f"Max SPM: {pump_data['max_spm']}", ln=True)
+    pdf.cell(200, 10, txt=f"Liquid End Material: {pump_data['liquid_end_material']}", ln=True)
+    pdf.cell(200, 10, txt=f"Pump Price: ${pump_data['pump_price']}", ln=True)
+    pdf.cell(200, 10, txt=f"Motor Price: ${pump_data['motor_price']}", ln=True)
+    pdf.cell(200, 10, txt=f"Diaphragm Price: ${pump_data['diaphragm_price']}", ln=True)
+    pdf.cell(200, 10, txt=f"Total Price: ${pump_data['total_price']}", ln=True)
+
+    # Save the PDF
+    pdf.output(filename)
+    return filename
 
 @app.route('/get_pump', methods=['GET'])
 def get_pump():
