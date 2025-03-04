@@ -109,13 +109,15 @@ def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_dupl
             print(f"Skipping pump {pump['Model']} due to pressure mismatch")
             continue  # Skip if pressure exceeds even high-pressure max
 
-        # Ensure pump's Max_SPM is ≤ user-input SPM
+        # Ensure pump's Max_SPM is <= user-input SPM
         max_spm = float(pump["Max_SPM"]) if pump["Max_SPM"] is not None else 0
         if max_spm > spm:
             print(f"Skipping pump {pump['Model']} due to SPM mismatch (pump Max_SPM: {max_spm}, user-input SPM: {spm})")
             continue  # Skip if pump's Max_SPM exceeds user-input SPM
 
         final_model = pump["Model"] + ("HP" if use_hp else "")
+        print("FINAL PUMP:")
+        print(final_model)
 
         # Ensure Simplex/Duplex matches or allow "both"
         if simplex_duplex.lower() != "both" and pump["Simplex_Duplex"].lower() != simplex_duplex.lower():
@@ -157,14 +159,17 @@ def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_dupl
             diaphragm_price = float(pump["Hypalon"]) if pump["Hypalon"] is not None else 0
         elif diaphragm.lower() == "epdm":
             diaphragm_price = float(pump["EPDM"]) if pump["EPDM"] is not None else 0
-        # PTFE has no charge
+        elif diaphragm.lower() == "ptfe":
+            diaphragm_price = 1
 
         if diaphragm_price == 0:
             print(f"Skipping pump {pump['Model']} due to Diaphragm price being 0")
             continue
+        else:
+            diaphragm_price = 0
 
         # Calculate total price
-        total_price = pump_price + motor_price + diaphragm_price
+        total_price = pump_price + motor_price + diaphragm_price if diaphragm != "ptfe" else pump_price + motor_price
 
         if use_hp and pump["HP_Adder_Price"] is not None and pump["HP_Adder_Price"] > 0:
             total_price += float(pump["HP_Adder_Price"])
@@ -191,7 +196,7 @@ def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_dupl
         })
 
     if filtered_pumps:
-        # ✅ Always return the first cheapest pump that meets all conditions
+        # Always return the first cheapest pump that meets all conditions
         # Sort by price and then select the first one
         filtered_pumps.sort(key=lambda x: x["total_price"])
         best_pump = filtered_pumps[0]
@@ -224,12 +229,12 @@ def get_pump():
         bar = request.args.get('bar', type=float)
         hz = request.args.get('hz', type=int)
         simplex_duplex = request.args.get('simplex_duplex', type=str)
-        want_motor = request.args.get('want_motor', type=str)  # "yes" or "no"
+        want_motor = request.args.get('want_motor', type=str)
         motor_type = request.args.get('motor_type', type=str)  # TEFC or XPFC
         motor_power = request.args.get('motor_power', type=str)  # AC or DC
-        spm = request.args.get('spm', type=int)  # SPM input
-        diaphragm = request.args.get('diaphragm', type=str)  # Diaphragm option
-        liquid_end_material = request.args.get('liquid_end_material', type=str)  # Liquid End Material option
+        spm = request.args.get('spm', type=int)
+        diaphragm = request.args.get('diaphragm', type=str)
+        liquid_end_material = request.args.get('liquid_end_material', type=str)
 
         result = find_best_pump(gph, lph, psi, bar, hz, simplex_duplex, want_motor, motor_type, motor_power, spm, diaphragm, liquid_end_material)
         return jsonify(result)
