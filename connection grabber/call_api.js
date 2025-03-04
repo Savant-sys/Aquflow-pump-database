@@ -15,7 +15,7 @@ document.getElementById("pumpForm").addEventListener("submit", async (e) => {
 
     // Call the API
     const response = await fetch(
-        `https://127.0.0.1:5000/get_pump?gph=${gph}&psi=${psi}&hz=${hz}&simplex_duplex=${simplex_duplex}&want_motor=${want_motor}&motor_type=${motor_type}&motor_power=${motor_power}&spm=${spm}&diaphragm=${diaphragm}&liquid_end_material=${liquid_end_material}`
+        `https://your-api-url.com/get_pump?gph=${gph}&psi=${psi}&hz=${hz}&simplex_duplex=${simplex_duplex}&want_motor=${want_motor}&motor_type=${motor_type}&motor_power=${motor_power}&spm=${spm}&diaphragm=${diaphragm}&liquid_end_material=${liquid_end_material}`
     );
     const data = await response.json();
 
