@@ -28,11 +28,11 @@ CREATE TABLE `pumps` (
     `Viton` DECIMAL(10,3) NULL,
     `Hypalon` DECIMAL(10,3) NULL,
     `EPDM` DECIMAL(10,3) NULL,
-    `Liquid_End_Material` VARCHAR(255) NULL,
-    `Liq_Inlet` VARCHAR(255) NULL,
-    `Liq_Outlet` VARCHAR(255) NULL,
-    `Motor_HP_AC` INT NULL,
-	`Motor_HP_AC_High_Pressure` INT NULL,
-    `Motor_HP_DC_TEFC` INT NULL,
-    `Motor_HP_DC_XPFC` INT NULL
+    `Liquid_End_Material` VARCHAR(255) NULL
+    -- `Liq_Inlet` VARCHAR(255) NULL,
+    -- `Liq_Outlet` VARCHAR(255) NULL,
+    -- `Motor_HP_AC` INT NULL,
+	-- `Motor_HP_AC_High_Pressure` INT NULL,
+    -- `Motor_HP_DC_TEFC` INT NULL,
+    -- `Motor_HP_DC_XPFC` INT NULL
 );
