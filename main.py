@@ -75,6 +75,7 @@ def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_dupl
             print(f"TEST: Pump Liquid End Material: {pump['Liquid_End_Material']}, User Input: {liquid_end_material}")
             continue
         else:
+            print(f"TEST: Pump Liquid End Material: {pump['Liquid_End_Material']}, User Input: {liquid_end_material}")
             print("GOOD: Liquid End Material matches")
 
         # Select the correct column for GPH/LPH based on Hz
@@ -182,6 +183,7 @@ def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_dupl
             "high_pressure_psi": float(pump["Max_Pressure_PSI_HP_Adder"]),
             "high_pressure_bar": float(pump["Max_Pressure_Bar_HP_Adder"]),
             "max_spm": float(pump["Max_SPM"]),
+            "liquid_end_material": pump["Liquid_End_Material"],
             "pump_price": pump_price,
             "motor_price": motor_price,
             "diaphragm_price": diaphragm_price,
@@ -204,6 +206,7 @@ def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_dupl
             "high_pressure_psi": best_pump["high_pressure_psi"],
             "high_pressure_bar": best_pump["high_pressure_bar"],
             "max_spm": best_pump["max_spm"],
+            "liquid_end_material": best_pump["liquid_end_material"],
             "pump_price": best_pump["pump_price"],
             "motor_price": best_pump["motor_price"],
             "diaphragm_price": best_pump["diaphragm_price"],
