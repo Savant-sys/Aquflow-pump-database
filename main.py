@@ -140,11 +140,17 @@ def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_dupl
             else:
                 return {"error": "Invalid motor type or power. Choose TEFC/XPFC and AC/DC correctly."}
 
-            motor_price = float(pump[motor_price_column]) if pump[motor_price_column] is not None else 0
+            motor_price_value = pump[motor_price_column]
 
             # Skip this pump if motor price is 0 for DC motor
-            if motor_power == "dc" and motor_price == 0:
+            if motor_power == "dc" and motor_price_value == "0":
                 continue
+
+            # Handle "C/F" values
+            if motor_price_value == "C/F":
+                motor_price = "C/F"
+            else:
+                motor_price = float(motor_price_value) if motor_price_value is not None else 0
 
         # Determine diaphragm price
         if diaphragm.lower() == "viton":
@@ -160,13 +166,16 @@ def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_dupl
             continue
 
         # Calculate total price
-        total_price = pump_price + motor_price + diaphragm_price if diaphragm != "ptfe" else pump_price + motor_price
+        if motor_price == "C/F":
+            total_price = "C/F"
+        else:
+            total_price = pump_price + motor_price + diaphragm_price if diaphragm != "ptfe" else pump_price + motor_price
 
-        if use_hp and pump["HP_Adder_Price"] is not None and pump["HP_Adder_Price"] > 0:
-            total_price += float(pump["HP_Adder_Price"])
+            if use_hp and pump["HP_Adder_Price"] is not None and pump["HP_Adder_Price"] != "C/F":
+                total_price += float(pump["HP_Adder_Price"])
 
-        # Round up the total price to the nearest whole number
-        total_price_rounded = math.ceil(total_price)
+            # Round up the total price to the nearest whole number
+            total_price_rounded = math.ceil(total_price)
 
         filtered_pumps.append({
             "model": final_model,
@@ -183,12 +192,12 @@ def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_dupl
             "pump_price": pump_price,
             "motor_price": motor_price,
             "diaphragm_price": diaphragm_price,
-            "total_price": total_price_rounded  # Use the rounded-up price
+            "total_price": total_price_rounded if motor_price != "C/F" else "C/F"
         })
 
     if filtered_pumps:
         # Always return the first cheapest pump that meets all conditions
-        filtered_pumps.sort(key=lambda x: x["total_price"])
+        filtered_pumps.sort(key=lambda x: x["total_price"] if x["total_price"] != "C/F" else float('inf'))
         best_pump = filtered_pumps[0]
         return best_pump
     else:
