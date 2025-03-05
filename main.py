@@ -164,7 +164,7 @@ def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_dupl
 
         if diaphragm_price == 0:
             continue
-        else:
+        elif diaphragm.lower() == "ptfe":
             diaphragm_price = 0
 
         # Calculate total price
