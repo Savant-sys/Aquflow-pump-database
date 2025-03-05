@@ -247,7 +247,7 @@ def generate_pdf(pump_data, filename="pump_quote.pdf"):
     pdf.set_font("Arial", size=12)
 
     # Add a header with a logo
-    pdf.image("logo.png", x=10, y=8, w=30)  # Replace "logo.png" with your logo file
+    pdf.image("logo.png", x=10, y=8, w=30)
     pdf.set_font("Arial", "B", 16)
     pdf.cell(0, 10, txt="Pump Quote", ln=True, align="C")
     pdf.ln(10)  # Add some space
