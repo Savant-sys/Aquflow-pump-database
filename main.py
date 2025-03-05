@@ -23,7 +23,7 @@ db_config = {
     "database": "Local_Pump_Info"
 }
 
-def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_duplex=None, want_motor=None, motor_type=None, motor_power=None, spm=None, diaphragm=None, liquid_end_material=None):
+def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_duplex=None, want_motor=None, motor_type=None, motor_power=None, spm=None, diaphragm=None, liquid_end_material=None, leak_detection=None):
     # Ensure either GPH or LPH is provided
     if gph is None and lph is None:
         return {"error": "Either GPH or LPH is required. Please provide one."}
@@ -62,6 +62,11 @@ def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_dupl
     valid_liquid_end_material = ["316ss", "alloy 20", "hast c.", "pvc", "pvdf"]
     if liquid_end_material is None or liquid_end_material.lower() not in valid_liquid_end_material:
         return {"error": "Liquid End Material is required and must be one of the following: 316SS, Alloy 20, Hast C., PVC, PVDF."}
+
+    # Ensure leak detection is provided and is one of the valid options
+    valid_leak_detection_options = ["no", "conductive", "vacuum"]
+    if leak_detection is None or leak_detection.lower() not in valid_leak_detection_options:
+        return {"error": "Leak Detection is required and must be one of the following: No, Conductive, Vacuum."}
 
     # Connect to MySQL database
     conn = mysql.connector.connect(**db_config)
@@ -122,6 +127,7 @@ def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_dupl
         pump_price = float(pump["Pump_Price"]) if pump["Pump_Price"] is not None else 0
         motor_price = 0
         diaphragm_price = 0
+        leak_detection_price = 0
 
         # Determine correct motor price column
         if want_motor == "yes":
@@ -166,6 +172,14 @@ def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_dupl
         else:
             diaphragm_price = 0
 
+        # Determine leak detection price
+        if leak_detection.lower() == "conductive":
+            leak_detection_price = float(pump["Conductive_Leak_Detection_Price_Adder"]) if pump["Conductive_Leak_Detection_Price_Adder"] is not None else 0
+        elif leak_detection.lower() == "vacuum":
+            leak_detection_price = float(pump["Vacuum_Leak_Detection_Price_Adder"]) if pump["Vacuum_Leak_Detection_Price_Adder"] is not None else 0
+        else:
+            leak_detection_price = 0
+
         # Calculate total price
         total_price = pump_price  # Always include the pump price
 
@@ -176,6 +190,9 @@ def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_dupl
         # Add diaphragm price if not "ptfe"
         if diaphragm != "ptfe":
             total_price += diaphragm_price
+
+        # Add leak detection price
+        total_price += leak_detection_price
 
         # Add HP adder price if it's not "C/F"
         if use_hp and pump["HP_Adder_Price"] is not None and pump["HP_Adder_Price"] != "C/F":
@@ -209,6 +226,7 @@ def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_dupl
             "pump_price": pump_price,
             "motor_price": motor_price,
             "diaphragm_price": diaphragm_price,
+            "leak_detection_price": leak_detection_price,
             "total_price": total_price_rounded
         })
 
@@ -273,6 +291,9 @@ def generate_pdf(pump_data, filename="pump_quote.pdf"):
     pdf.cell(100, 10, txt="Diaphragm Price", border=1)
     pdf.cell(80, 10, txt=f"${pump_data['diaphragm_price']}", border=1, ln=True)
 
+    pdf.cell(100, 10, txt="Leak Detection Price", border=1)
+    pdf.cell(80, 10, txt=f"${pump_data['leak_detection_price']}", border=1, ln=True)
+
     pdf.cell(100, 10, txt="Total Price", border=1)
     pdf.cell(80, 10, txt=f"${pump_data['total_price']}", border=1, ln=True)
 
@@ -301,9 +322,10 @@ def get_pump():
         spm = request.args.get('spm', type=int)
         diaphragm = request.args.get('diaphragm', type=str)
         liquid_end_material = request.args.get('liquid_end_material', type=str)
+        leak_detection = request.args.get('leak_detection', type=str)
 
         # Find the best pump
-        result = find_best_pump(gph, None, psi, None, hz, simplex_duplex, want_motor, motor_type, motor_power, spm, diaphragm, liquid_end_material)
+        result = find_best_pump(gph, None, psi, None, hz, simplex_duplex, want_motor, motor_type, motor_power, spm, diaphragm, liquid_end_material, leak_detection)
 
         # Generate PDF
         if "error" not in result:
