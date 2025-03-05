@@ -3,7 +3,6 @@ import mysql.connector
 from flask_cors import CORS
 import math
 from fpdf import FPDF
-import os
 
 app = Flask(__name__)
 CORS(app)  # Allows frontend access to API
@@ -164,7 +163,7 @@ def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_dupl
 
         if diaphragm_price == 0:
             continue
-        elif diaphragm.lower() == "ptfe":
+        else:
             diaphragm_price = 0
 
         # Calculate total price
@@ -239,8 +238,8 @@ def generate_pdf(pump_data, filename="pump_quote.pdf"):
     pdf.set_font("Arial", "B", 12)
     pdf.cell(0, 10, txt="Customer Details", ln=True)
     pdf.set_font("Arial", size=12)
-    pdf.cell(0, 10, txt="Name: John Doe", ln=True)
-    pdf.cell(0, 10, txt="Email: john.doe@example.com", ln=True)
+    pdf.cell(0, 10, txt="Name: Test Name", ln=True)
+    pdf.cell(0, 10, txt="Email: test.name@example.com", ln=True)
     pdf.cell(0, 10, txt="Phone: +1 234 567 890", ln=True)
     pdf.ln(10)  # Add some space
 
