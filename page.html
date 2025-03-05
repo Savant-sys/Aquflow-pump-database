@@ -1,17 +1,19 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pump Finder</title>
 </head>
+
 <body>
     <form id="pumpForm">
         <label for="gph">GPH:</label>
-        <input type="number" id="gph" name="gph" required>
+        <input type="number" id="gph" name="gph" step="any" required>
         <br>
         <label for="psi">PSI:</label>
-        <input type="number" id="psi" name="psi" required>
+        <input type="number" id="psi" name="psi" step="any" required>
         <br>
         <label for="hz">Hz:</label>
         <select id="hz" name="hz" required>
@@ -81,4 +83,5 @@
     <!-- Link to JavaScript file -->
     <script src="call_api.js"></script>
 </body>
+
 </html>
