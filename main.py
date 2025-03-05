@@ -166,16 +166,32 @@ def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_dupl
             continue
 
         # Calculate total price
+        total_price = pump_price  # Always include the pump price
+
+        # Add motor price if it's not "C/F"
+        if motor_price != "C/F":
+            total_price += motor_price
+
+        # Add diaphragm price if not "ptfe"
+        if diaphragm != "ptfe":
+            total_price += diaphragm_price
+
+        # Add HP adder price if it's not "C/F"
+        if use_hp and pump["HP_Adder_Price"] is not None and pump["HP_Adder_Price"] != "C/F":
+            total_price += float(pump["HP_Adder_Price"])
+
+        # Round up the total price to the nearest whole number
+        total_price_rounded = math.ceil(total_price)
+
+        # Add annotations for "C/F" cases
+        annotations = []
         if motor_price == "C/F":
-            total_price = "C/F"
-        else:
-            total_price = pump_price + motor_price + diaphragm_price if diaphragm != "ptfe" else pump_price + motor_price
+            annotations.append("C/F (Motor)")
+        if use_hp and pump["HP_Adder_Price"] == "C/F":
+            annotations.append("C/F (HP)")
 
-            if use_hp and pump["HP_Adder_Price"] is not None and pump["HP_Adder_Price"] != "C/F":
-                total_price += float(pump["HP_Adder_Price"])
-
-            # Round up the total price to the nearest whole number
-            total_price_rounded = math.ceil(total_price)
+        if annotations:
+            total_price_rounded = f"{total_price_rounded} + {' + '.join(annotations)}"
 
         filtered_pumps.append({
             "model": final_model,
@@ -192,16 +208,16 @@ def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_dupl
             "pump_price": pump_price,
             "motor_price": motor_price,
             "diaphragm_price": diaphragm_price,
-            "total_price": total_price_rounded if motor_price != "C/F" else "C/F"
+            "total_price": total_price_rounded
         })
 
-    if filtered_pumps:
-        # Always return the first cheapest pump that meets all conditions
-        filtered_pumps.sort(key=lambda x: x["total_price"] if x["total_price"] != "C/F" else float('inf'))
-        best_pump = filtered_pumps[0]
-        return best_pump
-    else:
-        return {"error": "No suitable pump found for the given specifications."}
+        if filtered_pumps:
+            # Sort pumps by total_price, treating "C/F" as infinity
+            filtered_pumps.sort(key=lambda x: float('inf') if isinstance(x["total_price"], str) else x["total_price"])
+            best_pump = filtered_pumps[0]
+            return best_pump
+        else:
+            return {"error": "No suitable pump found for the given specifications."}
 
 def generate_pdf(pump_data, filename="pump_quote.pdf"):
     # Create a PDF object
