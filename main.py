@@ -164,8 +164,8 @@ def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_dupl
 
         if diaphragm_price == 0:
             continue
-        # else:
-        #     diaphragm_price = 0
+        else:
+            diaphragm_price = 0
 
         # Calculate total price
         total_price = pump_price  # Always include the pump price
