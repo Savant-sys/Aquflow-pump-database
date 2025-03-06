@@ -30,14 +30,15 @@ document.getElementById("pumpForm").addEventListener("submit", async (e) => {
     const phase = document.getElementById("phase").value;
     const degassing = document.getElementById("degassing").value;
     const flanges = document.getElementById("flanges").value;
+    const balls_type = document.getElementById("balls_type").value;
 
     console.log("Form Data:", {
-        gph, psi, hz, simplex_duplex, want_motor, motor_type, motor_power, spm, diaphragm, liquid_end_material, leak_detection, phase, degassing, flanges
+        gph, psi, hz, simplex_duplex, want_motor, motor_type, motor_power, spm, diaphragm, liquid_end_material, leak_detection, phase, degassing, flanges, balls_type
     });
 
     try {
         // Call the API
-        const apiUrl = `http://localhost:5000/get_pump?gph=${gph}&psi=${psi}&hz=${hz}&simplex_duplex=${simplex_duplex}&want_motor=${want_motor}&motor_type=${motor_type}&motor_power=${motor_power}&spm=${spm}&diaphragm=${diaphragm}&liquid_end_material=${liquid_end_material}&leak_detection=${leak_detection}&phase=${phase}&degassing=${degassing}&flanges=${flanges}`;
+        const apiUrl = `http://localhost:5000/get_pump?gph=${gph}&psi=${psi}&hz=${hz}&simplex_duplex=${simplex_duplex}&want_motor=${want_motor}&motor_type=${motor_type}&motor_power=${motor_power}&spm=${spm}&diaphragm=${diaphragm}&liquid_end_material=${liquid_end_material}&leak_detection=${leak_detection}&phase=${phase}&degassing=${degassing}&flanges=${flanges}&balls_type=${balls_type}`;
         console.log("API URL:", apiUrl);
 
         const response = await fetch(apiUrl);

@@ -23,7 +23,7 @@ db_config = {
     "database": "Local_Pump_Info"
 }
 
-def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_duplex=None, want_motor=None, motor_type=None, motor_power=None, spm=None, diaphragm=None, liquid_end_material=None, leak_detection=None, phase=None, degassing=None, flanges=None):
+def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_duplex=None, want_motor=None, motor_type=None, motor_power=None, spm=None, diaphragm=None, liquid_end_material=None, leak_detection=None, phase=None, degassing=None, flanges=None, balls_type=None):
     # Ensure either GPH or LPH is provided
     if gph is None and lph is None:
         return {"error": "Either GPH or LPH is required. Please provide one."}
@@ -80,6 +80,11 @@ def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_dupl
     # If flange is required, ensure flange (Yes/No) is provided
     if flanges.lower() not in ["yes", "no"]:
         return {"error": "Flanges is required and must be either 'yes' or 'no'."}
+    
+    # Ensure balls type is required to be provided
+    valid_balls_type_options = ["std.", "tungsten", "ceramic"]
+    if balls_type is None or balls_type.lower() not in valid_balls_type_options:
+        return {"error": "Balls Type is required and must be one of the following: Std., Tungsten, Ceramic"}
 
     # Connect to MySQL database
     conn = mysql.connector.connect(**db_config)
@@ -318,7 +323,7 @@ def generate_pdf(pump_data, filename="pump_quote.pdf"):
         pdf.cell(0, 10, txt=f"Motor Power: {pump_data.get('motor_power', 'N/A')}", ln=True)
 
     # Add Diaphragm
-    pdf.cell(0, 10, txt=f"Diaphragm Material: {pump_data.get('diaphragm', 'N/A').upper()}", ln=True)
+    pdf.cell(0, 10, txt=f"Diaphragm Material: {pump_data.get('diaphragm', 'N/A')}", ln=True)
 
     # Add Liquid End Material
     pdf.cell(0, 10, txt=f"Liquid End Material: {pump_data.get('liquid_end_material', 'N/A')}", ln=True)
@@ -349,7 +354,10 @@ def generate_pdf(pump_data, filename="pump_quote.pdf"):
     else:
         pdf.cell(0, 10, txt=f"Add Flanges: No", ln=True)
 
-    pdf.ln(10)  # Add some space
+    pdf.cell(0, 10, txt=f"Balls Type: {pump_data.get('balls_type')}", ln=True)
+    
+    
+    pdf.ln(10)  # Add some space at the end
 
     # Add pricing details
     pdf.set_font("Arial", "B", 12)
@@ -423,10 +431,11 @@ def get_pump():
         phase = request.args.get('phase', type=str)
         degassing = request.args.get('degassing', type=str)
         flanges = request.args.get('flanges', type=str)
+        balls_type = request.args.get('balls_type', type=str)
 
         # Find the best pump
         result = find_best_pump(
-            gph, None, psi, None, hz, simplex_duplex, want_motor, motor_type, motor_power, spm, diaphragm, liquid_end_material, leak_detection, phase, degassing, flanges
+            gph, None, psi, None, hz, simplex_duplex, want_motor, motor_type, motor_power, spm, diaphragm, liquid_end_material, leak_detection, phase, degassing, flanges, balls_type
         )
 
         # Generate PDF
@@ -437,6 +446,7 @@ def get_pump():
             result["psi"] = psi
             result["degassing"] = degassing
             result["flanges"] = flanges
+            result["balls_type"] = balls_type
             pdf_filename = generate_pdf(result)
             result["pdf_url"] = f"/download_pdf/{pdf_filename}"
 
