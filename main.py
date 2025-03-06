@@ -23,7 +23,7 @@ db_config = {
     "database": "Local_Pump_Info"
 }
 
-def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_duplex=None, want_motor=None, motor_type=None, motor_power=None, spm=None, diaphragm=None, liquid_end_material=None, leak_detection=None):
+def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_duplex=None, want_motor=None, motor_type=None, motor_power=None, spm=None, diaphragm=None, liquid_end_material=None, leak_detection=None, phase=None):
     # Ensure either GPH or LPH is provided
     if gph is None and lph is None:
         return {"error": "Either GPH or LPH is required. Please provide one."}
@@ -67,6 +67,11 @@ def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_dupl
     valid_leak_detection_options = ["no", "conductive", "vacuum"]
     if leak_detection is None or leak_detection.lower() not in valid_leak_detection_options:
         return {"error": "Leak Detection is required and must be one of the following: No, Conductive, Vacuum."}
+
+    # Ensure phase is provided and is one of the valid options
+    valid_phase_options = ["single", "three"]
+    if phase is None or phase.lower() not in valid_phase_options:
+        return {"error": "Phase is required and must be one of the following: Single, Three."}
 
     # Connect to MySQL database
     conn = mysql.connector.connect(**db_config)
@@ -227,16 +232,17 @@ def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_dupl
             "motor_price": motor_price,
             "diaphragm_price": diaphragm_price,
             "leak_detection_price": leak_detection_price,
-            "total_price": total_price_rounded
+            "total_price": total_price_rounded,
+            "phase": phase
         })
 
-        if filtered_pumps:
-            # Sort pumps by total_price, treating "C/F" as infinity
-            filtered_pumps.sort(key=lambda x: float('inf') if isinstance(x["total_price"], str) else x["total_price"])
-            best_pump = filtered_pumps[0]
-            return best_pump
-        else:
-            return {"error": "No suitable pump found for the given specifications."}
+    if filtered_pumps:
+        # Sort pumps by total_price, treating "C/F" as infinity
+        filtered_pumps.sort(key=lambda x: float('inf') if isinstance(x["total_price"], str) else x["total_price"])
+        best_pump = filtered_pumps[0]
+        return best_pump
+    else:
+        return {"error": "No suitable pump found for the given specifications."}
 
 def generate_pdf(pump_data, filename="pump_quote.pdf"):
     # Create a PDF object
@@ -247,33 +253,54 @@ def generate_pdf(pump_data, filename="pump_quote.pdf"):
     pdf.set_font("Arial", size=12)
 
     # Add a header with a logo
-    pdf.image("logo.png", x=10, y=8, w=30)
+    pdf.image("logo.png", x=10, y=8, w=30)  # Ensure the logo path is correct
     pdf.set_font("Arial", "B", 16)
     pdf.cell(0, 10, txt="Pump Quote", ln=True, align="C")
     pdf.ln(10)  # Add some space
 
-    # Add customer details section
-    pdf.set_font("Arial", "B", 12)
-    pdf.cell(0, 10, txt="Customer Details", ln=True)
-    pdf.set_font("Arial", size=12)
-    pdf.cell(0, 10, txt="Name: Test Name", ln=True)
-    pdf.cell(0, 10, txt="Email: test.name@example.com", ln=True)
-    pdf.cell(0, 10, txt="Phone: +1 234 567 890", ln=True)
-    pdf.ln(10)  # Add some space
-
     # Add pump details section
     pdf.set_font("Arial", "B", 12)
-    pdf.cell(0, 10, txt="Pump Details", ln=True)
+    pdf.cell(0, 10, txt="Pump Specifications", ln=True)
     pdf.set_font("Arial", size=12)
 
-    # Create a table for pump details
-    pdf.cell(60, 10, txt="Model", border=1)
-    pdf.cell(60, 10, txt="Series", border=1)
-    pdf.cell(60, 10, txt="Simplex/Duplex", border=1, ln=True)
+    # Add Model
+    pdf.cell(0, 10, txt=f"Model: {pump_data.get('model', 'N/A')}", ln=True)
 
-    pdf.cell(60, 10, txt=pump_data["model"], border=1)
-    pdf.cell(60, 10, txt=pump_data["series"], border=1)
-    pdf.cell(60, 10, txt=pump_data["simplex_duplex"], border=1, ln=True)
+    # Add GPH/LPH
+    if "gph" in pump_data:
+        pdf.cell(0, 10, txt=f"Flow Rate (GPH): {pump_data['gph']}", ln=True)
+    elif "lph" in pump_data:
+        pdf.cell(0, 10, txt=f"Flow Rate (LPH): {pump_data['lph']}", ln=True)
+
+    # Add PSI/Bar
+    if "psi" in pump_data:
+        pdf.cell(0, 10, txt=f"Pressure (PSI): {pump_data['psi']}", ln=True)
+    elif "bar" in pump_data:
+        pdf.cell(0, 10, txt=f"Pressure (Bar): {pump_data['bar']}", ln=True)
+
+    # Add Hz
+    pdf.cell(0, 10, txt=f"Frequency (Hz): {pump_data.get('hz', 'N/A')}", ln=True)
+
+    # Add Simplex/Duplex
+    pdf.cell(0, 10, txt=f"Simplex/Duplex: {pump_data.get('simplex_duplex', 'N/A')}", ln=True)
+
+    # Add Motor Type and Motor Power (if want_motor is "yes")
+    if pump_data.get("want_motor", "").lower() == "yes":
+        pdf.cell(0, 10, txt=f"Motor Type: {pump_data.get('motor_type', 'N/A')}", ln=True)
+        pdf.cell(0, 10, txt=f"Motor Power: {pump_data.get('motor_power', 'N/A')}", ln=True)
+
+    # Add Diaphragm
+    pdf.cell(0, 10, txt=f"Diaphragm Material: {pump_data.get('diaphragm', 'N/A').upper()}", ln=True)
+
+    # Add Liquid End Material
+    pdf.cell(0, 10, txt=f"Liquid End Material: {pump_data.get('liquid_end_material', 'N/A')}", ln=True)
+
+    # Add Leak Detection (if not "no")
+    if pump_data.get("leak_detection", "").lower() != "no":
+        pdf.cell(0, 10, txt=f"Leak Detection: {pump_data.get('leak_detection', 'N/A')}", ln=True)
+
+    # Add Phase
+    pdf.cell(0, 10, txt=f"Phase: {pump_data.get('phase', 'N/A')}", ln=True)
 
     pdf.ln(10)  # Add some space
 
@@ -320,15 +347,22 @@ def get_pump():
         motor_type = request.args.get('motor_type', type=str)
         motor_power = request.args.get('motor_power', type=str)
         spm = request.args.get('spm', type=int)
-        diaphragm = request.args.get('diaphragm', type=str)
+        diaphragm = request.args.get('diaphragm', type=str)  # Add diaphragm parameter
         liquid_end_material = request.args.get('liquid_end_material', type=str)
         leak_detection = request.args.get('leak_detection', type=str)
+        phase = request.args.get('phase', type=str)
 
         # Find the best pump
-        result = find_best_pump(gph, None, psi, None, hz, simplex_duplex, want_motor, motor_type, motor_power, spm, diaphragm, liquid_end_material, leak_detection)
+        result = find_best_pump(
+            gph, None, psi, None, hz, simplex_duplex, want_motor, motor_type, motor_power, spm, diaphragm, liquid_end_material, leak_detection, phase
+        )
 
         # Generate PDF
         if "error" not in result:
+            # Include Hz and Diaphragm in the result for the PDF
+            result["hz"] = hz
+            result["diaphragm"] = diaphragm
+            result["psi"] = psi
             pdf_filename = generate_pdf(result)
             result["pdf_url"] = f"/download_pdf/{pdf_filename}"
 
