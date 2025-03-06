@@ -23,7 +23,7 @@ db_config = {
     "database": "Local_Pump_Info"
 }
 
-def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_duplex=None, want_motor=None, motor_type=None, motor_power=None, spm=None, diaphragm=None, liquid_end_material=None, leak_detection=None, phase=None, degassing=None, flanges=None, balls_type=None):
+def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_duplex=None, want_motor=None, motor_type=None, motor_power=None, spm=None, diaphragm=None, liquid_end_material=None, leak_detection=None, phase=None, degassing=None, flange=None, balls_type=None):
     # Ensure either GPH or LPH is provided
     if gph is None and lph is None:
         return {"error": "Either GPH or LPH is required. Please provide one."}
@@ -78,8 +78,8 @@ def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_dupl
         return {"error": "Degassing is required and must be either 'yes' or 'no'."}
     
     # If flange is required, ensure flange (Yes/No) is provided
-    if flanges.lower() not in ["yes", "no"]:
-        return {"error": "Flanges is required and must be either 'yes' or 'no'."}
+    if flange.lower() not in ["yes", "no"]:
+        return {"error": "Flange is required and must be either 'yes' or 'no'."}
     
     # Ensure balls type is required to be provided
     valid_balls_type_options = ["std.", "tungsten", "ceramic"]
@@ -137,7 +137,7 @@ def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_dupl
 
         final_model = pump["Model"]
 
-        if flanges.lower() == "yes":
+        if flange.lower() == "yes":
             final_model += "F"
 
         if degassing.lower() == "yes":
@@ -155,7 +155,7 @@ def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_dupl
         motor_price = 0
         diaphragm_price = 0
         leak_detection_price = 0
-        flanges_price = 0
+        flange_price = 0
 
         # Determine correct motor price column
         if want_motor == "yes":
@@ -185,12 +185,12 @@ def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_dupl
             else:
                 motor_price = float(motor_price_value) if motor_price_value is not None else 0
 
-        flanges_price_value = pump["Flanges_Adder_Price"] if flanges.lower() == "yes" else 0
+        flange_price_value = pump["Flange_Adder_Price"] if flange.lower() == "yes" else 0
 
-        if flanges_price_value == "C/F":
-            flanges_price = "C/F"
+        if flange_price_value == "C/F":
+            flange_price = "C/F"
         else:
-            flanges_price = float(flanges_price_value) if flanges_price_value is not None else 0
+            flange_price = float(flange_price_value) if flange_price_value is not None else 0
             
         # Determine diaphragm price
         if diaphragm.lower() == "viton":
@@ -222,8 +222,8 @@ def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_dupl
         if motor_price != "C/F":
             total_price += motor_price
 
-        if flanges_price != "C/F":
-            total_price += flanges_price
+        if flange_price != "C/F":
+            total_price += flange_price
 
         # Add diaphragm price if not "ptfe"
         total_price += diaphragm_price
@@ -244,8 +244,8 @@ def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_dupl
             annotations.append("C/F (Motor)")
         if use_hp and pump["High_Pressure_Adder_Price"] == "C/F":
             annotations.append("C/F (HP)")
-        if flanges_price_value == "C/F":
-            annotations.append("C/F (Flanges)")
+        if flange_price_value == "C/F":
+            annotations.append("C/F (Flange)")
 
         if annotations:
             total_price_rounded = f"{total_price_rounded} + {' + '.join(annotations)}"
@@ -266,7 +266,7 @@ def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_dupl
             "motor_price": motor_price,
             "diaphragm_price": diaphragm_price,
             "leak_detection_price": leak_detection_price,
-            "flanges_price": flanges_price,
+            "flange_price": flange_price,
             "total_price": total_price_rounded,
             "phase": phase
         })
@@ -351,10 +351,10 @@ def generate_pdf(pump_data, filename="pump_quote.pdf"):
         pdf.cell(0, 10, txt=f"Add Degassing: No", ln=True)
 
     # Add Degassing (if "yes")
-    if pump_data.get("flanges", "").lower() == "yes":
-        pdf.cell(0, 10, txt=f"Add Flanges: Yes", ln=True)
+    if pump_data.get("flange", "").lower() == "yes":
+        pdf.cell(0, 10, txt=f"Add Flange: Yes", ln=True)
     else:
-        pdf.cell(0, 10, txt=f"Add Flanges: No", ln=True)
+        pdf.cell(0, 10, txt=f"Add Flange: No", ln=True)
 
     pdf.cell(0, 10, txt=f"Balls Type: {pump_data.get('balls_type')}", ln=True)
     
@@ -390,15 +390,15 @@ def generate_pdf(pump_data, filename="pump_quote.pdf"):
         pdf.cell(100, 10, txt="Degassing Price", border=1)
         pdf.cell(80, 10, txt="$0", border=1, ln=True)
 
-    # Add Flanges Price
-    if pump_data.get("flanges", "").lower() == "yes":
-        pdf.cell(100, 10, txt="Flanges Price", border=1)
-        if isinstance(pump_data.get("flanges_price"), str):  # Handle "C/F" case
-            pdf.cell(80, 10, txt=f"{pump_data['flanges_price']}", border=1, ln=True)
+    # Add Flange Price
+    if pump_data.get("flange", "").lower() == "yes":
+        pdf.cell(100, 10, txt="Flange Price", border=1)
+        if isinstance(pump_data.get("flange_price"), str):  # Handle "C/F" case
+            pdf.cell(80, 10, txt=f"{pump_data['flange_price']}", border=1, ln=True)
         else:
-            pdf.cell(80, 10, txt=f"${pump_data.get('flanges_price', 0)}", border=1, ln=True)
+            pdf.cell(80, 10, txt=f"${pump_data.get('flange_price', 0)}", border=1, ln=True)
     else:
-        pdf.cell(100, 10, txt="Flanges Price", border=1)
+        pdf.cell(100, 10, txt="Flange Price", border=1)
         pdf.cell(80, 10, txt="$0", border=1, ln=True)
 
     pdf.cell(100, 10, txt="Total Price", border=1)
@@ -432,12 +432,12 @@ def get_pump():
         leak_detection = request.args.get('leak_detection', type=str)
         phase = request.args.get('phase', type=str)
         degassing = request.args.get('degassing', type=str)
-        flanges = request.args.get('flanges', type=str)
+        flange = request.args.get('flange', type=str)
         balls_type = request.args.get('balls_type', type=str)
 
         # Find the best pump
         result = find_best_pump(
-            gph, None, psi, None, hz, simplex_duplex, want_motor, motor_type, motor_power, spm, diaphragm, liquid_end_material, leak_detection, phase, degassing, flanges, balls_type
+            gph, None, psi, None, hz, simplex_duplex, want_motor, motor_type, motor_power, spm, diaphragm, liquid_end_material, leak_detection, phase, degassing, flange, balls_type
         )
 
         # Generate PDF
@@ -447,7 +447,7 @@ def get_pump():
             result["diaphragm"] = diaphragm
             result["psi"] = psi
             result["degassing"] = degassing
-            result["flanges"] = flanges
+            result["flange"] = flange
             result["balls_type"] = balls_type
             pdf_filename = generate_pdf(result)
             result["pdf_url"] = f"/download_pdf/{pdf_filename}"
