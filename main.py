@@ -69,9 +69,9 @@ def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_dupl
         return {"error": "Leak Detection is required and must be one of the following: No, Conductive, Vacuum."}
 
     # Ensure phase is provided and is one of the valid options
-    valid_phase_options = ["single", "three"]
-    if phase is None or phase.lower() not in valid_phase_options:
-        return {"error": "Phase is required and must be one of the following: Single, Three."}
+    valid_phase_options = ["1 Ph", "3 Ph"]
+    if phase is None or phase not in valid_phase_options:
+        return {"error": "Phase is required and must be one of the following: 1 Ph, 3 Ph."}
     
     # If degassing is required, ensure degassing (Yes/No) is provided
     if degassing.lower() not in ["yes", "no"]:
@@ -205,8 +205,10 @@ def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_dupl
         # Determine leak detection price
         if leak_detection.lower() == "conductive":
             leak_detection_price = float(pump["Conductive_Leak_Detection_Price_Adder"]) if pump["Conductive_Leak_Detection_Price_Adder"] is not None else 0
+            final_model = final_model[:3] + "W" + final_model[4:]
         elif leak_detection.lower() == "vacuum":
-            leak_detection_price = float(pump["Vacuum_Leak_Detection_Price_Adder"]) if pump["Vacuum_Leak_Detection_Price_Adder"] is not None else 0
+            leak_detection_price = float(pump ["Vacuum_Leak_Detection_Price_Adder"]) if pump["Vacuum_Leak_Detection_Price_Adder"] is not None else 0
+            final_model = final_model[:3] + "K" + final_model[4:]
         else:
             leak_detection_price = 0
 
@@ -337,10 +339,10 @@ def generate_pdf(pump_data, filename="pump_quote.pdf"):
         pdf.cell(0, 10, txt=f"Leak Detection: Vacuum", ln=True)
 
     # Add Phase
-    if pump_data.get("phase", "").lower() == "single":
-        pdf.cell(0, 10, txt=f"Phase: Single", ln=True)
+    if pump_data.get("phase", "")== "1 Ph":
+        pdf.cell(0, 10, txt=f"Phase: 1 Ph", ln=True)
     else:
-        pdf.cell(0, 10, txt=f"Phase: Triple", ln=True)
+        pdf.cell(0, 10, txt=f"Phase: 3 Ph", ln=True)
 
     # Add Degassing (if "yes")
     if pump_data.get("degassing", "").lower() == "yes":
