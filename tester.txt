@@ -1,1 +1,1 @@
-http://127.0.0.1:5000/get_pump?gph=60&psi=355&hz=60&simplex_duplex=both&want_motor=yes&motor_type=tefc&motor_power=dc&diaphragm=ptfe&spm=191&liquid_end_material=316ss&leak_detection=conductive&phase=single
+http://127.0.0.1:5000/get_pump?gph=2.33&psi=500&hz=60&simplex_duplex=both&want_motor=yes&motor_type=tefc&motor_power=dc&diaphragm=ptfe&spm=191&liquid_end_material=316ss&leak_detection=no&phase=single&degassing=yes&flanges=yes
