@@ -120,10 +120,10 @@ def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_dupl
         # Select the correct column for PSI/Bar
         if psi is not None:
             max_pressure = float(pump["Max_Pressure_PSI"])
-            high_pressure = float(pump["Max_Pressure_PSI_HP_Adder"])
+            high_pressure = float(pump["Max_Pressure_PSI_High_Pressure_Adder"])
         else:
             max_pressure = float(pump["Max_Pressure_Bar"])
-            high_pressure = float(pump["Max_Pressure_Bar_HP_Adder"])
+            high_pressure = float(pump["Max_Pressure_Bar_High_Pressure_Adder"])
 
         use_hp = psi > max_pressure if psi is not None else bar > max_pressure
         if (psi is not None and psi > max_pressure and (not high_pressure or psi > high_pressure)) or \
@@ -258,8 +258,8 @@ def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_dupl
             "lph": float(pump["LPH_60Hz"]) if hz == 60 else float(pump["LPH_50Hz"]),
             "psi": float(pump["Max_Pressure_PSI"]),
             "bar": float(pump["Max_Pressure_Bar"]),
-            "high_pressure_psi": float(pump["Max_Pressure_PSI_HP_Adder"]),
-            "high_pressure_bar": float(pump["Max_Pressure_Bar_HP_Adder"]),
+            "high_pressure_psi": float(pump["Max_Pressure_PSI_High_Pressure_Adder"]),
+            "high_pressure_bar": float(pump["Max_Pressure_Bar_High_Pressure_Adder"]),
             "max_spm": float(pump["Max_SPM"]),
             "liquid_end_material": pump["Liquid_End_Material"],
             "pump_price": pump_price,
