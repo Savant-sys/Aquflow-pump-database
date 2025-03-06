@@ -232,8 +232,8 @@ def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_dupl
         total_price += leak_detection_price
 
         # Add HP adder price if it's not "C/F"
-        if use_hp and pump["HP_Adder_Price"] is not None and pump["HP_Adder_Price"] != "C/F":
-            total_price += float(pump["HP_Adder_Price"])
+        if use_hp and pump["High_Pressure_Adder_Price"] is not None and pump["High_Pressure_Adder_Price"] != "C/F":
+            total_price += float(pump["High_Pressure_Adder_Price"])
 
         # Round up the total price to the nearest whole number
         total_price_rounded = math.ceil(total_price)
@@ -242,7 +242,7 @@ def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_dupl
         annotations = []
         if motor_price == "C/F":
             annotations.append("C/F (Motor)")
-        if use_hp and pump["HP_Adder_Price"] == "C/F":
+        if use_hp and pump["High_Pressure_Adder_Price"] == "C/F":
             annotations.append("C/F (HP)")
         if flanges_price_value == "C/F":
             annotations.append("C/F (Flanges)")
