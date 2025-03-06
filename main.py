@@ -23,7 +23,7 @@ db_config = {
     "database": "Local_Pump_Info"
 }
 
-def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_duplex=None, want_motor=None, motor_type=None, motor_power=None, spm=None, diaphragm=None, liquid_end_material=None, leak_detection=None, phase=None):
+def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_duplex=None, want_motor=None, motor_type=None, motor_power=None, spm=None, diaphragm=None, liquid_end_material=None, leak_detection=None, phase=None, degassing=None):
     # Ensure either GPH or LPH is provided
     if gph is None and lph is None:
         return {"error": "Either GPH or LPH is required. Please provide one."}
@@ -72,6 +72,10 @@ def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_dupl
     valid_phase_options = ["single", "three"]
     if phase is None or phase.lower() not in valid_phase_options:
         return {"error": "Phase is required and must be one of the following: Single, Three."}
+    
+    # If degassing is required, ensure degassing (Yes/No) is provided
+    if degassing.lower() not in ["yes", "no"]:
+        return {"error": "Degassing is required and must be either 'yes' or 'no'."}
 
     # Connect to MySQL database
     conn = mysql.connector.connect(**db_config)
@@ -188,6 +192,9 @@ def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_dupl
         # Calculate total price
         total_price = pump_price  # Always include the pump price
 
+        if degassing.lower() == "yes":
+            total_price += 450
+
         # Add motor price if it's not "C/F"
         if motor_price != "C/F":
             total_price += motor_price
@@ -298,9 +305,22 @@ def generate_pdf(pump_data, filename="pump_quote.pdf"):
     # Add Leak Detection (if not "no")
     if pump_data.get("leak_detection", "").lower() != "no":
         pdf.cell(0, 10, txt=f"Leak Detection: {pump_data.get('leak_detection', 'N/A')}", ln=True)
+    elif pump_data.get("leak_detection", "").lower() != "conductive":
+        pdf.cell(0, 10, txt=f"Leak Detection: Conductive", ln=True)
+    elif pump_data.get("leak_detection", "").lower() != "vacuum":
+        pdf.cell(0, 10, txt=f"Leak Detection: Vacuum", ln=True)
 
     # Add Phase
-    pdf.cell(0, 10, txt=f"Phase: {pump_data.get('phase', 'N/A')}", ln=True)
+    if pump_data.get("phase", "").lower() == "single":
+        pdf.cell(0, 10, txt=f"Phase: Single", ln=True)
+    else:
+        pdf.cell(0, 10, txt=f"Phase: Triple", ln=True)
+
+    # Add Degassing (if "yes")
+    if pump_data.get("degassing", "").lower() == "yes":
+        pdf.cell(0, 10, txt=f"Add Degassing: Yes", ln=True)
+    else:
+        pdf.cell(0, 10, txt=f"Add Degassing: No", ln=True)
 
     pdf.ln(10)  # Add some space
 
@@ -320,6 +340,14 @@ def generate_pdf(pump_data, filename="pump_quote.pdf"):
 
     pdf.cell(100, 10, txt="Leak Detection Price", border=1)
     pdf.cell(80, 10, txt=f"${pump_data['leak_detection_price']}", border=1, ln=True)
+
+    # Add Degassing Price (if "yes")
+    if pump_data.get("degassing", "").lower() == "yes":
+        pdf.cell(100, 10, txt="Degassing Price", border=1)
+        pdf.cell(80, 10, txt="$450", border=1, ln=True)
+    else:
+        pdf.cell(100, 10, txt="Degassing Price", border=1)
+        pdf.cell(80, 10, txt="$0", border=1, ln=True)
 
     pdf.cell(100, 10, txt="Total Price", border=1)
     pdf.cell(80, 10, txt=f"${pump_data['total_price']}", border=1, ln=True)
@@ -351,10 +379,11 @@ def get_pump():
         liquid_end_material = request.args.get('liquid_end_material', type=str)
         leak_detection = request.args.get('leak_detection', type=str)
         phase = request.args.get('phase', type=str)
+        degassing = request.args.get('degassing', type=str)
 
         # Find the best pump
         result = find_best_pump(
-            gph, None, psi, None, hz, simplex_duplex, want_motor, motor_type, motor_power, spm, diaphragm, liquid_end_material, leak_detection, phase
+            gph, None, psi, None, hz, simplex_duplex, want_motor, motor_type, motor_power, spm, diaphragm, liquid_end_material, leak_detection, phase, degassing
         )
 
         # Generate PDF
@@ -363,6 +392,7 @@ def get_pump():
             result["hz"] = hz
             result["diaphragm"] = diaphragm
             result["psi"] = psi
+            result["degassing"] = degassing
             pdf_filename = generate_pdf(result)
             result["pdf_url"] = f"/download_pdf/{pdf_filename}"
 
