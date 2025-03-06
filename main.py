@@ -59,7 +59,7 @@ def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_dupl
         return {"error": "Diaphragm is required and must be one of the following: PTFE, Viton, Hypalon, EPDM."}
 
     # Ensure liquid end material is provided and is one of the valid options
-    valid_liquid_end_material = ["316ss", "alloy 20", "hast c.", "pvc", "pvdf"]
+    valid_liquid_end_material = ["316ss", "alloy 20", "hast. c", "pvc", "pvdf"]
     if liquid_end_material is None or liquid_end_material.lower() not in valid_liquid_end_material:
         return {"error": "Liquid End Material is required and must be one of the following: 316SS, Alloy 20, Hast C., PVC, PVDF."}
 
@@ -194,13 +194,8 @@ def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_dupl
             diaphragm_price = float(pump["Hypalon"]) if pump["Hypalon"] is not None else 0
         elif diaphragm.lower() == "epdm":
             diaphragm_price = float(pump["EPDM"]) if pump["EPDM"] is not None else 0
-        elif diaphragm.lower() == "ptfe":
-            diaphragm_price = 1
-
-        if diaphragm_price == 0:
+        elif diaphragm.lower() != "ptfe":
             continue
-        else:
-            diaphragm_price = 0
 
         # Determine leak detection price
         if leak_detection.lower() == "conductive":
@@ -264,7 +259,7 @@ def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_dupl
             "motor_price": motor_price,
             "diaphragm_price": diaphragm_price,
             "leak_detection_price": leak_detection_price,
-            "flanges_price": flanges_price,  # Add flanges_price here
+            "flanges_price": flanges_price,
             "total_price": total_price_rounded,
             "phase": phase
         })
@@ -364,9 +359,13 @@ def generate_pdf(pump_data, filename="pump_quote.pdf"):
     pdf.cell(100, 10, txt="Pump Price", border=1)
     pdf.cell(80, 10, txt=f"${pump_data['pump_price']}", border=1, ln=True)
 
+    # Add Motor Price
     pdf.cell(100, 10, txt="Motor Price", border=1)
-    pdf.cell(80, 10, txt=f"${pump_data['motor_price']}", border=1, ln=True)
-
+    if isinstance(pump_data.get("motor_price"), str):  # Handle "C/F" case
+        pdf.cell(80, 10, txt=f"{pump_data['motor_price']}", border=1, ln=True)
+    else:
+        pdf.cell(80, 10, txt=f"${pump_data.get('motor_price', 0)}", border=1, ln=True)
+        
     pdf.cell(100, 10, txt="Diaphragm Price", border=1)
     pdf.cell(80, 10, txt=f"${pump_data['diaphragm_price']}", border=1, ln=True)
 

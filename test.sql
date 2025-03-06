@@ -3,6 +3,8 @@ SELECT * FROM pumps;
 SHOW COLUMNS FROM pumps;
 SELECT pump_price FROM pumps;
 
+SELECT DISTINCT Liquid_End_Material FROM pumps;
+
 SELECT pump_price, tefc_price, xpfc_price, hp_adder_price 
 FROM pumps 
 WHERE pump_price IS NOT NULL 
