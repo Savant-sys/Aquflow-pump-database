@@ -8,6 +8,12 @@ app = Flask(__name__)
 CORS(app)  # Allows frontend access to API
 
 # MySQL Database Configuration
+db_config = {
+    "host": "localhost",
+    "user": "root",
+    "password": "1234",
+    "database": "Local_Pump_Info"
+}
 
 # db_config = {
 #     "host": "your_godaddy_mysql_host",
@@ -16,14 +22,27 @@ CORS(app)  # Allows frontend access to API
 #     "database": "your_godaddy_mysql_database"
 # }
 
-db_config = {
-    "host": "localhost",
-    "user": "root",
-    "password": "1234",
-    "database": "Local_Pump_Info"
-}
+def calculate_suction_lift_price(series, liquid_end_material, suction_lift):
+    """
+    Calculate the suction lift price based on the series and liquid end material.
+    Only add the price if suction_lift is "yes".
+    """
+    if suction_lift.lower() != "yes":
+        return 0  # Do not add suction lift price if customer selects "no"
 
-def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_duplex=None, want_motor=None, motor_type=None, motor_power=None, spm=None, diaphragm=None, liquid_end_material=None, leak_detection=None, phase=None, degassing=None, flange=None, balls_type=None):
+    if series == "Series 1000":
+        if liquid_end_material in ["316SS", "Alloy 20", "Hast. C", "PVC", "PVDF"]:
+            return 844  # All materials in Series 1000 add $844
+    elif series == "Series 2000":
+        if liquid_end_material == "316SS":
+            return "C/F"
+        elif liquid_end_material == "Alloy 20":
+            return 2860
+        elif liquid_end_material in ["Hast. C", "PVC", "PVDF"]:
+            return "C/F"
+    return 0
+
+def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_duplex=None, want_motor=None, motor_type=None, motor_power=None, spm=None, diaphragm=None, liquid_end_material=None, leak_detection=None, phase=None, degassing=None, flange=None, balls_type=None, suction_lift=None):
     # Ensure either GPH or LPH is provided
     if gph is None and lph is None:
         return {"error": "Either GPH or LPH is required. Please provide one."}
@@ -38,7 +57,7 @@ def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_dupl
 
     # Ensure Simplex/Duplex is required
     if not simplex_duplex:
-        return {"error": "Simplex/Duplex is required. Please provide either 'Simplex', 'Duplex', or 'Both' (one of them)."}
+        return {"error": "Simplex/Duplex is required. Please provide either 'Simplex', 'Duplex', or 'Both'."}
 
     # Ensure want_motor is provided and is either "yes" or "no"
     if want_motor.lower() not in ["yes", "no"]:
@@ -59,9 +78,9 @@ def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_dupl
         return {"error": "Diaphragm is required and must be one of the following: PTFE, Viton, Hypalon, EPDM."}
 
     # Ensure liquid end material is provided and is one of the valid options
-    valid_liquid_end_material = ["316ss", "alloy 20", "hast. c", "pvc", "pvdf"]
-    if liquid_end_material is None or liquid_end_material.lower() not in valid_liquid_end_material:
-        return {"error": "Liquid End Material is required and must be one of the following: 316SS, Alloy 20, Hast C., PVC, PVDF."}
+    valid_liquid_end_material = ["316SS", "Alloy 20", "Hast. C", "PVC", "PVDF"]
+    if liquid_end_material is None or liquid_end_material not in valid_liquid_end_material:
+        return {"error": "Liquid End Material is required and must be one of the following: 316SS, Alloy 20, Hast. C, PVC, PVDF."}
 
     # Ensure leak detection is provided and is one of the valid options
     valid_leak_detection_options = ["no", "conductive", "vacuum"]
@@ -72,19 +91,23 @@ def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_dupl
     valid_phase_options = ["1 Ph", "3 Ph"]
     if phase is None or phase not in valid_phase_options:
         return {"error": "Phase is required and must be one of the following: 1 Ph, 3 Ph."}
-    
-    # If degassing is required, ensure degassing (Yes/No) is provided
+
+    # Ensure degassing is provided and is either "yes" or "no"
     if degassing.lower() not in ["yes", "no"]:
         return {"error": "Degassing is required and must be either 'yes' or 'no'."}
-    
-    # If flange is required, ensure flange (Yes/No) is provided
+
+    # Ensure flange is provided and is either "yes" or "no"
     if flange.lower() not in ["yes", "no"]:
         return {"error": "Flange is required and must be either 'yes' or 'no'."}
-    
-    # Ensure balls type is required to be provided
+
+    # Ensure balls type is provided and is one of the valid options
     valid_balls_type_options = ["std.", "tungsten", "ceramic"]
     if balls_type is None or balls_type.lower() not in valid_balls_type_options:
-        return {"error": "Balls Type is required and must be one of the following: Std., Tungsten, Ceramic"}
+        return {"error": "Balls Type is required and must be one of the following: Std., Tungsten, Ceramic."}
+
+    # Ensure suction_lift is provided and is either "yes" or "no"
+    if suction_lift.lower() not in ["yes", "no"]:
+        return {"error": "Suction Lift is required and must be either 'yes' or 'no'."}
 
     # Connect to MySQL database
     conn = mysql.connector.connect(**db_config)
@@ -97,8 +120,8 @@ def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_dupl
 
     filtered_pumps = []
     for pump in pumps:
-        # Ensure Liquid End Material matches (case-insensitive)
-        if pump["Liquid_End_Material"].lower() != liquid_end_material.lower():
+        # Ensure Liquid End Material matches
+        if pump["Liquid_End_Material"] != liquid_end_material:
             continue
 
         # Select the correct column for GPH/LPH based on Hz
@@ -150,7 +173,7 @@ def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_dupl
         if simplex_duplex.lower() != "both" and pump["Simplex_Duplex"].lower() != simplex_duplex.lower():
             continue
 
-        # Start total price calculation
+        # Start total price calculation (without suction lift)
         pump_price = float(pump["Pump_Price"]) if pump["Pump_Price"] is not None else 0
         motor_price = 0
         diaphragm_price = 0
@@ -191,7 +214,7 @@ def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_dupl
             flange_price = "C/F"
         else:
             flange_price = float(flange_price_value) if flange_price_value is not None else 0
-            
+
         # Determine diaphragm price
         if diaphragm.lower() == "viton":
             diaphragm_price = float(pump["Viton"]) if pump["Viton"] is not None else 0
@@ -207,23 +230,29 @@ def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_dupl
             leak_detection_price = float(pump["Conductive_Leak_Detection_Price_Adder"]) if pump["Conductive_Leak_Detection_Price_Adder"] is not None else 0
             final_model = final_model[:3] + "W" + final_model[4:]
         elif leak_detection.lower() == "vacuum":
-            leak_detection_price = float(pump ["Vacuum_Leak_Detection_Price_Adder"]) if pump["Vacuum_Leak_Detection_Price_Adder"] is not None else 0
+            leak_detection_price = float(pump["Vacuum_Leak_Detection_Price_Adder"]) if pump["Vacuum_Leak_Detection_Price_Adder"] is not None else 0
             final_model = final_model[:3] + "K" + final_model[4:]
         else:
             leak_detection_price = 0
 
-        # Calculate total price
+        # Calculate total price (without suction lift)
         total_price = pump_price  # Always include the pump price
 
         if degassing.lower() == "yes":
             total_price += 450
 
+        annotations = []
+
         # Add motor price if it's not "C/F"
         if motor_price != "C/F":
             total_price += motor_price
+        else:
+            annotations.append("C/F (Motor)")
 
         if flange_price != "C/F":
             total_price += flange_price
+        else:
+            annotations.append("C/F (Flange)")
 
         # Add diaphragm price if not "ptfe"
         total_price += diaphragm_price
@@ -234,19 +263,16 @@ def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_dupl
         # Add HP adder price if it's not "C/F"
         if use_hp and pump["High_Pressure_Adder_Price"] is not None and pump["High_Pressure_Adder_Price"] != "C/F":
             total_price += float(pump["High_Pressure_Adder_Price"])
+        elif use_hp and pump["High_Pressure_Adder_Price"] == "C/F":
+            annotations.append("C/F (HP)")
 
         # Round up the total price to the nearest whole number
-        total_price_rounded = math.ceil(total_price)
+        if isinstance(total_price, (int, float)):
+            total_price_rounded = math.ceil(total_price)
+        else:
+            total_price_rounded = total_price  # Handle "C/F" case
 
         # Add annotations for "C/F" cases
-        annotations = []
-        if motor_price == "C/F":
-            annotations.append("C/F (Motor)")
-        if use_hp and pump["High_Pressure_Adder_Price"] == "C/F":
-            annotations.append("C/F (HP)")
-        if flange_price_value == "C/F":
-            annotations.append("C/F (Flange)")
-
         if annotations:
             total_price_rounded = f"{total_price_rounded} + {' + '.join(annotations)}"
 
@@ -275,6 +301,29 @@ def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_dupl
         # Sort pumps by total_price, treating "C/F" as infinity
         filtered_pumps.sort(key=lambda x: float('inf') if isinstance(x["total_price"], str) else x["total_price"])
         best_pump = filtered_pumps[0]
+
+        # Add suction lift price AFTER choosing the cheapest pump
+        suction_lift_price = 0
+        suction_lift_message = None
+        if suction_lift.lower() == "yes":
+            suction_lift_price = calculate_suction_lift_price(best_pump["series"], liquid_end_material, suction_lift)
+            if suction_lift_price == 0:  # Suction lift is not available for this series
+                suction_lift_message = "Suction lift is not available"
+
+        # Update total price with suction lift price (if applicable)
+        if suction_lift_price != "C/F" and suction_lift_price != 0:
+            if isinstance(best_pump["total_price"], str):
+                # If total price is already a string (e.g., "C/F"), append the suction lift price
+                best_pump["total_price"] = f"{best_pump['total_price']} + ${suction_lift_price}"
+            else:
+                best_pump["total_price"] += suction_lift_price
+        elif suction_lift_price == "C/F":
+            best_pump["total_price"] = f"{best_pump['total_price']} + C/F (Suction Lift)"
+
+        # Add suction lift details to the best pump
+        best_pump["suction_lift_price"] = suction_lift_price
+        best_pump["suction_lift_message"] = suction_lift_message
+
         return best_pump
     else:
         return {"error": "No suitable pump found for the given specifications."}
@@ -300,6 +349,9 @@ def generate_pdf(pump_data, filename="pump_quote.pdf"):
 
     # Add Model
     pdf.cell(0, 10, txt=f"Model: {pump_data.get('model', 'N/A')}", ln=True)
+
+    # Add Series
+    pdf.cell(0, 10, txt=f"Series: {pump_data.get('series', 'N/A')}", ln=True)
 
     # Add GPH/LPH
     if "gph" in pump_data:
@@ -339,7 +391,7 @@ def generate_pdf(pump_data, filename="pump_quote.pdf"):
         pdf.cell(0, 10, txt=f"Leak Detection: Vacuum", ln=True)
 
     # Add Phase
-    if pump_data.get("phase", "")== "1 Ph":
+    if pump_data.get("phase", "") == "1 Ph":
         pdf.cell(0, 10, txt=f"Phase: 1 Ph", ln=True)
     else:
         pdf.cell(0, 10, txt=f"Phase: 3 Ph", ln=True)
@@ -350,22 +402,31 @@ def generate_pdf(pump_data, filename="pump_quote.pdf"):
     else:
         pdf.cell(0, 10, txt=f"Add Degassing: No", ln=True)
 
-    # Add Degassing (if "yes")
+    # Add Flange (if "yes")
     if pump_data.get("flange", "").lower() == "yes":
         pdf.cell(0, 10, txt=f"Add Flange: Yes", ln=True)
     else:
         pdf.cell(0, 10, txt=f"Add Flange: No", ln=True)
 
+    # Add Balls Type
     pdf.cell(0, 10, txt=f"Balls Type: {pump_data.get('balls_type')}", ln=True)
-    
-    
-    pdf.ln(10)  # Add some space at the end
+
+    # Add Suction Lift (if "yes")
+    if pump_data.get("suction_lift", "").lower() == "yes":
+        pdf.cell(0, 10, txt=f"Add Suction Lift: Yes", ln=True)
+        if pump_data.get("suction_lift_message"):  # Display message if suction lift is not available
+            pdf.cell(0, 10, txt=f"Note: {pump_data['suction_lift_message']}", ln=True)
+    else:
+        pdf.cell(0, 10, txt=f"Add Suction Lift: No", ln=True)
+
+    pdf.ln(10)  # Add some space
 
     # Add pricing details
     pdf.set_font("Arial", "B", 12)
     pdf.cell(0, 10, txt="Pricing Details", ln=True)
     pdf.set_font("Arial", size=12)
 
+    # Add Pump Price
     pdf.cell(100, 10, txt="Pump Price", border=1)
     pdf.cell(80, 10, txt=f"${pump_data['pump_price']}", border=1, ln=True)
 
@@ -375,10 +436,12 @@ def generate_pdf(pump_data, filename="pump_quote.pdf"):
         pdf.cell(80, 10, txt=f"{pump_data['motor_price']}", border=1, ln=True)
     else:
         pdf.cell(80, 10, txt=f"${pump_data.get('motor_price', 0)}", border=1, ln=True)
-        
+
+    # Add Diaphragm Price
     pdf.cell(100, 10, txt="Diaphragm Price", border=1)
     pdf.cell(80, 10, txt=f"${pump_data['diaphragm_price']}", border=1, ln=True)
 
+    # Add Leak Detection Price
     pdf.cell(100, 10, txt="Leak Detection Price", border=1)
     pdf.cell(80, 10, txt=f"${pump_data['leak_detection_price']}", border=1, ln=True)
 
@@ -401,8 +464,20 @@ def generate_pdf(pump_data, filename="pump_quote.pdf"):
         pdf.cell(100, 10, txt="Flange Price", border=1)
         pdf.cell(80, 10, txt="$0", border=1, ln=True)
 
+    # Add Suction Lift Price (if available)
+    if pump_data.get("suction_lift_price", 0) != 0:
+        pdf.cell(100, 10, txt="Suction Lift Price", border=1)
+        if isinstance(pump_data.get("suction_lift_price"), str):  # Handle "C/F" case
+            pdf.cell(80, 10, txt=f"{pump_data['suction_lift_price']}", border=1, ln=True)
+        else:
+            pdf.cell(80, 10, txt=f"${pump_data.get('suction_lift_price', 0)}", border=1, ln=True)
+
+    # Add Total Price
     pdf.cell(100, 10, txt="Total Price", border=1)
-    pdf.cell(80, 10, txt=f"${pump_data['total_price']}", border=1, ln=True)
+    if isinstance(pump_data.get("total_price"), str):  # Handle "C/F" case
+        pdf.cell(80, 10, txt=f"{pump_data['total_price']}", border=1, ln=True)
+    else:
+        pdf.cell(80, 10, txt=f"${pump_data.get('total_price', 0)}", border=1, ln=True)
 
     pdf.ln(10)  # Add some space
 
@@ -434,10 +509,11 @@ def get_pump():
         degassing = request.args.get('degassing', type=str)
         flange = request.args.get('flange', type=str)
         balls_type = request.args.get('balls_type', type=str)
+        suction_lift = request.args.get('suction_lift', type=str)
 
         # Find the best pump
         result = find_best_pump(
-            gph, None, psi, None, hz, simplex_duplex, want_motor, motor_type, motor_power, spm, diaphragm, liquid_end_material, leak_detection, phase, degassing, flange, balls_type
+            gph, None, psi, None, hz, simplex_duplex, want_motor, motor_type, motor_power, spm, diaphragm, liquid_end_material, leak_detection, phase, degassing, flange, balls_type, suction_lift
         )
 
         # Generate PDF
@@ -449,6 +525,7 @@ def get_pump():
             result["degassing"] = degassing
             result["flange"] = flange
             result["balls_type"] = balls_type
+            result["suction_lift"] = suction_lift
             pdf_filename = generate_pdf(result)
             result["pdf_url"] = f"/download_pdf/{pdf_filename}"
 
