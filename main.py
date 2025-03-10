@@ -160,6 +160,27 @@ def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_dupl
 
         final_model = pump["Model"]
 
+        if diaphragm.lower() == "ptfe":
+            if leak_detection.lower() == "no":
+                final_model = final_model[:3] + "T" + final_model[4:]
+            elif leak_detection.lower() == "conductive":
+                final_model = final_model[:3] + "W" + final_model[4:]
+            elif leak_detection.lower() == "vacuum":
+                final_model = final_model[:3] + "K" + final_model[4:]
+        elif diaphragm.lower() == "viton":
+            if leak_detection.lower() == "no":
+                final_model = final_model[:3] + "B" + final_model[4:]
+            elif leak_detection.lower() == "conductive":
+                final_model = final_model[:3] + "R" + final_model[4:]
+        elif diaphragm.lower() == "hypalon":
+            if leak_detection.lower() == "no":
+                final_model = final_model[:3] + "A" + final_model[4:]
+            elif leak_detection.lower() == "conductive":
+                final_model = final_model[:3] + "M" + final_model[4:]
+        elif diaphragm.lower() == "epdm":
+            if leak_detection.lower() == "no":
+                final_model = final_model[:3] + "C" + final_model[4:]
+
         if flange.lower() == "yes":
             final_model += "F"
 
@@ -228,10 +249,8 @@ def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_dupl
         # Determine leak detection price
         if leak_detection.lower() == "conductive":
             leak_detection_price = float(pump["Conductive_Leak_Detection_Price_Adder"]) if pump["Conductive_Leak_Detection_Price_Adder"] is not None else 0
-            final_model = final_model[:3] + "W" + final_model[4:]
         elif leak_detection.lower() == "vacuum":
             leak_detection_price = float(pump["Vacuum_Leak_Detection_Price_Adder"]) if pump["Vacuum_Leak_Detection_Price_Adder"] is not None else 0
-            final_model = final_model[:3] + "K" + final_model[4:]
         else:
             leak_detection_price = 0
 
