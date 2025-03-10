@@ -31,8 +31,9 @@ CREATE TABLE `pumps` (
     `Liquid_End_Material` VARCHAR(255) NULL,
     `Conductive_Leak_Detection_Price_Adder` DECIMAL(10,1) NULL,
     `Vacuum_Leak_Detection_Price_Adder` DECIMAL(10,1) NULL,
-    `Flange_Adder_Price` VARCHAR(20) NULL,
-    `Flange_Size` VARCHAR(20) NULL
+    -- `Flange_Adder_Price` VARCHAR(20) NULL,
+    `Flange_Size` VARCHAR(20) NULL,
+    `Ball_Size` VARCHAR(20) NULL
     -- `Liq_Inlet` VARCHAR(255) NULL,
     -- `Liq_Outlet` VARCHAR(255) NULL,
     -- `Motor_HP_AC` INT NULL,
