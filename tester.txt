@@ -599,7 +599,7 @@ Standard
 
 
 So heres my explanation:
-I have a column Ball_Size, always go for this data IF the option is Standard otherwise if the customer wants to pick specific ball size other than standard then replace the letter which is the very last letter of the model with specific letter based on ball size option which are:
+I have a column Ball_Size data, always go for this data IF the option is Standard otherwise if the customer wants to pick specific ball size other than standard then replace the letter which is the very last letter of the model with specific letter based on ball size option which are:
 1/8" = 1
 3/16" = 2
 1/4" = 3
@@ -623,4 +623,9 @@ I have a column Ball_Size, always go for this data IF the option is Standard oth
 3/8" Double Ball=Z
 
 
-CHARGE the price if 
+CHARGE the price if the customer picks different option other than "Standard" (its not all of the options that charge, only a few of them:
+Z = 250, V=350, W=450
+
+and thats it
+
+provide the entire functions for me

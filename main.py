@@ -42,7 +42,7 @@ def calculate_suction_lift_price(series, liquid_end_material, suction_lift):
             return "C/F"
     return 0
 
-def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_duplex=None, want_motor=None, motor_type=None, motor_power=None, spm=None, diaphragm=None, liquid_end_material=None, leak_detection=None, phase=None, degassing=None, flange=None, balls_type=None, suction_lift=None):
+def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_duplex=None, want_motor=None, motor_type=None, motor_power=None, spm=None, diaphragm=None, liquid_end_material=None, leak_detection=None, phase=None, degassing=None, flange=None, balls_type=None, suction_lift=None, ball_size=None):
     # Ensure either GPH or LPH is provided
     if gph is None and lph is None:
         return {"error": "Either GPH or LPH is required. Please provide one."}
@@ -108,6 +108,11 @@ def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_dupl
     # Ensure suction_lift is provided and is either "yes" or "no"
     if suction_lift.lower() not in ["yes", "no"]:
         return {"error": "Suction Lift is required and must be either 'yes' or 'no'."}
+
+    # Ensure ball_size is provided and is one of the valid options
+    valid_ball_size_options = ["1/8\"", "3/16\"", "1/4\"", "3/8\"", "1/2\"", "5/8\"", "3/4\"", "7/8\"", "1\"", "1-1/4\"", "1-1/2\"", "1-3/4\"", "2\"", "2-1/4\"", "2-1/2\"", "3\"", "3-1/2\"", "1/2\" Double Ball", "7/8\" Double Ball", "1/2\" Suction and 3/8\" Discharge", "3/8\" Double Ball", "Standard"]
+    if ball_size is None or ball_size not in valid_ball_size_options:
+        return {"error": "Ball Size is required and must be one of the valid options."}
 
     # Connect to MySQL database
     conn = mysql.connector.connect(**db_config)
@@ -189,6 +194,40 @@ def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_dupl
 
         if use_hp:
             final_model += "HP"
+
+        # Handle Ball Size
+        ball_size_price = 0
+        if ball_size != "Standard":
+            ball_size_mapping = {
+                "1/8\"": "1",
+                "3/16\"": "2",
+                "1/4\"": "3",
+                "3/8\"": "4",
+                "1/2\"": "5",
+                "5/8\"": "6",
+                "3/4\"": "7",
+                "7/8\"": "8",
+                "1\"": "9",
+                "1-1/4\"": "A",
+                "1-1/2\"": "B",
+                "1-3/4\"": "C",
+                "2\"": "D",
+                "2-1/4\"": "E",
+                "2-1/2\"": "F",
+                "3\"": "G",
+                "3-1/2\"": "H",
+                "1/2\" Double Ball": "V",
+                "7/8\" Double Ball": "W",
+                "1/2\" Suction and 3/8\" Discharge": "X",
+                "3/8\" Double Ball": "Z"
+            }
+            ball_size_code = ball_size_mapping.get(ball_size, "")
+            if ball_size_code:
+                final_model = final_model[:-1] + ball_size_code
+
+            # Add ball size price if applicable
+            if ball_size_code in ["Z", "V", "W"]:
+                ball_size_price = {"Z": 250, "V": 350, "W": 450}.get(ball_size_code, 0)
 
         # Ensure Simplex/Duplex matches or allow "both"
         if simplex_duplex.lower() != "both" and pump["Simplex_Duplex"].lower() != simplex_duplex.lower():
@@ -285,6 +324,9 @@ def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_dupl
         elif use_hp and pump["High_Pressure_Adder_Price"] == "C/F":
             annotations.append("C/F (HP)")
 
+        # Add ball size price if applicable
+        total_price += ball_size_price
+
         # Round up the total price to the nearest whole number
         if isinstance(total_price, (int, float)):
             total_price_rounded = math.ceil(total_price)
@@ -313,7 +355,8 @@ def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_dupl
             "leak_detection_price": leak_detection_price,
             "flange_price": flange_price,
             "total_price": total_price_rounded,
-            "phase": phase
+            "phase": phase,
+            "ball_size_price": ball_size_price
         })
 
     if filtered_pumps:
@@ -430,6 +473,9 @@ def generate_pdf(pump_data, filename="pump_quote.pdf"):
     # Add Balls Type
     pdf.cell(0, 10, txt=f"Balls Type: {pump_data.get('balls_type')}", ln=True)
 
+    # Add Ball Size
+    pdf.cell(0, 10, txt=f"Ball Size: {pump_data.get('ball_size')}", ln=True)
+
     # Add Suction Lift (if "yes")
     if pump_data.get("suction_lift", "").lower() == "yes":
         pdf.cell(0, 10, txt=f"Add Suction Lift: Yes", ln=True)
@@ -491,6 +537,11 @@ def generate_pdf(pump_data, filename="pump_quote.pdf"):
         else:
             pdf.cell(80, 10, txt=f"${pump_data.get('suction_lift_price', 0)}", border=1, ln=True)
 
+    # Add Ball Size Price (if applicable)
+    if pump_data.get("ball_size_price", 0) != 0:
+        pdf.cell(100, 10, txt="Ball Size Price", border=1)
+        pdf.cell(80, 10, txt=f"${pump_data.get('ball_size_price', 0)}", border=1, ln=True)
+
     # Add Total Price
     pdf.cell(100, 10, txt="Total Price", border=1)
     if isinstance(pump_data.get("total_price"), str):  # Handle "C/F" case
@@ -529,10 +580,11 @@ def get_pump():
         flange = request.args.get('flange', type=str)
         balls_type = request.args.get('balls_type', type=str)
         suction_lift = request.args.get('suction_lift', type=str)
+        ball_size = request.args.get('ball_size', type=str)
 
         # Find the best pump
         result = find_best_pump(
-            gph, None, psi, None, hz, simplex_duplex, want_motor, motor_type, motor_power, spm, diaphragm, liquid_end_material, leak_detection, phase, degassing, flange, balls_type, suction_lift
+            gph, None, psi, None, hz, simplex_duplex, want_motor, motor_type, motor_power, spm, diaphragm, liquid_end_material, leak_detection, phase, degassing, flange, balls_type, suction_lift, ball_size
         )
 
         # Generate PDF
@@ -545,6 +597,7 @@ def get_pump():
             result["flange"] = flange
             result["balls_type"] = balls_type
             result["suction_lift"] = suction_lift
+            result["ball_size"] = ball_size
             pdf_filename = generate_pdf(result)
             result["pdf_url"] = f"/download_pdf/{pdf_filename}"
 
