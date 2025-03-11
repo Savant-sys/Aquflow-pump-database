@@ -101,8 +101,8 @@ def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_dupl
         return {"error": "Flange is required and must be either 'yes' or 'no'."}
 
     # Ensure balls type is provided and is one of the valid options
-    valid_balls_type_options = ["std.", "tungsten", "ceramic"]
-    if balls_type is None or balls_type.lower() not in valid_balls_type_options:
+    valid_balls_type_options = ["Std.", "Tungsten", "ceramic"]
+    if balls_type is None or balls_type not in valid_balls_type_options:
         return {"error": "Balls Type is required and must be one of the following: Std., Tungsten, Ceramic."}
 
     # Ensure suction_lift is provided and is either "yes" or "no"
@@ -110,9 +110,13 @@ def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_dupl
         return {"error": "Suction Lift is required and must be either 'yes' or 'no'."}
 
     # Ensure ball_size is provided and is one of the valid options
-    valid_ball_size_options = ["1/8\"", "3/16\"", "1/4\"", "3/8\"", "1/2\"", "5/8\"", "3/4\"", "7/8\"", "1\"", "1-1/4\"", "1-1/2\"", "1-3/4\"", "2\"", "2-1/4\"", "2-1/2\"", "3\"", "3-1/2\"", "1/2\" Double Ball", "7/8\" Double Ball", "1/2\" Suction and 3/8\" Discharge", "3/8\" Double Ball", "Standard"]
+    if balls_type in ["Tungsten", "Ceramic"]:
+        valid_ball_size_options = ["Standard", "1/4\"", "3/8\"", "1/2\"", "7/8\"", "1-1/4\"", "1-1/2\""]
+    else:
+        valid_ball_size_options = ["1/8\"", "3/16\"", "1/4\"", "3/8\"", "1/2\"", "5/8\"", "3/4\"", "7/8\"", "1\"", "1-1/4\"", "1-1/2\"", "1-3/4\"", "2\"", "2-1/4\"", "2-1/2\"", "3\"", "3-1/2\"", "1/2\" Double Ball", "7/8\" Double Ball", "1/2\" Suction and 3/8\" Discharge", "3/8\" Double Ball", "Standard"]
+
     if ball_size is None or ball_size not in valid_ball_size_options:
-        return {"error": "Ball Size is required and must be one of the valid options."}
+        return {"error": f"Ball Size is required and must be one of the following: {', '.join(valid_ball_size_options)}."}
 
     # Connect to MySQL database
     conn = mysql.connector.connect(**db_config)
@@ -230,9 +234,26 @@ def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_dupl
                 final_model = final_model[:-1] + ball_size_code
 
             # Add ball size price if applicable
-            if ball_size_code in ["Z", "V", "W"]:
-                ball_size_price = {"Z": 250, "V": 350, "W": 450}.get(ball_size_code, 0)
-
+            if balls_type in ["Tungsten", "Ceramic"]:
+                ball_size_prices = {
+                    "1/4\"": 4,
+                    "3/8\"": 7.67,
+                    "1/2\"": 17.22,
+                    "7/8\"": 49.54,
+                    "1-1/4\"": 102.15,
+                    "1-1/2\"": 144.3
+                }
+                if ball_size in ball_size_prices:
+                    base_price = ball_size_prices[ball_size]
+                    if balls_type == "Tungsten":
+                        ball_size_price = base_price * 2.89
+                    elif balls_type == "Ceramic":
+                        ball_size_price = base_price * 1.7
+        # Debug logs
+        print("Balls Type:", balls_type)
+        print("Ball Size:", ball_size)
+        print("Ball Size Price:", ball_size_price)
+        
         # Ensure Simplex/Duplex matches or allow "both"
         if simplex_duplex.lower() != "both" and pump["Simplex_Duplex"].lower() != simplex_duplex.lower():
             continue
