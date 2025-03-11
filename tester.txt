@@ -1,11 +1,1 @@
-http://localhost:5000/get_pump?gph=$2&psi=22&hz=60&simplex_duplex=both&want_motor=yes&motor_type=TEFC&motor_power=AC&spm=191&diaphragm=PTFE&liquid_end_material=316SS&leak_detection=no&phase=1 ph&degassing=no&flange=no&balls_type=$std.&suction_lift=no&ball_size=Standard
-
-
-http://localhost:5500/page.html?gph=2&psi=22&hz=60&simplex_duplex=Simplex&want_motor=yes&motor_type=TEFC&motor_power=AC&spm=191&diaphragm=PTFE&liquid_end_material=316SS&leak_detection=No&phase=1+Ph&degassing=No&flange=No&balls_type=Std.&ball_size=2-1%2F4%26quot%3B&suction_lift=No
-
-things to do:
-flange size based on psi
-tungsten ball based on ball size pricing
-ceramic ball based on ball size pricing
-
-unhide the sheet for HP on motors based on psi
+http://localhost:5000/get_pump?gph=2&psi=22&hz=60&simplex_duplex=Simplex&want_motor=yes&motor_type=TEFC&motor_power=AC&spm=191&diaphragm=PTFE&liquid_end_material=316SS&leak_detection=No&phase=1+Ph&degassing=No&flange=No&balls_type=Std.&ball_size=2-1%2F4%26quot%3B&suction_lift=No
