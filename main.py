@@ -101,7 +101,7 @@ def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_dupl
         return {"error": "Flange is required and must be either 'yes' or 'no'."}
 
     # Ensure balls type is provided and is one of the valid options
-    valid_balls_type_options = ["Std.", "Tungsten", "ceramic"]
+    valid_balls_type_options = ["Std.", "Tungsten", "Ceramic"]
     if balls_type is None or balls_type not in valid_balls_type_options:
         return {"error": "Balls Type is required and must be one of the following: Std., Tungsten, Ceramic."}
 
@@ -113,7 +113,18 @@ def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_dupl
     if balls_type in ["Tungsten", "Ceramic"]:
         valid_ball_size_options = ["Standard", "1/4\"", "3/8\"", "1/2\"", "7/8\"", "1-1/4\"", "1-1/2\""]
     else:
-        valid_ball_size_options = ["1/8\"", "3/16\"", "1/4\"", "3/8\"", "1/2\"", "5/8\"", "3/4\"", "7/8\"", "1\"", "1-1/4\"", "1-1/2\"", "1-3/4\"", "2\"", "2-1/4\"", "2-1/2\"", "3\"", "3-1/2\"", "1/2\" Double Ball", "7/8\" Double Ball", "1/2\" Suction and 3/8\" Discharge", "3/8\" Double Ball", "Standard"]
+        valid_ball_size_options = [
+            "1/8\"", "3/16\"", "1/4\"", "3/8\"", "1/2\"", "5/8\"", "3/4\"", "7/8\"", 
+            "1\"", "1-1/4\"", "1-1/2\"", "1-3/4\"", "2\"", "2-1/4\"", "2-1/2\"", 
+            "3\"", "3-1/2\"", "1/2\" Double Ball", "7/8\" Double Ball", 
+            "1/2\" Suction and 3/8\" Discharge", "3/8\" Double Ball", "Standard"
+        ]
+
+    # Normalize the ball_size input to handle cases like "2-1/4""
+    if ball_size:
+        ball_size = ball_size.replace("%26quot%3B", "\"")  # Replace URL-encoded quotes
+        ball_size = ball_size.replace("&quot;", "\"")  # Replace HTML-encoded quotes
+        ball_size = ball_size.strip()  # Remove any leading/trailing whitespace
 
     if ball_size is None or ball_size not in valid_ball_size_options:
         return {"error": f"Ball Size is required and must be one of the following: {', '.join(valid_ball_size_options)}."}
@@ -199,61 +210,60 @@ def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_dupl
         if use_hp:
             final_model += "HP"
 
-        # Handle Ball Size
+        # Handle Ball Size Pricing
         ball_size_price = 0
         ball_size_display = ball_size  # Default to the selected ball size
-        if ball_size == "Standard":
-            # Fetch the Ball_Size from the database
-            ball_size_display = f"Standard ({pump['Ball_Size']})"
-        else:
-            ball_size_mapping = {
-                "1/8\"": "1",
-                "3/16\"": "2",
-                "1/4\"": "3",
-                "3/8\"": "4",
-                "1/2\"": "5",
-                "5/8\"": "6",
-                "3/4\"": "7",
-                "7/8\"": "8",
-                "1\"": "9",
-                "1-1/4\"": "A",
-                "1-1/2\"": "B",
-                "1-3/4\"": "C",
-                "2\"": "D",
-                "2-1/4\"": "E",
-                "2-1/2\"": "F",
-                "3\"": "G",
-                "3-1/2\"": "H",
-                "1/2\" Double Ball": "V",
-                "7/8\" Double Ball": "W",
-                "1/2\" Suction and 3/8\" Discharge": "X",
-                "3/8\" Double Ball": "Z"
-            }
-            ball_size_code = ball_size_mapping.get(ball_size, "")
-            if ball_size_code:
-                final_model = final_model[:-1] + ball_size_code
 
-            # Add ball size price if applicable
-            if balls_type in ["Tungsten", "Ceramic"]:
-                ball_size_prices = {
-                    "1/4\"": 4,
-                    "3/8\"": 7.67,
-                    "1/2\"": 17.22,
-                    "7/8\"": 49.54,
-                    "1-1/4\"": 102.15,
-                    "1-1/2\"": 144.3
-                }
-                if ball_size in ball_size_prices:
-                    base_price = ball_size_prices[ball_size]
+        if balls_type == "Std.":
+            # Handle special ball sizes (Z, V, W) for Standard balls
+            if ball_size == "3/8\" Double Ball":
+                ball_size_price = 250
+            elif ball_size == "1/2\" Double Ball":
+                ball_size_price = 350
+            elif ball_size == "7/8\" Double Ball":
+                ball_size_price = 450
+
+            # Fetch the Ball_Size from the database if the option is "Standard"
+            if ball_size == "Standard":
+                ball_size_display = f"Standard ({pump['Ball_Size']})"
+        elif balls_type in ["Tungsten", "Ceramic"]:
+            # Handle Standard option for Tungsten and Ceramic balls
+            if ball_size == "Standard":
+                ball_size_display = f"Standard ({pump['Ball_Size']})"
+                # Define base prices for ball sizes
+                if balls_type == "Tungsten":
+                    ball_size_prices = {
+                        "1/4\"": 4.00,
+                        "3/8\"": 7.67,
+                        "1/2\"": 17.22,
+                        "7/8\"": 49.54,
+                        "1-1/4\"": 102.15,
+                        "1-1/2\"": 144.30
+                    }
+                elif balls_type == "Ceramic":
+                    ball_size_prices = {
+                        "1/4\"": 4.60,
+                        "3/8\"": 3.00,
+                        "1/2\"": 4.60,
+                        "7/8\"": 28.95,
+                        "1-1/4\"": 60.05,
+                        "1-1/2\"": 70.55
+                    }
+
+                # Apply the base price for the selected ball size
+                if pump['Ball_Size'] in ball_size_prices:
+                    base_price = ball_size_prices[pump['Ball_Size']]
                     if balls_type == "Tungsten":
-                        ball_size_price = base_price * 2.89
+                        ball_size_price = base_price * 2.89  # Multiply by 2.89 for Tungsten
                     elif balls_type == "Ceramic":
-                        ball_size_price = base_price * 1.7
+                        ball_size_price = base_price * 1.7  # Multiply by 1.7 for Ceramic
+
         # Debug logs
         print("Balls Type:", balls_type)
         print("Ball Size:", ball_size)
         print("Ball Size Price:", ball_size_price)
-        
+        print("Ball Size Display:", ball_size_display)
+
         # Ensure Simplex/Duplex matches or allow "both"
         if simplex_duplex.lower() != "both" and pump["Simplex_Duplex"].lower() != simplex_duplex.lower():
             continue
@@ -381,8 +391,8 @@ def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_dupl
             "flange_price": flange_price,
             "total_price": total_price_rounded,
             "phase": phase,
-            "ball_size_price": ball_size_price,
-            "ball_size_display": ball_size_display  # Add the ball size display value
+            "ball_size_price": ball_size_price,  # Add ball size price
+            "ball_size_display": ball_size_display  # Add ball size display value
         })
 
     if filtered_pumps:

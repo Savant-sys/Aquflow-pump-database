@@ -144,6 +144,35 @@
     </form>
     <div id="result"></div>
 
+    <script>
+        function updateBallSizeOptions() {
+            const ballsType = document.getElementById("balls_type").value;
+            const ballSizeSelect = document.getElementById("ball_size");
+
+            // Clear existing options
+            ballSizeSelect.innerHTML = '';
+
+            // Define ball size options based on ball type
+            let ballSizeOptions = [];
+            if (ballsType === "Tungsten" || ballsType === "Ceramic") {
+                ballSizeOptions = ["Standard", "1/4\"", "3/8\"", "1/2\"", "7/8\"", "1-1/4\"", "1-1/2\""];
+            } else {
+                ballSizeOptions = ["Standard", "1/8\"", "3/16\"", "1/4\"", "3/8\"", "1/2\"", "5/8\"", "3/4\"", "7/8\"", "1\"", "1-1/4\"", "1-1/2\"", "1-3/4\"", "2\"", "2-1/4\"", "2-1/2\"", "3\"", "3-1/2\"", "1/2\" Double Ball", "7/8\" Double Ball", "1/2\" Suction and 3/8\" Discharge", "3/8\" Double Ball"];
+            }
+
+            // Add new options
+            ballSizeOptions.forEach(size => {
+                const option = document.createElement("option");
+                option.value = size;
+                option.text = size;
+                ballSizeSelect.appendChild(option);
+            });
+        }
+
+        // Initialize ball size options on page load
+        updateBallSizeOptions();
+    </script>
+
     <!-- Link to JavaScript file -->
     <script src="call_api.js"></script>
 </body>
