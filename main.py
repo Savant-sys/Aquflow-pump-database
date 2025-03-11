@@ -22,6 +22,73 @@ db_config = {
 #     "database": "your_godaddy_mysql_database"
 # }
 
+ball_size_mapping = {
+    "1/8\"": "1",
+    "3/16\"": "2",
+    "1/4\"": "3",
+    "3/8\"": "4",
+    "1/2\"": "5",
+    "5/8\"": "6",
+    "3/4\"": "7",
+    "7/8\"": "8",
+    "1\"": "9",
+    "1-1/4\"": "A",
+    "1-1/2\"": "B",
+    "1-3/4\"": "C",
+    "2\"": "D",
+    "2-1/4\"": "E",
+    "2-1/2\"": "F",
+    "3\"": "G",
+    "3-1/2\"": "H",
+    "1/2\" Double Ball": "V",
+    "7/8\" Double Ball": "W",
+    "1/2\" Suction and 3/8\" Discharge": "X",
+    "3/8\" Double Ball": "Z"
+}
+
+def replace_last_letter(model, ball_size):
+    """
+    Replace the last letter of the model name based on the ball size.
+    Skip if ball_size is "Standard".
+    """
+    if ball_size.lower() == "standard":
+        return model  # Do not replace if ball_size is "Standard"
+
+    # Get the replacement letter from the mapping
+    replacement = ball_size_mapping.get(ball_size, "")
+
+    if replacement:
+        # Replace the last letter of the model name
+        model = model[:-1] + replacement
+
+    return model
+
+def replace_model_letters(model, liquid_end_material, balls_type):
+    """
+    Replace the two letters after the dash in the model name based on liquid end material and ball type.
+    """
+    # Define the replacement table
+    replacement_table = {
+        "316SS": {"Std.": "04", "Ceramic": "74", "Tungsten": "84"},
+        "Alloy 20": {"Std.": "05", "Ceramic": "75", "Tungsten": "85"},
+        "Hast. C": {"Std.": "06", "Ceramic": "76", "Tungsten": "86"},
+        "PVC": {"Std.": "08", "Ceramic": "08", "Tungsten": "88"},
+        "PVDF": {"Std.": "0A", "Ceramic": "0A", "Tungsten": "8A"},
+    }
+
+    # Get the replacement letters
+    replacement = replacement_table.get(liquid_end_material, {}).get(balls_type, "00")
+
+    # Replace the two letters after the dash
+    if "-" in model:
+        parts = model.split("-")
+        if len(parts) > 1:
+            # Replace the two letters after the dash
+            parts[1] = replacement + parts[1][2:]  # Keep the rest of the string after the two letters
+            model = "-".join(parts)
+
+    return model
+
 def calculate_suction_lift_price(series, liquid_end_material, suction_lift):
     """
     Calculate the suction lift price based on the series and liquid end material.
@@ -201,6 +268,9 @@ def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_dupl
             if leak_detection.lower() == "no":
                 final_model = final_model[:3] + "C" + final_model[4:]
 
+        # Replace the last letter based on ball_size (if not "Standard")
+        final_model = replace_last_letter(final_model, ball_size)
+        
         if flange.lower() == "yes":
             final_model += "F"
 
@@ -209,6 +279,8 @@ def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_dupl
 
         if use_hp:
             final_model += "HP"
+
+        final_model = replace_model_letters(final_model, liquid_end_material, balls_type)
 
         # Handle Ball Size Pricing
         ball_size_price = 0
