@@ -197,7 +197,11 @@ def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_dupl
 
         # Handle Ball Size
         ball_size_price = 0
-        if ball_size != "Standard":
+        ball_size_display = ball_size  # Default to the selected ball size
+        if ball_size == "Standard":
+            # Fetch the Ball_Size from the database
+            ball_size_display = f"Standard ({pump['Ball_Size']})"
+        else:
             ball_size_mapping = {
                 "1/8\"": "1",
                 "3/16\"": "2",
@@ -356,7 +360,8 @@ def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_dupl
             "flange_price": flange_price,
             "total_price": total_price_rounded,
             "phase": phase,
-            "ball_size_price": ball_size_price
+            "ball_size_price": ball_size_price,
+            "ball_size_display": ball_size_display  # Add the ball size display value
         })
 
     if filtered_pumps:
@@ -474,7 +479,7 @@ def generate_pdf(pump_data, filename="pump_quote.pdf"):
     pdf.cell(0, 10, txt=f"Balls Type: {pump_data.get('balls_type')}", ln=True)
 
     # Add Ball Size
-    pdf.cell(0, 10, txt=f"Ball Size: {pump_data.get('ball_size')}", ln=True)
+    pdf.cell(0, 10, txt=f"Ball Size: {pump_data.get('ball_size_display')}", ln=True)
 
     # Add Suction Lift (if "yes")
     if pump_data.get("suction_lift", "").lower() == "yes":
