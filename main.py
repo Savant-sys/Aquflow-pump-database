@@ -330,12 +330,6 @@ def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_dupl
                     elif balls_type == "Ceramic":
                         ball_size_price = base_price * 1.7  # Multiply by 1.7 for Ceramic
 
-        # Debug logs
-        print("Balls Type:", balls_type)
-        print("Ball Size:", ball_size)
-        print("Ball Size Price:", ball_size_price)
-        print("Ball Size Display:", ball_size_display)
-
         # Ensure Simplex/Duplex matches or allow "both"
         if simplex_duplex.lower() != "both" and pump["Simplex_Duplex"].lower() != simplex_duplex.lower():
             continue
@@ -444,6 +438,9 @@ def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_dupl
         if annotations:
             total_price_rounded = f"{total_price_rounded} + {' + '.join(annotations)}"
 
+        print("PUMPS")
+        print(final_model)
+        print(total_price_rounded)
         filtered_pumps.append({
             "model": final_model,
             "series": pump["Series"],
@@ -468,8 +465,14 @@ def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_dupl
         })
 
     if filtered_pumps:
-        # Sort pumps by total_price, treating "C/F" as infinity
-        filtered_pumps.sort(key=lambda x: float('inf') if isinstance(x["total_price"], str) else x["total_price"])
+        # Sort pumps by total_price, GPH, SPM, and PSI
+        filtered_pumps.sort(key=lambda x: (
+            float('inf') if isinstance(x["total_price"], str) else x["total_price"],  # Sort by price
+            x["gph"],  # Sort by GPH (ascending)
+            x["max_spm"],  # Sort by SPM (ascending)
+            x["psi"]  # Sort by PSI (ascending)
+        ))
+
         best_pump = filtered_pumps[0]
 
         # Add suction lift price AFTER choosing the cheapest pump
