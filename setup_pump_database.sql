@@ -34,10 +34,10 @@ CREATE TABLE `pumps` (
     -- `Flange_Adder_Price` VARCHAR(20) NULL,
     `Flange_Size` VARCHAR(20) NULL,
     `Ball_Size` VARCHAR(20) NULL,
-    -- `Liq_Inlet` VARCHAR(255) NULL,
-    -- `Liq_Outlet` VARCHAR(255) NULL,
      `Motor_HP_AC` DECIMAL(10,2) NULL,
 	 `Motor_HP_AC_High_Pressure` DECIMAL(10,2) NULL,
      `Motor_HP_DC_TEFC` DECIMAL(10,2) NULL,
-     `Motor_HP_DC_XPFC` DECIMAL(10,2) NULL
+     `Motor_HP_DC_XPFC` DECIMAL(10,2) NULL,
+     `Liq_Inlet` VARCHAR(255) NULL,
+     `Liq_Outlet` VARCHAR(255) NULL
 );
