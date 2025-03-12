@@ -147,9 +147,9 @@ def calculate_flange_price(psi, suction_flange_size, discharge_flange_size, liqu
 
     # Handle "C/F" and "0" values
     if suction_price == "C/F" or discharge_price == "C/F":
-        return {"error": "Flange not available for the selected material (C/F)"}
+        return {"total_flange_price": "C/F (Flange)"}  # Return C/F message
     if suction_price == 0 or discharge_price == 0:
-        return {"error": "Flange not available for the selected material (0)"}
+        return {"total_flange_price": "Unavailable (Flange)"}  # Return Unavailable message
 
     # Calculate total flange price
     total_price = (suction_price * 1.6 + discharge_price * 1.6) * 3
@@ -531,9 +531,6 @@ def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_dupl
         else:
             annotations.append("C/F (Motor)")
 
-        print("TEST FOR FLANGE:")
-        print(flange_price)
-
         if flange_price != "C/F":
             total_price += flange_price
         else:
@@ -591,7 +588,7 @@ def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_dupl
             "ball_size_display": ball_size_display  # Add ball size display value
         })
 
-    # After selecting the best pump
+    # Inside the `find_best_pump` function, after selecting the best pump
     if filtered_pumps:
         # Sort pumps by total_price, GPH, SPM, and PSI
         filtered_pumps.sort(key=lambda x: (
@@ -615,11 +612,20 @@ def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_dupl
             print(f"Total Flange Price: {flange_price}")  # Debug: Print total flange price
 
             # Update total price with flange price (if applicable)
-            if isinstance(best_pump["total_price"], str):
-                # If total price is already a string (e.g., "C/F"), append the flange price
-                best_pump["total_price"] = f"{best_pump['total_price']} + ${flange_price}"
+            if isinstance(flange_price, str):  # Handle "C/F" or "Unavailable" cases
+                if isinstance(best_pump["total_price"], str):
+                    # If total price is already a string (e.g., "C/F"), append the flange price message
+                    best_pump["total_price"] = f"{best_pump['total_price']} + {flange_price}"
+                else:
+                    # If total price is a number, convert it to a string and append the flange price message
+                    best_pump["total_price"] = f"{best_pump['total_price']} + {flange_price}"
             else:
-                best_pump["total_price"] += flange_price
+                # If flange price is a number, add it to the total price
+                if isinstance(best_pump["total_price"], str):
+                    # If total price is already a string (e.g., "C/F"), append the flange price
+                    best_pump["total_price"] = f"{best_pump['total_price']} + ${flange_price}"
+                else:
+                    best_pump["total_price"] += flange_price
         else:
             # If flange is "No", set flange_price to 0
             flange_price = 0
@@ -767,12 +773,16 @@ def generate_pdf(pump_data, filename="pump_quote.pdf"):
     else:
         pdf.cell(80, 10, txt=f"${pump_data.get('motor_price', 0)}", border=1, ln=True)
 
-    # Add Price Adder for Flanges
-    pdf.cell(100, 10, txt="Price Adder for Flanges", border=1)
-    if isinstance(pump_data.get("flange_price"), str):  # Handle "C/F" case
-        pdf.cell(80, 10, txt=f"{pump_data['flange_price']}", border=1, ln=True)
+    # Inside the `generate_pdf` function, add the following logic for flange price
+    if pump_data.get("flange_price", 0) != 0:
+        pdf.cell(100, 10, txt="Flange Price", border=1)
+        if isinstance(pump_data.get("flange_price"), str):  # Handle "C/F" or "Unavailable" cases
+            pdf.cell(80, 10, txt=f"{pump_data['flange_price']}", border=1, ln=True)
+        else:
+            pdf.cell(80, 10, txt=f"${pump_data.get('flange_price', 0)}", border=1, ln=True)
     else:
-        pdf.cell(80, 10, txt=f"${pump_data.get('flange_price', 0)}", border=1, ln=True)
+        pdf.cell(100, 10, txt="Flange Price", border=1)
+        pdf.cell(80, 10, txt="$0", border=1, ln=True)
 
     # Add Diaphragm Price
     pdf.cell(100, 10, txt="Diaphragm Price", border=1)
