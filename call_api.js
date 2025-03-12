@@ -34,15 +34,59 @@ document.getElementById("pumpForm").addEventListener("submit", async (e) => {
     const suction_lift = document.getElementById("suction_lift").value;
     const ball_size = document.getElementById("ball_size").value;
 
+    // Get flange sizes if flange is "Yes"
+    let suction_flange_size = null;
+    let discharge_flange_size = null;
+    if (flange === "Yes") {
+        suction_flange_size = document.getElementById("suction_flange_size").value;
+        discharge_flange_size = document.getElementById("discharge_flange_size").value;
+
+        // Validate flange sizes
+        if (!suction_flange_size || !discharge_flange_size) {
+            alert("Please select both Suction Flange Size and Discharge Flange Size.");
+            return; // Stop the form submission if sizes are not selected
+        }
+    }
+
     console.log("Form Data:", {
-        gph, psi, hz, simplex_duplex, want_motor, motor_type, motor_power, spm, diaphragm, liquid_end_material, leak_detection, phase, degassing, flange, balls_type, suction_lift, ball_size
+        gph, psi, hz, simplex_duplex, want_motor, motor_type, motor_power, spm, diaphragm, liquid_end_material, leak_detection, phase, degassing, flange, balls_type, suction_lift, ball_size, suction_flange_size, discharge_flange_size
     });
 
     try {
-        // Call the API
-        const apiUrl = `http://localhost:5000/get_pump?gph=${gph}&psi=${psi}&hz=${hz}&simplex_duplex=${simplex_duplex}&want_motor=${want_motor}&motor_type=${motor_type}&motor_power=${motor_power}&spm=${spm}&diaphragm=${diaphragm}&liquid_end_material=${liquid_end_material}&leak_detection=${leak_detection}&phase=${phase}&degassing=${degassing}&flange=${flange}&balls_type=${balls_type}&suction_lift=${suction_lift}&ball_size=${ball_size}`;
-        console.log("API URL:", apiUrl);
+        // Build the API URL
+        const apiUrl = new URL("http://localhost:5000/get_pump");
+        const params = {
+            gph,
+            psi,
+            hz,
+            simplex_duplex,
+            want_motor,
+            motor_type,
+            motor_power,
+            spm,
+            diaphragm,
+            liquid_end_material,
+            leak_detection,
+            phase,
+            degassing,
+            flange,
+            balls_type,
+            suction_lift,
+            ball_size,
+        };
 
+        // Add flange sizes to the API call if flange is "Yes"
+        if (flange === "Yes") {
+            params.suction_flange_size = suction_flange_size;
+            params.discharge_flange_size = discharge_flange_size;
+        }
+
+        // Append parameters to the URL
+        Object.keys(params).forEach(key => apiUrl.searchParams.append(key, params[key]));
+
+        console.log("API URL:", apiUrl.toString());
+
+        // Call the API
         const response = await fetch(apiUrl);
         console.log("API Response Status:", response.status);
 

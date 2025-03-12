@@ -22,6 +22,20 @@ db_config = {
 #     "database": "your_godaddy_mysql_database"
 # }
 
+def get_flange_size_id(psi):
+    if psi < 290:
+        return 150
+    elif 290 <= psi < 750:
+        return 300
+    elif 750 <= psi < 1000:
+        return 400
+    elif 1000 <= psi < 1500:
+        return 600
+    elif 1500 <= psi <= 2250:
+        return 900
+    else:
+        return None  # Handle cases where PSI is out of range
+
 ball_size_mapping = {
     "1/8\"": "1",
     "3/16\"": "2",
@@ -45,6 +59,101 @@ ball_size_mapping = {
     "1/2\" Suction and 3/8\" Discharge": "X",
     "3/8\" Double Ball": "Z"
 }
+
+# Flange Pricing Tables
+flange_pricing_tables = {
+    150: {
+        "1/2\"": {"316SS": 24.75, "Alloy 20": "C/F", "Hast. C": "C/F", "PVC": 7.56, "PVDF": "C/F"},
+        "3/4\"": {"316SS": 26.75, "Alloy 20": "C/F", "Hast. C": "C/F", "PVC": 8.86, "PVDF": "C/F"},
+        "1\"": {"316SS": 29.5, "Alloy 20": "C/F", "Hast. C": "C/F", "PVC": 9.7, "PVDF": "C/F"},
+        "1-1/4\"": {"316SS": 40.55, "Alloy 20": "C/F", "Hast. C": "C/F", "PVC": 12.16, "PVDF": "C/F"},
+        "1-1/2\"": {"316SS": 42.8, "Alloy 20": "C/F", "Hast. C": "C/F", "PVC": 13.27, "PVDF": "C/F"},
+        "2\"": {"316SS": 53.25, "Alloy 20": "C/F", "Hast. C": "C/F", "PVC": 13.57, "PVDF": "C/F"},
+        "2-1/2\"": {"316SS": 83.65, "Alloy 20": "C/F", "Hast. C": "C/F", "PVC": 26.41, "PVDF": "C/F"},
+        "3\"": {"316SS": 69.7, "Alloy 20": "C/F", "Hast. C": "C/F", "PVC": 27.18, "PVDF": "C/F"},
+        "4\"": {"316SS": 114, "Alloy 20": "C/F", "Hast. C": "C/F", "PVC": 51.07, "PVDF": "C/F"}
+    },
+    300: {
+        "1/2\"": {"316SS": 33.15, "Alloy 20": "C/F", "Hast. C": "C/F", "PVC": 0, "PVDF": 0},
+        "3/4\"": {"316SS": 37.1, "Alloy 20": "C/F", "Hast. C": "C/F", "PVC": 0, "PVDF": 0},
+        "1\"": {"316SS": 39.95, "Alloy 20": "C/F", "Hast. C": "C/F", "PVC": 0, "PVDF": 0},
+        "1-1/4\"": {"316SS": 58.95, "Alloy 20": "C/F", "Hast. C": "C/F", "PVC": 0, "PVDF": 0},
+        "1-1/2\"": {"316SS": 62.75, "Alloy 20": "C/F", "Hast. C": "C/F", "PVC": 0, "PVDF": 0},
+        "2\"": {"316SS": 72.25, "Alloy 20": "C/F", "Hast. C": "C/F", "PVC": 0, "PVDF": 0},
+        "2-1/2\"": {"316SS": 135, "Alloy 20": "C/F", "Hast. C": "C/F", "PVC": 0, "PVDF": 0},
+        "3\"": {"316SS": 138, "Alloy 20": "C/F", "Hast. C": "C/F", "PVC": 0, "PVDF": 0},
+        "4\"": {"316SS": 225, "Alloy 20": "C/F", "Hast. C": "C/F", "PVC": 0, "PVDF": 0}
+    },
+    400: {
+        "1/2\"": {"316SS": "C/F", "Alloy 20": "C/F", "Hast. C": "C/F", "PVC": 0, "PVDF": 0},
+        "3/4\"": {"316SS": "C/F", "Alloy 20": "C/F", "Hast. C": "C/F", "PVC": 0, "PVDF": 0},
+        "1\"": {"316SS": "C/F", "Alloy 20": "C/F", "Hast. C": "C/F", "PVC": 0, "PVDF": 0},
+        "1-1/4\"": {"316SS": "C/F", "Alloy 20": "C/F", "Hast. C": "C/F", "PVC": 0, "PVDF": 0},
+        "1-1/2\"": {"316SS": "C/F", "Alloy 20": "C/F", "Hast. C": "C/F", "PVC": 0, "PVDF": 0},
+        "2\"": {"316SS": "C/F", "Alloy 20": "C/F", "Hast. C": "C/F", "PVC": 0, "PVDF": 0},
+        "2-1/2\"": {"316SS": "C/F", "Alloy 20": "C/F", "Hast. C": "C/F", "PVC": 0, "PVDF": 0},
+        "3\"": {"316SS": "C/F", "Alloy 20": "C/F", "Hast. C": "C/F", "PVC": 0, "PVDF": 0},
+        "4\"": {"316SS": "C/F", "Alloy 20": "C/F", "Hast. C": "C/F", "PVC": 0, "PVDF": 0}
+    },
+    600: {
+        "1/2\"": {"316SS": "C/F", "Alloy 20": "C/F", "Hast. C": "C/F", "PVC": 0, "PVDF": 0},
+        "3/4\"": {"316SS": "C/F", "Alloy 20": "C/F", "Hast. C": "C/F", "PVC": 0, "PVDF": 0},
+        "1\"": {"316SS": "C/F", "Alloy 20": "C/F", "Hast. C": "C/F", "PVC": 0, "PVDF": 0},
+        "1-1/4\"": {"316SS": "C/F", "Alloy 20": "C/F", "Hast. C": "C/F", "PVC": 0, "PVDF": 0},
+        "1-1/2\"": {"316SS": "C/F", "Alloy 20": "C/F", "Hast. C": "C/F", "PVC": 0, "PVDF": 0},
+        "2\"": {"316SS": "C/F", "Alloy 20": "C/F", "Hast. C": "C/F", "PVC": 0, "PVDF": 0},
+        "2-1/2\"": {"316SS": "C/F", "Alloy 20": "C/F", "Hast. C": "C/F", "PVC": 0, "PVDF": 0},
+        "3\"": {"316SS": "C/F", "Alloy 20": "C/F", "Hast. C": "C/F", "PVC": 0, "PVDF": 0},
+        "4\"": {"316SS": "C/F", "Alloy 20": "C/F", "Hast. C": "C/F", "PVC": 0, "PVDF": 0}
+    },
+    900: {
+        "1/2\"": {"316SS": "C/F", "Alloy 20": "C/F", "Hast. C": "C/F", "PVC": 0, "PVDF": 0},
+        "3/4\"": {"316SS": "C/F", "Alloy 20": "C/F", "Hast. C": "C/F", "PVC": 0, "PVDF": 0},
+        "1\"": {"316SS": "C/F", "Alloy 20": "C/F", "Hast. C": "C/F", "PVC": 0, "PVDF": 0},
+        "1-1/4\"": {"316SS": "C/F", "Alloy 20": "C/F", "Hast. C": "C/F", "PVC": 0, "PVDF": 0},
+        "1-1/2\"": {"316SS": "C/F", "Alloy 20": "C/F", "Hast. C": "C/F", "PVC": 0, "PVDF": 0},
+        "2\"": {"316SS": "C/F", "Alloy 20": "C/F", "Hast. C": "C/F", "PVC": 0, "PVDF": 0},
+        "2-1/2\"": {"316SS": "C/F", "Alloy 20": "C/F", "Hast. C": "C/F", "PVC": 0, "PVDF": 0},
+        "3\"": {"316SS": "C/F", "Alloy 20": "C/F", "Hast. C": "C/F", "PVC": 0, "PVDF": 0},
+        "4\"": {"316SS": "C/F", "Alloy 20": "C/F", "Hast. C": "C/F", "PVC": 0, "PVDF": 0}
+    }
+}
+
+def get_flange_price(flange_size_id, flange_size, liquid_end_material):
+    if flange_size_id not in flange_pricing_tables:
+        return None  # Invalid Flange Size ID
+
+    if flange_size not in flange_pricing_tables[flange_size_id]:
+        return None  # Invalid Flange Size
+
+    price = flange_pricing_tables[flange_size_id][flange_size][liquid_end_material]
+    return price
+
+def calculate_flange_price(psi, suction_flange_size, discharge_flange_size, liquid_end_material):
+    # Get the flange size ID based on PSI
+    flange_size_id = get_flange_size_id(psi)
+    if flange_size_id is None:
+        return {"error": "Invalid PSI value for flange size calculation"}
+
+    # Validate suction and discharge flange sizes
+    if suction_flange_size not in flange_pricing_tables[flange_size_id]:
+        return {"error": f"Invalid suction flange size: {suction_flange_size}"}
+    if discharge_flange_size not in flange_pricing_tables[flange_size_id]:
+        return {"error": f"Invalid discharge flange size: {discharge_flange_size}"}
+
+    # Get the prices for suction and discharge flanges
+    suction_price = get_flange_price(flange_size_id, suction_flange_size, liquid_end_material)
+    discharge_price = get_flange_price(flange_size_id, discharge_flange_size, liquid_end_material)
+
+    # Handle "C/F" and "0" values
+    if suction_price == "C/F" or discharge_price == "C/F":
+        return {"error": "Flange not available for the selected material (C/F)"}
+    if suction_price == 0 or discharge_price == 0:
+        return {"error": "Flange not available for the selected material (0)"}
+
+    # Calculate total flange price
+    total_price = (suction_price * 1.6 + discharge_price * 1.6) * 3
+    return {"total_flange_price": total_price}
 
 def replace_last_letter(model, ball_size):
     """
@@ -109,7 +218,7 @@ def calculate_suction_lift_price(series, liquid_end_material, suction_lift):
             return "C/F"
     return 0
 
-def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_duplex=None, want_motor=None, motor_type=None, motor_power=None, spm=None, diaphragm=None, liquid_end_material=None, leak_detection=None, phase=None, degassing=None, flange=None, balls_type=None, suction_lift=None, ball_size=None):
+def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_duplex=None, want_motor=None, motor_type=None, motor_power=None, spm=None, diaphragm=None, liquid_end_material=None, leak_detection=None, phase=None, degassing=None, flange=None, balls_type=None, suction_lift=None, ball_size=None, suction_flange_size=None, discharge_flange_size=None):
     # Ensure either GPH or LPH is provided
     if gph is None and lph is None:
         return {"error": "Either GPH or LPH is required. Please provide one."}
@@ -195,6 +304,17 @@ def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_dupl
 
     if ball_size is None or ball_size not in valid_ball_size_options:
         return {"error": f"Ball Size is required and must be one of the following: {', '.join(valid_ball_size_options)}."}
+
+    # Ensure flange sizes are provided only if flange is "Yes"
+    if flange and flange.lower() == "yes":
+        print(f"Suction Flange Size: {suction_flange_size}")
+        print(f"Discharge Flange Size: {discharge_flange_size}")
+        if not suction_flange_size or not discharge_flange_size:
+            return {"error": "Suction and Discharge flange sizes are required when selecting flanges."}
+    else:
+        # If flange is "No", ignore flange sizes
+        suction_flange_size = None
+        discharge_flange_size = None
 
     # Connect to MySQL database
     conn = mysql.connector.connect(**db_config)
@@ -369,13 +489,6 @@ def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_dupl
             else:
                 motor_price = float(motor_price_value) if motor_price_value is not None else 0
 
-        flange_price_value = pump["Flange_Adder_Price"] if flange.lower() == "yes" else 0
-
-        if flange_price_value == "C/F":
-            flange_price = "C/F"
-        else:
-            flange_price = float(flange_price_value) if flange_price_value is not None else 0
-
         # Determine diaphragm price
         if diaphragm.lower() == "viton":
             diaphragm_price = float(pump["Viton"]) if pump["Viton"] is not None else 0
@@ -394,11 +507,26 @@ def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_dupl
         else:
             leak_detection_price = 0
 
-        # Calculate total price (without suction lift)
+        # Updated total price calculation
         total_price = pump_price  # Always include the pump price
 
+        # Add other prices (motor, diaphragm, leak detection, etc.)
+        total_price += motor_price
+        total_price += diaphragm_price
+        total_price += leak_detection_price
+
+        # Add degassing price if applicable
         if degassing.lower() == "yes":
             total_price += 450
+
+        # Add ball size price if applicable
+        total_price += ball_size_price
+
+        # Round up the total price
+        if isinstance(total_price, (int, float)):
+            total_price_rounded = math.ceil(total_price)
+        else:
+            total_price_rounded = total_price  # Handle "C/F" case
 
         annotations = []
 
@@ -438,9 +566,10 @@ def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_dupl
         if annotations:
             total_price_rounded = f"{total_price_rounded} + {' + '.join(annotations)}"
 
-        print("PUMPS")
-        print(final_model)
-        print(total_price_rounded)
+        # print("PUMPS")
+        # print(final_model)
+        # print(total_price_rounded)
+
         filtered_pumps.append({
             "model": final_model,
             "series": pump["Series"],
@@ -474,6 +603,24 @@ def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_dupl
         ))
 
         best_pump = filtered_pumps[0]
+
+        # Calculate flange price AFTER choosing the cheapest pump
+        if flange and flange.lower() == "yes":
+            flange_price_result = calculate_flange_price(psi, suction_flange_size, discharge_flange_size, liquid_end_material)
+            if "error" in flange_price_result:
+                return flange_price_result  # Return the error if any
+
+            total_flange_price = flange_price_result["total_flange_price"]
+            if isinstance(best_pump["total_price"], str):
+                best_pump["total_price"] = f"{best_pump['total_price']} + ${total_flange_price}"
+            else:
+                best_pump["total_price"] += total_flange_price
+
+            # Store the flange price in the best_pump dictionary
+            best_pump["flange_price"] = total_flange_price
+        else:
+            # If flange is "No", set flange_price to 0
+            best_pump["flange_price"] = 0
 
         # Add suction lift price AFTER choosing the cheapest pump
         suction_lift_price = 0
@@ -613,6 +760,13 @@ def generate_pdf(pump_data, filename="pump_quote.pdf"):
     else:
         pdf.cell(80, 10, txt=f"${pump_data.get('motor_price', 0)}", border=1, ln=True)
 
+    # Add Price Adder for Flanges
+    pdf.cell(100, 10, txt="Price Adder for Flanges", border=1)
+    if isinstance(pump_data.get("flange_price"), str):  # Handle "C/F" case
+        pdf.cell(80, 10, txt=f"{pump_data['flange_price']}", border=1, ln=True)
+    else:
+        pdf.cell(80, 10, txt=f"${pump_data.get('flange_price', 0)}", border=1, ln=True)
+
     # Add Diaphragm Price
     pdf.cell(100, 10, txt="Diaphragm Price", border=1)
     pdf.cell(80, 10, txt=f"${pump_data['diaphragm_price']}", border=1, ln=True)
@@ -627,17 +781,6 @@ def generate_pdf(pump_data, filename="pump_quote.pdf"):
         pdf.cell(80, 10, txt="$450", border=1, ln=True)
     else:
         pdf.cell(100, 10, txt="Degassing Price", border=1)
-        pdf.cell(80, 10, txt="$0", border=1, ln=True)
-
-    # Add Flange Price
-    if pump_data.get("flange", "").lower() == "yes":
-        pdf.cell(100, 10, txt="Flange Price", border=1)
-        if isinstance(pump_data.get("flange_price"), str):  # Handle "C/F" case
-            pdf.cell(80, 10, txt=f"{pump_data['flange_price']}", border=1, ln=True)
-        else:
-            pdf.cell(80, 10, txt=f"${pump_data.get('flange_price', 0)}", border=1, ln=True)
-    else:
-        pdf.cell(100, 10, txt="Flange Price", border=1)
         pdf.cell(80, 10, txt="$0", border=1, ln=True)
 
     # Add Suction Lift Price (if available)
@@ -692,10 +835,12 @@ def get_pump():
         balls_type = request.args.get('balls_type', type=str)
         suction_lift = request.args.get('suction_lift', type=str)
         ball_size = request.args.get('ball_size', type=str)
+        suction_flange_size = request.args.get('suction_flange_size', type=str)
+        discharge_flange_size = request.args.get('discharge_flange_size', type=str)
 
         # Find the best pump
         result = find_best_pump(
-            gph, None, psi, None, hz, simplex_duplex, want_motor, motor_type, motor_power, spm, diaphragm, liquid_end_material, leak_detection, phase, degassing, flange, balls_type, suction_lift, ball_size
+            gph, None, psi, None, hz, simplex_duplex, want_motor, motor_type, motor_power, spm, diaphragm, liquid_end_material, leak_detection, phase, degassing, flange, balls_type, suction_lift, ball_size, suction_flange_size, discharge_flange_size
         )
 
         # Generate PDF
@@ -715,6 +860,7 @@ def get_pump():
         return jsonify(result)
 
     except Exception as e:
+        print(f"Error in /get_pump: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
 @app.route('/download_pdf/<filename>', methods=['GET'])
