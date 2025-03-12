@@ -119,6 +119,68 @@ flange_pricing_tables = {
     }
 }
 
+# Flange Adaptor Pricing Tables
+flange_adaptor_pricing_tables = {
+    "psi_lt_1000": {
+        "1/2\"": {"316SS": 8.16, "Alloy 20": 62.74, "Hast. C": "C/F", "PVC": 1.2, "PVDF": "C/F"},
+        "3/4\"": {"316SS": 11.88, "Alloy 20": 84.51, "Hast. C": "C/F", "PVC": 1.53, "PVDF": "C/F"},
+        "1\"": {"316SS": 14.85, "Alloy 20": 91.87, "Hast. C": "C/F", "PVC": 2.47, "PVDF": "C/F"},
+        "1-1/4\"": {"316SS": 25.4, "Alloy 20": "C/F", "Hast. C": "C/F", "PVC": 3.29, "PVDF": "C/F"},
+        "1-1/2\"": {"316SS": 33.89, "Alloy 20": 123.5, "Hast. C": "C/F", "PVC": 3.53, "PVDF": "C/F"},
+        "2\"": {"316SS": 42.84, "Alloy 20": 167.19, "Hast. C": "C/F", "PVC": 4.27, "PVDF": "C/F"},
+        "2-1/2\"": {"316SS": 101.55, "Alloy 20": "C/F", "Hast. C": "C/F", "PVC": 9.83, "PVDF": "C/F"},
+        "3\"": {"316SS": 129.27, "Alloy 20": "C/F", "Hast. C": "C/F", "PVC": 11.21, "PVDF": "C/F"},
+        "4\"": {"316SS": 168.20, "Alloy 20": "C/F", "Hast. C": "C/F", "PVC": 14.96, "PVDF": "C/F"}
+    },
+    "psi_gt_1000": {
+        "1/2\"": {"316SS": 24.31, "Alloy 20": "C/F", "Hast. C": "C/F", "PVC": 0, "PVDF": 0},
+        "3/4\"": {"316SS": 36.19, "Alloy 20": "C/F", "Hast. C": "C/F", "PVC": 0, "PVDF": 0},
+        "1\"": {"316SS": 61.56, "Alloy 20": "C/F", "Hast. C": "C/F", "PVC": 0, "PVDF": 0},
+        "1-1/4\"": {"316SS": 84.74, "Alloy 20": "C/F", "Hast. C": "C/F", "PVC": 0, "PVDF": 0},
+        "1-1/2\"": {"316SS": 125.87, "Alloy 20": "C/F", "Hast. C": "C/F", "PVC": 0, "PVDF": 0},
+        "2\"": {"316SS": 175.24, "Alloy 20": "C/F", "Hast. C": "C/F", "PVC": 0, "PVDF": 0},
+        "2-1/2\"": {"316SS": "C/F", "Alloy 20": "C/F", "Hast. C": "C/F", "PVC": "C/F", "PVDF": "C/F"},
+        "3\"": {"316SS": "C/F", "Alloy 20": "C/F", "Hast. C": "C/F", "PVC": "C/F", "PVDF": "C/F"},
+        "4\"": {"316SS": "C/F", "Alloy 20": "C/F", "Hast. C": "C/F", "PVC": "C/F", "PVDF": "C/F"}
+    },
+    "all": {
+        "1/2\"": {"316SS": 9.53, "Alloy 20": 40.23, "Hast. C": "C/F", "PVC": 1, "PVDF": "C/F"},
+        "3/4\"": {"316SS": 12, "Alloy 20": 47.58, "Hast. C": "C/F", "PVC": 1, "PVDF": "C/F"},
+        "1\"": {"316SS": 18.5, "Alloy 20": 82.74, "Hast. C": "C/F", "PVC": 1.5, "PVDF": "C/F"},
+        "1-1/4\"": {"316SS": 31.56, "Alloy 20": "C/F", "Hast. C": "C/F", "PVC": 2.2, "PVDF": "C/F"},
+        "1-1/2\"": {"316SS": 35.53, "Alloy 20": 99.55, "Hast. C": "C/F", "PVC": 2.5, "PVDF": "C/F"},
+        "2\"": {"316SS": 56.26, "Alloy 20": 189.91, "Hast. C": "C/F", "PVC": 3.5, "PVDF": "C/F"},
+        "2-1/2\"": {"316SS": "C/F", "Alloy 20": "C/F", "Hast. C": "C/F", "PVC": 5.5, "PVDF": "C/F"},
+        "3\"": {"316SS": 109.26, "Alloy 20": "C/F", "Hast. C": "C/F", "PVC": 6.5, "PVDF": "C/F"},
+        "4\"": {"316SS": 230, "Alloy 20": "C/F", "Hast. C": "C/F", "PVC": 9.5, "PVDF": "C/F"}
+    }
+}
+
+def calculate_flange_adaptor_price(psi, suction_flange_size, discharge_flange_size, liquid_end_material, simplex_duplex):
+    # Determine which table to use based on PSI
+    if psi < 1000:
+        table = flange_adaptor_pricing_tables["psi_lt_1000"]
+    else:
+        table = flange_adaptor_pricing_tables["psi_gt_1000"]
+
+    # Get the prices for suction and discharge flanges from the first table
+    suction_price = table.get(suction_flange_size, {}).get(liquid_end_material, 0)
+    discharge_price = table.get(discharge_flange_size, {}).get(liquid_end_material, 0)
+
+    # Get the prices for suction and discharge flanges from the "all" table
+    suction_price_all = flange_adaptor_pricing_tables["all"].get(suction_flange_size, {}).get(liquid_end_material, 0)
+    discharge_price_all = flange_adaptor_pricing_tables["all"].get(discharge_flange_size, {}).get(liquid_end_material, 0)
+
+    # Handle "C/F" and "0" values
+    if suction_price == "C/F" or discharge_price == "C/F" or suction_price_all == "C/F" or discharge_price_all == "C/F":
+        return {"total_flange_adaptor_price": "C/F (Flange Adaptor)"}  # Return C/F message
+    if suction_price == 0 or discharge_price == 0 or suction_price_all == 0 or discharge_price_all == 0:
+        return {"total_flange_adaptor_price": "Unavailable (Flange Adaptor)"}  # Return Unavailable message
+
+    # Calculate total flange adaptor price
+    total_price = (suction_price + discharge_price + suction_price_all + discharge_price_all) * (5 if simplex_duplex.lower() == "simplex" else 10)
+    return {"total_flange_adaptor_price": total_price}
+
 def get_flange_price(flange_size_id, flange_size, liquid_end_material):
     if flange_size_id not in flange_pricing_tables:
         return None  # Invalid Flange Size ID
@@ -657,6 +719,41 @@ def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_dupl
         best_pump["suction_lift_price"] = suction_lift_price
         best_pump["suction_lift_message"] = suction_lift_message
 
+        # Add flange adaptor price AFTER choosing the cheapest pump
+        flange_adaptor_price = 0
+        flange_adaptor_message = None
+        if flange and flange.lower() == "yes":
+            flange_adaptor_price_result = calculate_flange_adaptor_price(psi, suction_flange_size, discharge_flange_size, liquid_end_material, simplex_duplex)
+            if "error" in flange_adaptor_price_result:
+                return flange_adaptor_price_result  # Return the error if any
+
+            flange_adaptor_price = flange_adaptor_price_result["total_flange_adaptor_price"]
+            print(f"Total Flange Adaptor Price: {flange_adaptor_price}")  # Debug: Print total flange adaptor price
+
+            # Update total price with flange adaptor price (if applicable)
+            if isinstance(flange_adaptor_price, str):  # Handle "C/F" or "Unavailable" cases
+                if isinstance(best_pump["total_price"], str):
+                    # If total price is already a string (e.g., "C/F"), append the flange adaptor price message
+                    best_pump["total_price"] = f"{best_pump['total_price']} + {flange_adaptor_price}"
+                else:
+                    # If total price is a number, convert it to a string and append the flange adaptor price message
+                    best_pump["total_price"] = f"{best_pump['total_price']} + {flange_adaptor_price}"
+            else:
+                # If flange adaptor price is a number, add it to the total price
+                if isinstance(best_pump["total_price"], str):
+                    # If total price is already a string (e.g., "C/F"), append the flange adaptor price
+                    best_pump["total_price"] = f"{best_pump['total_price']} + ${flange_adaptor_price}"
+                else:
+                    best_pump["total_price"] += flange_adaptor_price
+        else:
+            # If flange is "No", set flange_adaptor_price to 0
+            flange_adaptor_price = 0
+            flange_adaptor_message = "Flange Adaptor not selected"
+
+        # Add flange adaptor details to the best pump
+        best_pump["flange_adaptor_price"] = flange_adaptor_price
+        best_pump["flange_adaptor_message"] = flange_adaptor_message
+
         return best_pump
     else:
         return {"error": "No suitable pump found for the given specifications."}
@@ -773,7 +870,7 @@ def generate_pdf(pump_data, filename="pump_quote.pdf"):
     else:
         pdf.cell(80, 10, txt=f"${pump_data.get('motor_price', 0)}", border=1, ln=True)
 
-    # Inside the `generate_pdf` function, add the following logic for flange price
+    # Add Flange Price (if applicable)
     if pump_data.get("flange_price", 0) != 0:
         pdf.cell(100, 10, txt="Flange Price", border=1)
         if isinstance(pump_data.get("flange_price"), str):  # Handle "C/F" or "Unavailable" cases
@@ -782,6 +879,17 @@ def generate_pdf(pump_data, filename="pump_quote.pdf"):
             pdf.cell(80, 10, txt=f"${pump_data.get('flange_price', 0)}", border=1, ln=True)
     else:
         pdf.cell(100, 10, txt="Flange Price", border=1)
+        pdf.cell(80, 10, txt="$0", border=1, ln=True)
+
+    # Add Flange Adaptor Price (if applicable)
+    if pump_data.get("flange_adaptor_price", 0) != 0:
+        pdf.cell(100, 10, txt="Flange Adaptor Price", border=1)
+        if isinstance(pump_data.get("flange_adaptor_price"), str):  # Handle "C/F" or "Unavailable" cases
+            pdf.cell(80, 10, txt=f"{pump_data['flange_adaptor_price']}", border=1, ln=True)
+        else:
+            pdf.cell(80, 10, txt=f"${pump_data.get('flange_adaptor_price', 0)}", border=1, ln=True)
+    else:
+        pdf.cell(100, 10, txt="Flange Adaptor Price", border=1)
         pdf.cell(80, 10, txt="$0", border=1, ln=True)
 
     # Add Diaphragm Price
