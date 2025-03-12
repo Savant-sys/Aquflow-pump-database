@@ -525,16 +525,13 @@ def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_dupl
 
         # Determine correct motor price column
         if want_motor == "yes":
-            motor_type = motor_type.lower()
-            motor_power = motor_power.lower()
-
-            if motor_type == "tefc" and motor_power == "ac":
+            if motor_type == "TEFC" and motor_power == "AC":
                 motor_price_column = "TEFC_AC_Price"
-            elif motor_type == "xpfc" and motor_power == "ac":
+            elif motor_type == "XPFC" and motor_power == "AC":
                 motor_price_column = "XPFC_AC_Price"
-            elif motor_type == "tefc" and motor_power == "dc":
+            elif motor_type == "TEFC" and motor_power == "DC":
                 motor_price_column = "TEFC_DC_Price"
-            elif motor_type == "xpfc" and motor_power == "dc":
+            elif motor_type == "XPFC" and motor_power == "DC":
                 motor_price_column = "XPFC_DC_Price"
             else:
                 return {"error": "Invalid motor type or power. Choose TEFC/XPFC and AC/DC correctly."}
@@ -542,7 +539,7 @@ def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_dupl
             motor_price_value = pump[motor_price_column]
 
             # Skip this pump if motor price is 0 for DC motor
-            if motor_power == "dc" and motor_price_value == "0":
+            if motor_power == "DC" and motor_price_value == "0":
                 continue
 
             # Handle "C/F" values
@@ -661,6 +658,10 @@ def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_dupl
         ))
 
         best_pump = filtered_pumps[0]
+        # Add additional details to the best_pump dictionary
+        best_pump["want_motor"] = want_motor
+        best_pump["motor_type"] = motor_type
+        best_pump["motor_power"] = motor_power
 
         # Add flange price AFTER choosing the cheapest pump
         flange_price = 0
@@ -806,6 +807,21 @@ def generate_pdf(pump_data, filename="pump_quote.pdf"):
         pdf.cell(0, 10, txt=f"Motor Type: {pump_data.get('motor_type', 'N/A')}", ln=True)
         pdf.cell(0, 10, txt=f"Motor Power: {pump_data.get('motor_power', 'N/A')}", ln=True)
 
+        # Add Motor Horsepower (HP) under Motor Power
+        motor_hp = "N/A"  # Default value
+        if pump_data.get("motor_power", "").lower() == "ac":
+            if pump_data.get("use_hp", False):  # Check if high pressure is needed
+                motor_hp = pump_data.get("Motor_HP_AC_High_Pressure", "N/A")
+            else:
+                motor_hp = pump_data.get("Motor_HP_AC", "N/A")
+        elif pump_data.get("motor_power", "").lower() == "dc":
+            if pump_data.get("motor_type", "").lower() == "tefc":
+                motor_hp = pump_data.get("Motor_HP_DC_TEFC", "N/A")
+            elif pump_data.get("motor_type", "").lower() == "xpfc":
+                motor_hp = pump_data.get("Motor_HP_DC_XPFC", "N/A")
+
+        pdf.cell(0, 10, txt=f"Motor Horsepower (HP): {motor_hp}", ln=True)
+
     # Add Diaphragm
     pdf.cell(0, 10, txt=f"Diaphragm Material: {pump_data.get('diaphragm', 'N/A')}", ln=True)
 
@@ -815,16 +831,9 @@ def generate_pdf(pump_data, filename="pump_quote.pdf"):
     # Add Leak Detection (if not "no")
     if pump_data.get("leak_detection", "").lower() != "no":
         pdf.cell(0, 10, txt=f"Leak Detection: {pump_data.get('leak_detection', 'N/A')}", ln=True)
-    elif pump_data.get("leak_detection", "").lower() != "conductive":
-        pdf.cell(0, 10, txt=f"Leak Detection: Conductive", ln=True)
-    elif pump_data.get("leak_detection", "").lower() != "vacuum":
-        pdf.cell(0, 10, txt=f"Leak Detection: Vacuum", ln=True)
 
     # Add Phase
-    if pump_data.get("phase", "") == "1 Ph":
-        pdf.cell(0, 10, txt=f"Phase: 1 Ph", ln=True)
-    else:
-        pdf.cell(0, 10, txt=f"Phase: 3 Ph", ln=True)
+    pdf.cell(0, 10, txt=f"Phase: {pump_data.get('phase', 'N/A')}", ln=True)
 
     # Add Degassing (if "yes")
     if pump_data.get("degassing", "").lower() == "yes":
@@ -839,10 +848,10 @@ def generate_pdf(pump_data, filename="pump_quote.pdf"):
         pdf.cell(0, 10, txt=f"Add Flange: No", ln=True)
 
     # Add Balls Type
-    pdf.cell(0, 10, txt=f"Balls Type: {pump_data.get('balls_type')}", ln=True)
+    pdf.cell(0, 10, txt=f"Balls Type: {pump_data.get('balls_type', 'N/A')}", ln=True)
 
     # Add Ball Size
-    pdf.cell(0, 10, txt=f"Ball Size: {pump_data.get('ball_size_display')}", ln=True)
+    pdf.cell(0, 10, txt=f"Ball Size: {pump_data.get('ball_size_display', 'N/A')}", ln=True)
 
     # Add Suction Lift (if "yes")
     if pump_data.get("suction_lift", "").lower() == "yes":
