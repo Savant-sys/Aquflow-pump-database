@@ -510,11 +510,6 @@ def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_dupl
         # Updated total price calculation
         total_price = pump_price  # Always include the pump price
 
-        # Add other prices (motor, diaphragm, leak detection, etc.)
-        total_price += motor_price
-        total_price += diaphragm_price
-        total_price += leak_detection_price
-
         # Add degassing price if applicable
         if degassing.lower() == "yes":
             total_price += 450
@@ -535,6 +530,9 @@ def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_dupl
             total_price += motor_price
         else:
             annotations.append("C/F (Motor)")
+
+        print("TEST FOR FLANGE:")
+        print(flange_price)
 
         if flange_price != "C/F":
             total_price += flange_price
@@ -593,6 +591,7 @@ def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_dupl
             "ball_size_display": ball_size_display  # Add ball size display value
         })
 
+    # After selecting the best pump
     if filtered_pumps:
         # Sort pumps by total_price, GPH, SPM, and PSI
         filtered_pumps.sort(key=lambda x: (
@@ -604,23 +603,31 @@ def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_dupl
 
         best_pump = filtered_pumps[0]
 
-        # Calculate flange price AFTER choosing the cheapest pump
+        # Add flange price AFTER choosing the cheapest pump
+        flange_price = 0
+        flange_message = None
         if flange and flange.lower() == "yes":
             flange_price_result = calculate_flange_price(psi, suction_flange_size, discharge_flange_size, liquid_end_material)
             if "error" in flange_price_result:
                 return flange_price_result  # Return the error if any
 
-            total_flange_price = flange_price_result["total_flange_price"]
-            if isinstance(best_pump["total_price"], str):
-                best_pump["total_price"] = f"{best_pump['total_price']} + ${total_flange_price}"
-            else:
-                best_pump["total_price"] += total_flange_price
+            flange_price = flange_price_result["total_flange_price"]
+            print(f"Total Flange Price: {flange_price}")  # Debug: Print total flange price
 
-            # Store the flange price in the best_pump dictionary
-            best_pump["flange_price"] = total_flange_price
+            # Update total price with flange price (if applicable)
+            if isinstance(best_pump["total_price"], str):
+                # If total price is already a string (e.g., "C/F"), append the flange price
+                best_pump["total_price"] = f"{best_pump['total_price']} + ${flange_price}"
+            else:
+                best_pump["total_price"] += flange_price
         else:
             # If flange is "No", set flange_price to 0
-            best_pump["flange_price"] = 0
+            flange_price = 0
+            flange_message = "Flange not selected"
+
+        # Add flange details to the best pump
+        best_pump["flange_price"] = flange_price
+        best_pump["flange_message"] = flange_message
 
         # Add suction lift price AFTER choosing the cheapest pump
         suction_lift_price = 0
