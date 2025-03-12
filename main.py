@@ -667,6 +667,8 @@ def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_dupl
         best_pump["motor_type"] = motor_type
         best_pump["motor_power"] = motor_power
         best_pump["use_hp"] = use_hp
+        best_pump["Liq_Inlet"] = pump["Liq_Inlet"]
+        best_pump["Liq_Outlet"] = pump["Liq_Outlet"]
 
         # Add flange price AFTER choosing the cheapest pump
         flange_price = 0
@@ -777,6 +779,17 @@ def generate_pdf(pump_data, filename="pump_quote.pdf"):
     pdf.set_font("Arial", "B", 16)
     pdf.cell(0, 10, txt="Pump Quote", ln=True, align="C")
     pdf.ln(10)  # Add some space
+
+    # Add the dynamic string description
+    dynamic_description = (
+        f"Aquflow {pump_data.get('series', 'N/A')} ({pump_data.get('simplex_duplex', 'N/A')}) "
+        f"hydraulic diaphragm metering pump with liquid end in {pump_data.get('liquid_end_material', 'N/A')} "
+        f"and {pump_data.get('diaphragm', 'N/A')} Diaphragm with {pump_data.get('Liq_Inlet', 'N/A')} suction "
+        f"and {pump_data.get('Liq_Outlet', 'N/A')} discharge check valve connections. The pump has a maximum "
+        f"flow capacity of {pump_data.get('gph', 'N/A')} GPH at {pump_data.get('hz', 'N/A')} Hz and design "
+        f"pressure of {pump_data.get('psi', 'N/A')} PSI."
+    )
+    pdf.multi_cell(0, 10, txt=dynamic_description)  # Removed `ln=True`
 
     # Add pump details section
     pdf.set_font("Arial", "B", 12)
