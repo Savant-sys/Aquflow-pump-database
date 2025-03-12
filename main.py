@@ -644,7 +644,11 @@ def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_dupl
             "total_price": total_price_rounded,
             "phase": phase,
             "ball_size_price": ball_size_price,  # Add ball size price
-            "ball_size_display": ball_size_display  # Add ball size display value
+            "ball_size_display": ball_size_display,  # Add ball size display value
+            "Motor_HP_AC": pump.get("Motor_HP_AC", "N/A"),  # Add Motor_HP_AC
+            "Motor_HP_AC_High_Pressure": pump.get("Motor_HP_AC_High_Pressure", "N/A"),  # Add Motor_HP_AC_High_Pressure
+            "Motor_HP_DC_TEFC": pump.get("Motor_HP_DC_TEFC", "N/A"),  # Add Motor_HP_DC_TEFC
+            "Motor_HP_DC_XPFC": pump.get("Motor_HP_DC_XPFC", "N/A"),  # Add Motor_HP_DC_XPFC
         })
 
     # Inside the `find_best_pump` function, after selecting the best pump
@@ -662,6 +666,7 @@ def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_dupl
         best_pump["want_motor"] = want_motor
         best_pump["motor_type"] = motor_type
         best_pump["motor_power"] = motor_power
+        best_pump["use_hp"] = use_hp
 
         # Add flange price AFTER choosing the cheapest pump
         flange_price = 0
@@ -802,22 +807,22 @@ def generate_pdf(pump_data, filename="pump_quote.pdf"):
     # Add Simplex/Duplex
     pdf.cell(0, 10, txt=f"Simplex/Duplex: {pump_data.get('simplex_duplex', 'N/A')}", ln=True)
 
-    # Add Motor Type and Motor Power (if want_motor is "yes")
+    # Inside the generate_pdf function, under "Add Motor Type and Motor Power"
     if pump_data.get("want_motor", "").lower() == "yes":
         pdf.cell(0, 10, txt=f"Motor Type: {pump_data.get('motor_type', 'N/A')}", ln=True)
         pdf.cell(0, 10, txt=f"Motor Power: {pump_data.get('motor_power', 'N/A')}", ln=True)
 
         # Add Motor Horsepower (HP) under Motor Power
         motor_hp = "N/A"  # Default value
-        if pump_data.get("motor_power", "").lower() == "ac":
+        if pump_data.get("motor_power", "") == "AC":
             if pump_data.get("use_hp", False):  # Check if high pressure is needed
                 motor_hp = pump_data.get("Motor_HP_AC_High_Pressure", "N/A")
             else:
                 motor_hp = pump_data.get("Motor_HP_AC", "N/A")
-        elif pump_data.get("motor_power", "").lower() == "dc":
-            if pump_data.get("motor_type", "").lower() == "tefc":
+        elif pump_data.get("motor_power", "") == "DC":
+            if pump_data.get("motor_type", "") == "TEFC":
                 motor_hp = pump_data.get("Motor_HP_DC_TEFC", "N/A")
-            elif pump_data.get("motor_type", "").lower() == "xpfc":
+            elif pump_data.get("motor_type", "") == "XPFC":
                 motor_hp = pump_data.get("Motor_HP_DC_XPFC", "N/A")
 
         pdf.cell(0, 10, txt=f"Motor Horsepower (HP): {motor_hp}", ln=True)
