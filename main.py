@@ -811,7 +811,10 @@ def generate_pdf(pump_data, filename="pump_quote.pdf"):
     pdf.cell(0, 10, txt="Pump Quote", ln=True, align="C")
     pdf.ln(10)  # Add some space
 
-    # Add the dynamic string description
+    # Initialize the dynamic description string
+    dynamic_description = ""
+
+    # Add the base description
     ball_type = pump_data.get("balls_type", "N/A")
     diaphragm = pump_data.get("diaphragm", "N/A")
 
@@ -822,7 +825,7 @@ def generate_pdf(pump_data, filename="pump_quote.pdf"):
 
         # Build the flange-specific sentence
         if ball_type.lower() == "tungsten":
-            dynamic_description = (
+            dynamic_description += (
                 f"Aquflow {pump_data.get('series', 'N/A')} ({pump_data.get('simplex_duplex', 'N/A')}) "
                 f"hydraulic diaphragm metering pump with liquid end in {pump_data.get('liquid_end_material', 'N/A')} "
                 f"with {ball_type} Carbid balls and {diaphragm} Diaphragm with {pump_data.get('suction_flange_size', 'N/A')} "
@@ -832,7 +835,7 @@ def generate_pdf(pump_data, filename="pump_quote.pdf"):
                 f"and design pressure of {pump_data.get('psi', 'N/A')} PSI."
             )
         elif ball_type.lower() == "ceramic":
-            dynamic_description = (
+            dynamic_description += (
                 f"Aquflow {pump_data.get('series', 'N/A')} ({pump_data.get('simplex_duplex', 'N/A')}) "
                 f"hydraulic diaphragm metering pump with liquid end in {pump_data.get('liquid_end_material', 'N/A')} "
                 f"with {ball_type} balls and {diaphragm} Diaphragm with {pump_data.get('suction_flange_size', 'N/A')} "
@@ -842,7 +845,7 @@ def generate_pdf(pump_data, filename="pump_quote.pdf"):
                 f"and design pressure of {pump_data.get('psi', 'N/A')} PSI."
             )
         else:
-            dynamic_description = (
+            dynamic_description += (
                 f"Aquflow {pump_data.get('series', 'N/A')} ({pump_data.get('simplex_duplex', 'N/A')}) "
                 f"hydraulic diaphragm metering pump with liquid end in {pump_data.get('liquid_end_material', 'N/A')} "
                 f"and {diaphragm} Diaphragm with {pump_data.get('suction_flange_size', 'N/A')} "
@@ -854,7 +857,7 @@ def generate_pdf(pump_data, filename="pump_quote.pdf"):
     else:
         # Use the default sentence for non-flange connections
         if ball_type.lower() == "tungsten":
-            dynamic_description = (
+            dynamic_description += (
                 f"Aquflow {pump_data.get('series', 'N/A')} ({pump_data.get('simplex_duplex', 'N/A')}) "
                 f"hydraulic diaphragm metering pump with liquid end in {pump_data.get('liquid_end_material', 'N/A')} "
                 f"with {ball_type} Carbid balls and {diaphragm} Diaphragm with {pump_data.get('Liq_Inlet', 'N/A')} suction "
@@ -863,7 +866,7 @@ def generate_pdf(pump_data, filename="pump_quote.pdf"):
                 f"and design pressure of {pump_data.get('psi', 'N/A')} PSI."
             )
         elif ball_type.lower() == "ceramic":
-            dynamic_description = (
+            dynamic_description += (
                 f"Aquflow {pump_data.get('series', 'N/A')} ({pump_data.get('simplex_duplex', 'N/A')}) "
                 f"hydraulic diaphragm metering pump with liquid end in {pump_data.get('liquid_end_material', 'N/A')} "
                 f"with {ball_type} balls and {diaphragm} Diaphragm with {pump_data.get('Liq_Inlet', 'N/A')} suction "
@@ -872,7 +875,7 @@ def generate_pdf(pump_data, filename="pump_quote.pdf"):
                 f"and design pressure of {pump_data.get('psi', 'N/A')} PSI."
             )
         else:
-            dynamic_description = (
+            dynamic_description += (
                 f"Aquflow {pump_data.get('series', 'N/A')} ({pump_data.get('simplex_duplex', 'N/A')}) "
                 f"hydraulic diaphragm metering pump with liquid end in {pump_data.get('liquid_end_material', 'N/A')} "
                 f"and {diaphragm} Diaphragm with {pump_data.get('Liq_Inlet', 'N/A')} suction "
@@ -908,22 +911,26 @@ def generate_pdf(pump_data, filename="pump_quote.pdf"):
 
         # Add the motor description sentence
         if motor_power == "DC":
-            motor_description = f" The pump comes with {motor_hp} HP, {input_voltage}, {pump_data.get('motor_type', 'N/A')} Motor."
+            dynamic_description += f" The pump comes with {motor_hp} HP, {input_voltage}, {pump_data.get('motor_type', 'N/A')} Motor."
         else:
-            motor_description = f" The pump comes with {motor_hp} HP, {input_voltage}, {phase}, {pump_data.get('motor_type', 'N/A')} Motor."
-
-        # Append the motor description to the dynamic description
-        dynamic_description += motor_description
+            dynamic_description += f" The pump comes with {motor_hp} HP, {input_voltage}, {phase}, {pump_data.get('motor_type', 'N/A')} Motor."
 
     # Add degassing description if degassing is "yes"
     if pump_data.get("degassing", "").lower() == "yes":
-        degassing_description = " The pump comes with Degassing valve on it."
-        dynamic_description += degassing_description
+        dynamic_description += " The pump comes with a degassing valve."
+
+    # Add food graded oil description if food_graded_oil is "yes"
+    if pump_data.get("food_graded_oil", "").lower() == "yes":
+        dynamic_description += " The pump comes with food graded oil."
+
+    # Add suction lift description if suction_lift is "yes"
+    if pump_data.get("suction_lift", "").lower() == "yes":
+        dynamic_description += " The pump comes with suction lift."
 
     # Add the combined description to the PDF
-    pdf.multi_cell(0, 10, txt=dynamic_description)  # Removed `ln=True`
+    pdf.multi_cell(0, 10, txt=dynamic_description)
 
-    # Add pump details section
+    # Add pump details section (unchanged)
     pdf.set_font("Arial", "B", 12)
     pdf.cell(0, 10, txt="Pump Specifications", ln=True)
     pdf.set_font("Arial", size=12)
@@ -952,12 +959,12 @@ def generate_pdf(pump_data, filename="pump_quote.pdf"):
     # Add Simplex/Duplex
     pdf.cell(0, 10, txt=f"Simplex/Duplex: {pump_data.get('simplex_duplex', 'N/A')}", ln=True)
 
-    # Inside the generate_pdf function, under "Add Motor Type and Motor Power"
+    # Add Motor Type and Motor Power (if applicable)
     if pump_data.get("want_motor", "").lower() == "yes":
         pdf.cell(0, 10, txt=f"Motor Type: {pump_data.get('motor_type', 'N/A')}", ln=True)
         pdf.cell(0, 10, txt=f"Motor Power: {pump_data.get('motor_power', 'N/A')}", ln=True)
 
-        # Add Motor Horsepower (HP) under Motor Power
+        # Add Motor Horsepower (HP)
         motor_hp = "N/A"  # Default value
         if pump_data.get("motor_power", "") == "AC":
             if pump_data.get("use_hp", False):  # Check if high pressure is needed
@@ -1019,7 +1026,7 @@ def generate_pdf(pump_data, filename="pump_quote.pdf"):
 
     pdf.ln(10)  # Add some space
 
-    # Add pricing details
+    # Add pricing details (unchanged)
     pdf.set_font("Arial", "B", 12)
     pdf.cell(0, 10, txt="Pricing Details", ln=True)
     pdf.set_font("Arial", size=12)
@@ -1079,10 +1086,12 @@ def generate_pdf(pump_data, filename="pump_quote.pdf"):
         pdf.cell(100, 10, txt="Ball Size Price", border=1)
         pdf.cell(80, 10, txt=f"${pump_data.get('ball_size_price', 0)}", border=1, ln=True)
 
+    # Add Food Graded Oil Price (if applicable)
     if pump_data.get("food_graded_oil", "").lower() == "yes":
         pdf.cell(100, 10, txt="Food Graded Oil Price", border=1)
         pdf.cell(80, 10, txt=f"${pump_data.get('food_graded_oil_price', 0)}", border=1, ln=True)
 
+    # Add Pump + Motor Price
     pump_motor_price = pump_data['pump_price'] + pump_data['motor_price']
     pdf.cell(100, 10, txt="Pump + Motor Price", border=1)
     pdf.cell(80, 10, txt=f"{pump_motor_price}", border=1, ln=True)
