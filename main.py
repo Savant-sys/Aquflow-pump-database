@@ -789,7 +789,6 @@ def generate_pdf(pump_data, filename="pump_quote.pdf"):
         f"flow capacity of {pump_data.get('gph', 'N/A')} GPH at {pump_data.get('hz', 'N/A')} Hz and design "
         f"pressure of {pump_data.get('psi', 'N/A')} PSI."
     )
-    pdf.multi_cell(0, 10, txt=dynamic_description)  # Removed `ln=True`
 
     # Add motor description if want_motor is "yes"
     if pump_data.get("want_motor", "").lower() == "yes":
@@ -818,11 +817,15 @@ def generate_pdf(pump_data, filename="pump_quote.pdf"):
 
         # Add the motor description sentence
         if motor_power == "DC":
-            motor_description = f"The pump comes with {motor_hp} HP, {input_voltage}, {pump_data.get('motor_type', 'N/A')} Motor."
+            motor_description = f" The pump comes with {motor_hp} HP, {input_voltage}, {pump_data.get('motor_type', 'N/A')} Motor."
         else:
-            motor_description = f"The pump comes with {motor_hp} HP, {input_voltage}, {phase}, {pump_data.get('motor_type', 'N/A')} Motor."
+            motor_description = f" The pump comes with {motor_hp} HP, {input_voltage}, {phase}, {pump_data.get('motor_type', 'N/A')} Motor."
 
-        pdf.multi_cell(0, 10, txt=motor_description)  # Add the motor description
+        # Append the motor description to the dynamic description
+        dynamic_description += motor_description
+
+    # Add the combined description to the PDF
+    pdf.multi_cell(0, 10, txt=dynamic_description)  # Removed `ln=True`
 
     # Add pump details section
     pdf.set_font("Arial", "B", 12)
