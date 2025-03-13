@@ -33,6 +33,7 @@ document.getElementById("pumpForm").addEventListener("submit", async (e) => {
     const balls_type = document.getElementById("balls_type").value;
     const suction_lift = document.getElementById("suction_lift").value;
     const ball_size = document.getElementById("ball_size").value;
+    const food_graded_oil = document.getElementById("food_graded_oil").value;
 
     // Get flange sizes if flange is "Yes"
     let suction_flange_size = null;
@@ -49,7 +50,7 @@ document.getElementById("pumpForm").addEventListener("submit", async (e) => {
     }
 
     console.log("Form Data:", {
-        gph, psi, hz, simplex_duplex, want_motor, motor_type, motor_power, spm, diaphragm, liquid_end_material, leak_detection, phase, degassing, flange, balls_type, suction_lift, ball_size, suction_flange_size, discharge_flange_size
+        gph, psi, hz, simplex_duplex, want_motor, motor_type, motor_power, spm, diaphragm, liquid_end_material, leak_detection, phase, degassing, flange, balls_type, suction_lift, ball_size, suction_flange_size, discharge_flange_size, food_graded_oil
     });
 
     try {
@@ -73,6 +74,7 @@ document.getElementById("pumpForm").addEventListener("submit", async (e) => {
             balls_type,
             suction_lift,
             ball_size,
+            food_graded_oil,
         };
 
         // Add flange sizes to the API call if flange is "Yes"

@@ -280,7 +280,12 @@ def calculate_suction_lift_price(series, liquid_end_material, suction_lift):
             return "C/F"
     return 0
 
-def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_duplex=None, want_motor=None, motor_type=None, motor_power=None, spm=None, diaphragm=None, liquid_end_material=None, leak_detection=None, phase=None, degassing=None, flange=None, balls_type=None, suction_lift=None, ball_size=None, suction_flange_size=None, discharge_flange_size=None):
+def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, 
+                   simplex_duplex=None, want_motor=None, motor_type=None, 
+                   motor_power=None, spm=None, diaphragm=None, liquid_end_material=None, 
+                   leak_detection=None, phase=None, degassing=None, flange=None, 
+                   balls_type=None, suction_lift=None, ball_size=None, suction_flange_size=None, 
+                   discharge_flange_size=None, food_graded_oil=None):
     # Ensure either GPH or LPH is provided
     if gph is None and lph is None:
         return {"error": "Either GPH or LPH is required. Please provide one."}
@@ -377,6 +382,10 @@ def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_dupl
         # If flange is "No", ignore flange sizes
         suction_flange_size = None
         discharge_flange_size = None
+
+    # Ensure Food_Graded_Oil is provided and is either "yes" or "no"
+    if food_graded_oil.lower() not in ["yes", "no"]:
+        return {"error": "Food Graded Oil is required and must be either 'yes' or 'no'."}
 
     # Connect to MySQL database
     conn = mysql.connector.connect(**db_config)
@@ -566,6 +575,20 @@ def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_dupl
         else:
             leak_detection_price = 0
 
+        # Calculate Food Graded Oil price
+        food_graded_oil_price = 0
+        if food_graded_oil.lower() == "yes":
+            if pump["Series"] == "Series 1000":
+                food_graded_oil_price = 140
+            elif pump["Series"] == "Series 2000":
+                food_graded_oil_price = 280
+            elif pump["Series"] == "Series 3000":
+                food_graded_oil_price = 840
+            elif pump["Series"] == "Series 4000":
+                food_graded_oil_price = 2200
+            elif pump["Series"] == "Series 900":
+                food_graded_oil_price = 44
+
         # Updated total price calculation
         total_price = pump_price  # Always include the pump price
 
@@ -610,6 +633,9 @@ def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_dupl
         # Add ball size price if applicable
         total_price += ball_size_price
 
+        # Add Food Graded Oil price if applicable
+        total_price += food_graded_oil_price
+
         # Round up the total price to the nearest whole number
         if isinstance(total_price, (int, float)):
             total_price_rounded = math.ceil(total_price)
@@ -643,12 +669,13 @@ def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_dupl
             "flange_price": flange_price,
             "total_price": total_price_rounded,
             "phase": phase,
-            "ball_size_price": ball_size_price,  # Add ball size price
-            "ball_size_display": ball_size_display,  # Add ball size display value
-            "Motor_HP_AC": pump.get("Motor_HP_AC", "N/A"),  # Add Motor_HP_AC
-            "Motor_HP_AC_High_Pressure": pump.get("Motor_HP_AC_High_Pressure", "N/A"),  # Add Motor_HP_AC_High_Pressure
-            "Motor_HP_DC_TEFC": pump.get("Motor_HP_DC_TEFC", "N/A"),  # Add Motor_HP_DC_TEFC
-            "Motor_HP_DC_XPFC": pump.get("Motor_HP_DC_XPFC", "N/A"),  # Add Motor_HP_DC_XPFC
+            "ball_size_price": ball_size_price,
+            "ball_size_display": ball_size_display,
+            "Motor_HP_AC": pump.get("Motor_HP_AC", "N/A"),
+            "Motor_HP_AC_High_Pressure": pump.get("Motor_HP_AC_High_Pressure", "N/A"),
+            "Motor_HP_DC_TEFC": pump.get("Motor_HP_DC_TEFC", "N/A"),
+            "Motor_HP_DC_XPFC": pump.get("Motor_HP_DC_XPFC", "N/A"),
+            "food_graded_oil_price": food_graded_oil_price,
         })
 
     # Inside the `find_best_pump` function, after selecting the best pump
@@ -669,10 +696,10 @@ def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, simplex_dupl
         best_pump["use_hp"] = use_hp
         best_pump["Liq_Inlet"] = pump["Liq_Inlet"]
         best_pump["Liq_Outlet"] = pump["Liq_Outlet"]
-
-        # Add flange details to the best pump
         best_pump["suction_flange_size"] = suction_flange_size
         best_pump["discharge_flange_size"] = discharge_flange_size
+        best_pump["food_graded_oil"] = food_graded_oil
+        best_pump["food_graded_oil_price"] = food_graded_oil_price
 
         # Add flange price AFTER choosing the cheapest pump
         flange_price = 0
@@ -984,6 +1011,12 @@ def generate_pdf(pump_data, filename="pump_quote.pdf"):
     else:
         pdf.cell(0, 10, txt=f"Add Suction Lift: No", ln=True)
 
+    # Add Food Graded Oil (if "yes")
+    if pump_data.get("food_graded_oil", "").lower() == "yes":
+        pdf.cell(0, 10, txt=f"Add Food Graded Oil: Yes", ln=True)
+    else:
+        pdf.cell(0, 10, txt=f"Add Food Graded Oil: No", ln=True)
+
     pdf.ln(10)  # Add some space
 
     # Add pricing details
@@ -1009,9 +1042,6 @@ def generate_pdf(pump_data, filename="pump_quote.pdf"):
             pdf.cell(80, 10, txt=f"{pump_data['flange_price']}", border=1, ln=True)
         else:
             pdf.cell(80, 10, txt=f"${pump_data.get('flange_price', 0)}", border=1, ln=True)
-    else:
-        pdf.cell(100, 10, txt="Flange Price", border=1)
-        pdf.cell(80, 10, txt="$0", border=1, ln=True)
 
     # Add Flange Adaptor Price (if applicable)
     if pump_data.get("flange_adaptor_price", 0) != 0:
@@ -1020,25 +1050,21 @@ def generate_pdf(pump_data, filename="pump_quote.pdf"):
             pdf.cell(80, 10, txt=f"{pump_data['flange_adaptor_price']}", border=1, ln=True)
         else:
             pdf.cell(80, 10, txt=f"${pump_data.get('flange_adaptor_price', 0)}", border=1, ln=True)
-    else:
-        pdf.cell(100, 10, txt="Flange Adaptor Price", border=1)
-        pdf.cell(80, 10, txt="$0", border=1, ln=True)
 
     # Add Diaphragm Price
-    pdf.cell(100, 10, txt="Diaphragm Price", border=1)
-    pdf.cell(80, 10, txt=f"${pump_data['diaphragm_price']}", border=1, ln=True)
+    if pump_data['diaphragm_price'] != 0:
+        pdf.cell(100, 10, txt="Diaphragm Price", border=1)
+        pdf.cell(80, 10, txt=f"${pump_data['diaphragm_price']}", border=1, ln=True)
 
     # Add Leak Detection Price
-    pdf.cell(100, 10, txt="Leak Detection Price", border=1)
-    pdf.cell(80, 10, txt=f"${pump_data['leak_detection_price']}", border=1, ln=True)
+    if pump_data['leak_detection_price'] != 0:
+        pdf.cell(100, 10, txt="Leak Detection Price", border=1)
+        pdf.cell(80, 10, txt=f"${pump_data['leak_detection_price']}", border=1, ln=True)
 
     # Add Degassing Price
     if pump_data.get("degassing", "").lower() == "yes":
         pdf.cell(100, 10, txt="Degassing Price", border=1)
         pdf.cell(80, 10, txt="$450", border=1, ln=True)
-    else:
-        pdf.cell(100, 10, txt="Degassing Price", border=1)
-        pdf.cell(80, 10, txt="$0", border=1, ln=True)
 
     # Add Suction Lift Price (if available)
     if pump_data.get("suction_lift_price", 0) != 0:
@@ -1052,6 +1078,14 @@ def generate_pdf(pump_data, filename="pump_quote.pdf"):
     if pump_data.get("ball_size_price", 0) != 0:
         pdf.cell(100, 10, txt="Ball Size Price", border=1)
         pdf.cell(80, 10, txt=f"${pump_data.get('ball_size_price', 0)}", border=1, ln=True)
+
+    if pump_data.get("food_graded_oil", "").lower() == "yes":
+        pdf.cell(100, 10, txt="Food Graded Oil Price", border=1)
+        pdf.cell(80, 10, txt=f"${pump_data.get('food_graded_oil_price', 0)}", border=1, ln=True)
+
+    pump_motor_price = pump_data['pump_price'] + pump_data['motor_price']
+    pdf.cell(100, 10, txt="Pump + Motor Price", border=1)
+    pdf.cell(80, 10, txt=f"{pump_motor_price}", border=1, ln=True)
 
     # Add Total Price
     pdf.cell(100, 10, txt="Total Price", border=1)
@@ -1094,10 +1128,14 @@ def get_pump():
         ball_size = request.args.get('ball_size', type=str)
         suction_flange_size = request.args.get('suction_flange_size', type=str)
         discharge_flange_size = request.args.get('discharge_flange_size', type=str)
+        food_graded_oil = request.args.get('food_graded_oil', type=str)
 
         # Find the best pump
         result = find_best_pump(
-            gph, None, psi, None, hz, simplex_duplex, want_motor, motor_type, motor_power, spm, diaphragm, liquid_end_material, leak_detection, phase, degassing, flange, balls_type, suction_lift, ball_size, suction_flange_size, discharge_flange_size
+            gph, None, psi, None, hz, simplex_duplex, want_motor, motor_type, 
+            motor_power, spm, diaphragm, liquid_end_material, leak_detection, 
+            phase, degassing, flange, balls_type, suction_lift, ball_size, 
+            suction_flange_size, discharge_flange_size, food_graded_oil
         )
 
         # Generate PDF
