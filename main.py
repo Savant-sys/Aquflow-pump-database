@@ -824,6 +824,11 @@ def generate_pdf(pump_data, filename="pump_quote.pdf"):
         # Append the motor description to the dynamic description
         dynamic_description += motor_description
 
+    # Add degassing description if degassing is "yes"
+    if pump_data.get("degassing", "").lower() == "yes":
+        degassing_description = " The pump comes with Degassing valve on it."
+        dynamic_description += degassing_description
+
     # Add the combined description to the PDF
     pdf.multi_cell(0, 10, txt=dynamic_description)  # Removed `ln=True`
 
