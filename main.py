@@ -785,31 +785,74 @@ def generate_pdf(pump_data, filename="pump_quote.pdf"):
     pdf.ln(10)  # Add some space
 
     # Add the dynamic string description
+    ball_type = pump_data.get("balls_type", "N/A")
+    diaphragm = pump_data.get("diaphragm", "N/A")
+
     if pump_data.get("flange", "").lower() == "yes":
         # Get the flange size ID based on PSI
         psi = pump_data.get("psi", 0)
         flange_size_id = get_flange_size_id(psi)  # Use the function from the top of the code
 
         # Build the flange-specific sentence
-        dynamic_description = (
-            f"Aquflow {pump_data.get('series', 'N/A')} ({pump_data.get('simplex_duplex', 'N/A')}) "
-            f"hydraulic diaphragm metering pump with liquid end in {pump_data.get('liquid_end_material', 'N/A')} "
-            f"and {pump_data.get('diaphragm', 'N/A')} Diaphragm with {pump_data.get('suction_flange_size', 'N/A')} "
-            f"ANSI RF Type #{flange_size_id} Suction and {pump_data.get('discharge_flange_size', 'N/A')} "
-            f"ANSI RF Type #{flange_size_id} Discharge. The pump has a maximum flow capacity of "
-            f"{pump_data.get('gph', 'N/A')} GPH at {pump_data.get('hz', 'N/A')} Hz and design pressure of "
-            f"{pump_data.get('psi', 'N/A')} PSI."
-        )
+        if ball_type.lower() == "tungsten":
+            dynamic_description = (
+                f"Aquflow {pump_data.get('series', 'N/A')} ({pump_data.get('simplex_duplex', 'N/A')}) "
+                f"hydraulic diaphragm metering pump with liquid end in {pump_data.get('liquid_end_material', 'N/A')} "
+                f"with {ball_type} Carbid balls and {diaphragm} Diaphragm with {pump_data.get('suction_flange_size', 'N/A')} "
+                f"ANSI RF Type #{flange_size_id} Suction and {pump_data.get('discharge_flange_size', 'N/A')} "
+                f"ANSI RF Type #{flange_size_id} Discharge Flanges."
+                f"The pump has a maximum flow capacity of {pump_data.get('gph', 'N/A')} GPH at {pump_data.get('hz', 'N/A')} Hz "
+                f"and design pressure of {pump_data.get('psi', 'N/A')} PSI."
+            )
+        elif ball_type.lower() == "ceramic":
+            dynamic_description = (
+                f"Aquflow {pump_data.get('series', 'N/A')} ({pump_data.get('simplex_duplex', 'N/A')}) "
+                f"hydraulic diaphragm metering pump with liquid end in {pump_data.get('liquid_end_material', 'N/A')} "
+                f"with {ball_type} balls and {diaphragm} Diaphragm with {pump_data.get('suction_flange_size', 'N/A')} "
+                f"ANSI RF Type #{flange_size_id} Suction and {pump_data.get('discharge_flange_size', 'N/A')} "
+                f"ANSI RF Type #{flange_size_id} Discharge Flanges."
+                f"The pump has a maximum flow capacity of {pump_data.get('gph', 'N/A')} GPH at {pump_data.get('hz', 'N/A')} Hz "
+                f"and design pressure of {pump_data.get('psi', 'N/A')} PSI."
+            )
+        else:
+            dynamic_description = (
+                f"Aquflow {pump_data.get('series', 'N/A')} ({pump_data.get('simplex_duplex', 'N/A')}) "
+                f"hydraulic diaphragm metering pump with liquid end in {pump_data.get('liquid_end_material', 'N/A')} "
+                f"and {diaphragm} Diaphragm with {pump_data.get('suction_flange_size', 'N/A')} "
+                f"ANSI RF Type #{flange_size_id} Suction and {pump_data.get('discharge_flange_size', 'N/A')} "
+                f"ANSI RF Type #{flange_size_id} Discharge. The pump has a maximum flow capacity of "
+                f"{pump_data.get('gph', 'N/A')} GPH at {pump_data.get('hz', 'N/A')} Hz and design pressure of "
+                f"{pump_data.get('psi', 'N/A')} PSI."
+            )
     else:
         # Use the default sentence for non-flange connections
-        dynamic_description = (
-            f"Aquflow {pump_data.get('series', 'N/A')} ({pump_data.get('simplex_duplex', 'N/A')}) "
-            f"hydraulic diaphragm metering pump with liquid end in {pump_data.get('liquid_end_material', 'N/A')} "
-            f"and {pump_data.get('diaphragm', 'N/A')} Diaphragm with {pump_data.get('Liq_Inlet', 'N/A')} suction "
-            f"and {pump_data.get('Liq_Outlet', 'N/A')} discharge check valve connections. The pump has a maximum "
-            f"flow capacity of {pump_data.get('gph', 'N/A')} GPH at {pump_data.get('hz', 'N/A')} Hz and design "
-            f"pressure of {pump_data.get('psi', 'N/A')} PSI."
-        )
+        if ball_type.lower() == "tungsten":
+            dynamic_description = (
+                f"Aquflow {pump_data.get('series', 'N/A')} ({pump_data.get('simplex_duplex', 'N/A')}) "
+                f"hydraulic diaphragm metering pump with liquid end in {pump_data.get('liquid_end_material', 'N/A')} "
+                f"with {ball_type} Carbid balls and {diaphragm} Diaphragm with {pump_data.get('Liq_Inlet', 'N/A')} suction "
+                f"and {pump_data.get('Liq_Outlet', 'N/A')} discharge check valve connections. "
+                f"The pump has a maximum flow capacity of {pump_data.get('gph', 'N/A')} GPH at {pump_data.get('hz', 'N/A')} Hz "
+                f"and design pressure of {pump_data.get('psi', 'N/A')} PSI."
+            )
+        elif ball_type.lower() == "ceramic":
+            dynamic_description = (
+                f"Aquflow {pump_data.get('series', 'N/A')} ({pump_data.get('simplex_duplex', 'N/A')}) "
+                f"hydraulic diaphragm metering pump with liquid end in {pump_data.get('liquid_end_material', 'N/A')} "
+                f"with {ball_type} balls and {diaphragm} Diaphragm with {pump_data.get('Liq_Inlet', 'N/A')} suction "
+                f"and {pump_data.get('Liq_Outlet', 'N/A')} discharge check valve connections. "
+                f"The pump has a maximum flow capacity of {pump_data.get('gph', 'N/A')} GPH at {pump_data.get('hz', 'N/A')} Hz "
+                f"and design pressure of {pump_data.get('psi', 'N/A')} PSI."
+            )
+        else:
+            dynamic_description = (
+                f"Aquflow {pump_data.get('series', 'N/A')} ({pump_data.get('simplex_duplex', 'N/A')}) "
+                f"hydraulic diaphragm metering pump with liquid end in {pump_data.get('liquid_end_material', 'N/A')} "
+                f"and {diaphragm} Diaphragm with {pump_data.get('Liq_Inlet', 'N/A')} suction "
+                f"and {pump_data.get('Liq_Outlet', 'N/A')} discharge check valve connections. The pump has a maximum "
+                f"flow capacity of {pump_data.get('gph', 'N/A')} GPH at {pump_data.get('hz', 'N/A')} Hz and design "
+                f"pressure of {pump_data.get('psi', 'N/A')} PSI."
+            )
 
     # Add motor description if want_motor is "yes"
     if pump_data.get("want_motor", "").lower() == "yes":
