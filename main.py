@@ -7,20 +7,60 @@ from fpdf import FPDF
 app = Flask(__name__)
 CORS(app)  # Allows frontend access to API
 
-# MySQL Database Configuration
-db_config = {
-    "host": "localhost",
-    "user": "root",
-    "password": "1234",
-    "database": "Local_Pump_Info"
-}
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.base import MIMEBase
+from email.mime.text import MIMEText
+from email import encoders
 
+# Email configuration
+SMTP_SERVER = 'smtp.gmail.com'
+SMTP_PORT = 587
+EMAIL_ADDRESS = 'michaelkhuri@gmail.com'
+EMAIL_PASSWORD = 'nkfv bdut pjud kenv'
+
+def send_email(to_emails, subject, body, filename):
+    msg = MIMEMultipart()
+    msg['From'] = EMAIL_ADDRESS
+    msg['To'] = ', '.join(to_emails)
+    msg['Subject'] = subject
+
+    msg.attach(MIMEText(body, 'plain'))
+
+    # Attach the PDF file
+    with open(filename, 'rb') as attachment:
+        part = MIMEBase('application', 'octet-stream')
+        part.set_payload(attachment.read())
+        encoders.encode_base64(part)
+        part.add_header('Content-Disposition', f'attachment; filename={filename}')
+        msg.attach(part)
+
+    # Send the email
+    try:
+        server = smtplib.SMTP(SMTP_SERVER, SMTP_PORT)
+        server.starttls()
+        server.login(EMAIL_ADDRESS, EMAIL_PASSWORD)
+        server.sendmail(EMAIL_ADDRESS, to_emails, msg.as_string())
+        server.quit()
+        return True
+    except Exception as e:
+        print(f"Error sending email: {e}")
+        return False
+
+# MySQL Database Configuration
 # db_config = {
-#     "host": "your_godaddy_mysql_host",
-#     "user": "your_godaddy_mysql_user",
-#     "password": "your_godaddy_mysql_password",
-#     "database": "your_godaddy_mysql_database"
+#     "host": "localhost",
+#     "user": "root",
+#     "password": "1234",
+#     "database": "Local_Pump_Info"
 # }
+
+db_config = {
+    "host": "132.148.249.113",
+    "user": "quote",
+    "password": ".2zKuI]4#n@V",
+    "database": "Quotes_Database_3_13_25"
+}
 
 def get_flange_size_id(psi):
     if psi < 290:
@@ -1120,6 +1160,9 @@ def generate_pdf(pump_data, filename="pump_quote.pdf"):
 @app.route('/get_pump', methods=['GET'])
 def get_pump():
     try:
+        # Log the incoming request parameters
+        print("Request Args:", request.args)
+
         # Get parameters from the request
         gph = request.args.get('gph', type=float)
         psi = request.args.get('psi', type=float)
@@ -1141,6 +1184,32 @@ def get_pump():
         suction_flange_size = request.args.get('suction_flange_size', type=str)
         discharge_flange_size = request.args.get('discharge_flange_size', type=str)
         food_graded_oil = request.args.get('food_graded_oil', type=str)
+        user_email = request.args.get('user_email', type=str)
+
+        # Log the parsed parameters
+        print("Parsed Parameters:", {
+            "gph": gph,
+            "psi": psi,
+            "hz": hz,
+            "simplex_duplex": simplex_duplex,
+            "want_motor": want_motor,
+            "motor_type": motor_type,
+            "motor_power": motor_power,
+            "spm": spm,
+            "diaphragm": diaphragm,
+            "liquid_end_material": liquid_end_material,
+            "leak_detection": leak_detection,
+            "phase": phase,
+            "degassing": degassing,
+            "flange": flange,
+            "balls_type": balls_type,
+            "suction_lift": suction_lift,
+            "ball_size": ball_size,
+            "suction_flange_size": suction_flange_size,
+            "discharge_flange_size": discharge_flange_size,
+            "food_graded_oil": food_graded_oil,
+            "user_email": user_email
+        })
 
         # Find the best pump
         result = find_best_pump(
@@ -1149,6 +1218,9 @@ def get_pump():
             phase, degassing, flange, balls_type, suction_lift, ball_size, 
             suction_flange_size, discharge_flange_size, food_graded_oil
         )
+
+        # Log the result
+        print("Result:", result)
 
         # Generate PDF
         if "error" not in result:
@@ -1162,7 +1234,16 @@ def get_pump():
             result["suction_lift"] = suction_lift
             result["ball_size"] = ball_size
             pdf_filename = generate_pdf(result)
-            result["pdf_url"] = f"/download_pdf/{pdf_filename}"
+            # result["pdf_url"] = f"/download_pdf/{pdf_filename}"
+
+            # Send the PDF via email
+            email_subject = "Your Pump Quote"
+            email_body = "Please find attached the pump quote."
+            to_emails = [user_email, "michaelkhoury744@gmail.com"]
+            if send_email(to_emails, email_subject, email_body, pdf_filename):
+                result["email_status"] = "Email sent successfully"
+            else:
+                result["email_status"] = "Failed to send email"
 
         return jsonify(result)
 
@@ -1176,6 +1257,19 @@ def download_pdf(filename):
         return send_file(filename, as_attachment=True)
     except FileNotFoundError:
         return jsonify({"error": "PDF not found"}), 404
+
+@app.route('/test_db')
+def test_db():
+    try:
+        conn = mysql.connector.connect(**db_config)
+        cursor = conn.cursor()
+        cursor.execute("SELECT 1")
+        result = cursor.fetchone()
+        cursor.close()
+        conn.close()
+        return jsonify({"status": "success", "message": "Database connection successful!"})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=5000, debug=True)

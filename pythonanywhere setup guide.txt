@@ -1,0 +1,5 @@
+mkvirtualenv myenv --python=/usr/bin/python3.10
+workon myenv
+pip install flask mysql-connector-python
+pip install flask_cors
+pip install fpdf
