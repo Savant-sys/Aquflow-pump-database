@@ -1,14 +1,3 @@
-console.log("Script loaded!"); // Debugging log
-
-// Prevent form submission on Enter key
-document.getElementById("pumpForm").addEventListener("keydown", (e) => {
-    if (e.key === "Enter") {
-        e.preventDefault(); // Prevent form submission on Enter key
-        console.log("Enter key prevented from submitting form!");
-    }
-});
-
-// Attach submit event listener to the form
 document.getElementById("pumpForm").addEventListener("submit", async (e) => {
     e.preventDefault(); // Prevent form submission and page reload
     console.log("Default prevented!"); // Debugging log
@@ -34,6 +23,7 @@ document.getElementById("pumpForm").addEventListener("submit", async (e) => {
     const suction_lift = document.getElementById("suction_lift").value;
     const ball_size = document.getElementById("ball_size").value;
     const food_graded_oil = document.getElementById("food_graded_oil").value;
+    const user_email = document.getElementById("user_email").value;
 
     // Get flange sizes if flange is "Yes"
     let suction_flange_size = null;
@@ -50,12 +40,12 @@ document.getElementById("pumpForm").addEventListener("submit", async (e) => {
     }
 
     console.log("Form Data:", {
-        gph, psi, hz, simplex_duplex, want_motor, motor_type, motor_power, spm, diaphragm, liquid_end_material, leak_detection, phase, degassing, flange, balls_type, suction_lift, ball_size, suction_flange_size, discharge_flange_size, food_graded_oil
+        gph, psi, hz, simplex_duplex, want_motor, motor_type, motor_power, spm, diaphragm, liquid_end_material, leak_detection, phase, degassing, flange, balls_type, suction_lift, ball_size, suction_flange_size, discharge_flange_size, food_graded_oil, user_email
     });
 
     try {
         // Build the API URL
-        const apiUrl = new URL("http://localhost:5000/get_pump");
+        const apiUrl = new URL("https://aquflow-api-server-quote-c561945c3782.herokuapp.com/get_pump");
         const params = {
             gph,
             psi,
@@ -75,6 +65,7 @@ document.getElementById("pumpForm").addEventListener("submit", async (e) => {
             suction_lift,
             ball_size,
             food_graded_oil,
+            user_email, // Include user's email in the API request
         };
 
         // Add flange sizes to the API call if flange is "Yes"
@@ -110,6 +101,7 @@ document.getElementById("pumpForm").addEventListener("submit", async (e) => {
                 <p>Series: ${data.series}</p>
                 <p>Total Price: $${data.total_price}</p>
                 <a href="${data.pdf_url}" download>Download PDF Quote</a>
+                <p>Email Status: ${data.email_status}</p>
             `;
         }
     } catch (error) {
@@ -118,5 +110,3 @@ document.getElementById("pumpForm").addEventListener("submit", async (e) => {
         resultDiv.innerHTML = `<p style="color: red;">An error occurred. Please check the console for details.</p>`;
     }
 });
-
-console.log("Event listener attached!"); // Debugging log

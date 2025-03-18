@@ -1,0 +1,7 @@
+$env:Path += ";C:\Program Files\MySQL\MySQL Server 8.0\bin"
+mysql -u root -p
+
+
+
+password MySQL:
+.2zKuI]4#n@V

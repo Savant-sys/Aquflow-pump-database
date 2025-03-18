@@ -1,0 +1,3 @@
+git add .
+git commit -m "Added logo" 
+git push heroku main
