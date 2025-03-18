@@ -1,1 +1,0 @@
-http://localhost:5000/get_pump?gph=2&psi=22&hz=60&simplex_duplex=Simplex&want_motor=yes&motor_type=TEFC&motor_power=AC&spm=191&diaphragm=PTFE&liquid_end_material=316SS&leak_detection=No&phase=1+Ph&degassing=No&flange=No&balls_type=Std.&ball_size=2-1%2F4%26quot%3B&suction_lift=No
