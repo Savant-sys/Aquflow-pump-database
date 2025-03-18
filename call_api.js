@@ -45,7 +45,8 @@ document.getElementById("pumpForm").addEventListener("submit", async (e) => {
 
     try {
         // Build the API URL
-        const apiUrl = new URL("https://aquflow-api-server-quote-c561945c3782.herokuapp.com/get_pump");
+        // const apiUrl = new URL("https://aquflow-api-server-quote-c561945c3782.herokuapp.com/get_pump");
+        const apiUrl = new URL("http://localhost:5000/get_pump");
         const params = {
             gph,
             psi,
@@ -65,7 +66,7 @@ document.getElementById("pumpForm").addEventListener("submit", async (e) => {
             suction_lift,
             ball_size,
             food_graded_oil,
-            user_email, // Include user's email in the API request
+            user_email,
         };
 
         // Add flange sizes to the API call if flange is "Yes"
