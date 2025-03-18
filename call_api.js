@@ -45,7 +45,7 @@ document.getElementById("pumpForm").addEventListener("submit", async (e) => {
 
     try {
         // Build the API URL
-        const apiUrl = new URL("http://localhost:5000/get_pump");
+        const apiUrl = new URL("https://aquflow-api-server-quote-c561945c3782.herokuapp.com/get_pump");
         const params = {
             gph,
             psi,
