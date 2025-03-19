@@ -3,4 +3,8 @@ git commit -m "Changed prices"
 git push heroku main
 
 
+// setup library installs
 pip freeze > requirements.txt
+
+// logging api server live
+heroku logs --tail
