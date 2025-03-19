@@ -1,3 +1,80 @@
+// Function to update ball size options
+function updateBallSizeOptions() {
+    const ballsType = document.getElementById("balls_type").value;
+    const ballSizeSelect = document.getElementById("ball_size");
+
+    // Clear existing options
+    ballSizeSelect.innerHTML = '';
+
+    // Define ball size options based on ball type
+    let ballSizeOptions = [];
+    if (ballsType === "Tungsten" || ballsType === "Ceramic") {
+        ballSizeOptions = [
+            "Standard",
+            "1/4\"",
+            "3/8\"",
+            "1/2\"",
+            "7/8\"",
+            "1-1/4\"",
+            "1-1/2\""
+        ];
+    } else {
+        ballSizeOptions = [
+            "Standard",
+            "1/8\"",
+            "3/16\"",
+            "1/4\"",
+            "3/8\"",
+            "1/2\"",
+            "5/8\"",
+            "3/4\"",
+            "7/8\"",
+            "1\"",
+            "1-1/4\"",
+            "1-1/2\"",
+            "1-3/4\"",
+            "2\"",
+            "2-1/4\"",
+            "2-1/2\"",
+            "3\"",
+            "3-1/2\"",
+            "1/2\" Double Ball",
+            "7/8\" Double Ball",
+            "1/2\" Suction and 3/8\" Discharge",
+            "3/8\" Double Ball"
+        ];
+    }
+
+    // Add new options
+    ballSizeOptions.forEach(size => {
+        const option = document.createElement("option");
+        option.value = size;
+        option.text = size;
+        ballSizeSelect.appendChild(option);
+    });
+}
+
+// Function to toggle flange size options
+function toggleFlangeSizeOptions() {
+    const flangeSelect = document.getElementById("flange");
+    const flangeSizeOptions = document.querySelector(".flange-size-options");
+
+    if (flangeSelect.value === "Yes") {
+        flangeSizeOptions.style.display = "block"; // Show flange size options
+    } else {
+        flangeSizeOptions.style.display = "none"; // Hide flange size options
+    }
+}
+
+// Initialize ball size options on page load
+document.addEventListener("DOMContentLoaded", () => {
+    updateBallSizeOptions();
+    document.getElementById("balls_type").addEventListener("change", updateBallSizeOptions);
+    document.getElementById("flange").addEventListener("change", toggleFlangeSizeOptions);
+    toggleFlangeSizeOptions();
+});
+
+// Handle form submission
 document.getElementById("pumpForm").addEventListener("submit", async (e) => {
     e.preventDefault(); // Prevent form submission and page reload
     console.log("Default prevented!"); // Debugging log
@@ -45,7 +122,8 @@ document.getElementById("pumpForm").addEventListener("submit", async (e) => {
 
     try {
         // Build the API URL
-        const apiUrl = new URL("https://aquflow-api-server-quote-c561945c3782.herokuapp.com/get_pump");
+        // const apiUrl = new URL("https://aquflow-api-server-quote-c561945c3782.herokuapp.com/get_pump");
+        const apiUrl = new URL("http://localhost:5000/get_pump");
         const params = {
             gph,
             psi,
@@ -65,7 +143,7 @@ document.getElementById("pumpForm").addEventListener("submit", async (e) => {
             suction_lift,
             ball_size,
             food_graded_oil,
-            user_email, // Include user's email in the API request
+            user_email,
         };
 
         // Add flange sizes to the API call if flange is "Yes"
