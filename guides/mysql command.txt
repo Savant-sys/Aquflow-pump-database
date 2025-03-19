@@ -5,3 +5,19 @@ mysql -u root -p
 
 password MySQL:
 .2zKuI]4#n@V
+
+
+
+// import MySQL db from excel
+use setup_pump_database script
+run it
+Go to Schemas and right click to refresh all
+Right Click on Tables under schema -> Table Data Import Wizard
+
+
+// export MySQL db
+go to administration on the right panel of MySQL
+Data Export
+Click the schema -> table
+Export to Dump Project Folder -> pick folder to import db on GoDaddy
+
