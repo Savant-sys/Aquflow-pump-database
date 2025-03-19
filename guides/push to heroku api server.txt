@@ -1,5 +1,5 @@
 git add .
-git commit -m "Added logo" 
+git commit -m "Changed prices" 
 git push heroku main
 
 
