@@ -2,9 +2,9 @@ git add .
 git commit -m "Changed prices" 
 git push heroku main
 
+// when pushed, grab 2 ip addresses for godaddy whitelist DB under remote MySQL on CCPanel
 
-// setup library installs
-pip freeze > requirements.txt
 
 // logging api server live
 heroku logs --tail
+

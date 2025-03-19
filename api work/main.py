@@ -325,7 +325,7 @@ def calculate_suction_lift_price(series, liquid_end_material, suction_lift):
             return "C/F"
     return 0
 
-def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None, 
+def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, hz=None, 
                    simplex_duplex=None, want_motor=None, motor_type=None, 
                    motor_power=None, spm=None, diaphragm=None, liquid_end_material=None, 
                    leak_detection=None, phase=None, degassing=None, flange=None, 
@@ -721,6 +721,7 @@ def find_best_pump(gph=None, lph=None, psi=None, bar=None, hz=None,
             "Motor_HP_DC_TEFC": pump.get("Motor_HP_DC_TEFC", "N/A"),
             "Motor_HP_DC_XPFC": pump.get("Motor_HP_DC_XPFC", "N/A"),
             "food_graded_oil_price": food_graded_oil_price,
+            "customer_name": customer_name,
         })
 
     # Inside the `find_best_pump` function, after selecting the best pump
@@ -902,7 +903,7 @@ def generate_pdf(pump_data, filename="pump_quote.pdf"):
         quote_form_text = Paragraph("<font size='7'>Quote Form 2311</font>", normal_style)
 
         # Create a 2x1 table for Customer information
-        customer_name = pump_data.get("customer_name", "John Smith")  # Default to "John Smith" if not provided
+        customer_name = pump_data.get("customer_name", "N/A")
         customer_table = Table([
             ["Customer"],  # First row
             [customer_name]  # Second row
@@ -1116,6 +1117,7 @@ def get_pump():
         print("Request Args:", request.args)
 
         # Get parameters from the request
+        customer_name = request.args.get('customer_name', type=str)
         gph = request.args.get('gph', type=float)
         psi = request.args.get('psi', type=float)
         hz = request.args.get('hz', type=int)
@@ -1140,6 +1142,7 @@ def get_pump():
 
         # Log the parsed parameters
         print("Parsed Parameters:", {
+            "customer_name" : customer_name,
             "gph": gph,
             "psi": psi,
             "hz": hz,
@@ -1165,7 +1168,7 @@ def get_pump():
 
         # Find the best pump
         result = find_best_pump(
-            gph, None, psi, None, hz, simplex_duplex, want_motor, motor_type, 
+            customer_name, gph, None, psi, None, hz, simplex_duplex, want_motor, motor_type, 
             motor_power, spm, diaphragm, liquid_end_material, leak_detection, 
             phase, degassing, flange, balls_type, suction_lift, ball_size, 
             suction_flange_size, discharge_flange_size, food_graded_oil
@@ -1186,16 +1189,16 @@ def get_pump():
             result["suction_lift"] = suction_lift
             result["ball_size"] = ball_size
             pdf_filename = generate_pdf(result)
-            result["pdf_url"] = f"/download_pdf/{pdf_filename}"
+            # result["pdf_url"] = f"/download_pdf/{pdf_filename}"
 
-            # # Send the PDF via email
-            # email_subject = "Your Pump Quote"
-            # email_body = "Please find attached the pump quote."
-            # to_emails = [user_email, "michaelkhoury744@gmail.com"]
-            # if send_email(to_emails, email_subject, email_body, pdf_filename):
-            #     result["email_status"] = "Email sent successfully"
-            # else:
-            #     result["email_status"] = "Failed to send email"
+            # Send the PDF via email
+            email_subject = "Your Pump Quote"
+            email_body = "Please find attached the pump quote."
+            to_emails = [user_email, "michaelkhoury744@gmail.com"]
+            if send_email(to_emails, email_subject, email_body, pdf_filename):
+                result["email_status"] = "Email sent successfully"
+            else:
+                result["email_status"] = "Failed to send email"
 
         return jsonify(result)
 
