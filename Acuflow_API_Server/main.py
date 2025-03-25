@@ -7,6 +7,7 @@ from reportlab.lib import colors
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, Image
 from datetime import datetime
+import requests
 import os
 
 app = Flask(__name__)
@@ -19,10 +20,10 @@ from email.mime.text import MIMEText
 from email import encoders
 
 # Email configuration
-SMTP_SERVER = 'smtp.bizmail.yahoo.com'
-SMTP_PORT = 465
-EMAIL_ADDRESS = 'quotes@acuflow.com'
-EMAIL_PASSWORD = 'xfvdcfnkfriprpol'
+SMTP_SERVER = os.getenv('SMTP_SERVER')
+SMTP_PORT = os.getenv('SMTP_PORT')
+EMAIL_ADDRESS = os.getenv('EMAIL_ADDRESS')
+EMAIL_PASSWORD = os.getenv('EMAIL_PASSWORD')
 
 def send_email(to_emails, subject, body, filename):
     msg = MIMEMultipart()
@@ -54,7 +55,35 @@ def send_email(to_emails, subject, body, filename):
     except Exception as e:
         print(f"Error sending email: {e}")
         return False
+    
+fixie_socks_host = os.getenv("FIXIE_SOCKS_HOST")  # e.g. "fixie:XYZ@speedway.usefixie.com:1080"
+if fixie_socks_host:
+    # Add the "socks5://" prefix manually
+    fixie_url = f"socks5://{fixie_socks_host}"
 
+    # Now set up requests proxies with the correct scheme
+    proxies = {
+        "http": fixie_url,
+        "https": fixie_url
+    }
+
+    try:
+        response = requests.get("https://ifconfig.me", proxies=proxies)
+        print("Your IP address through Fixie:", response.text)
+    except Exception as e:
+        print("Fixie Proxy Connection failed:", str(e))
+else:
+    print("No FIXIE_SOCKS_HOST found; not using Fixie proxy.")
+
+# Then proceed with your code...
+
+
+# Test the connection
+try:
+    response = requests.get("https://ifconfig.me")
+    print("Your IP address is:", response.text)
+except Exception as e:
+    print("Connection failed:", str(e))
 # MySQL Database Configuration
 # db_config = {
 #     "host": "localhost",
@@ -63,11 +92,12 @@ def send_email(to_emails, subject, body, filename):
 #     "database": "Local_Pump_Info"
 # }
 
+# Database configuration
 db_config = {
-    "host": "132.148.249.113",
-    "user": "quote",
-    "password": ".2zKuI]4#n@V",
-    "database": "Quotes_Database_3_13_25"
+    "host": os.getenv("DB_HOST"),
+    "user": os.getenv("DB_USER"),
+    "password": os.getenv("DB_PASSWORD"),
+    "database": os.getenv("DB_NAME")
 }
 
 def get_flange_size_id(psi):
@@ -1192,16 +1222,16 @@ def get_pump():
             result["suction_lift"] = suction_lift
             result["ball_size"] = ball_size
             pdf_filename = generate_pdf(result)
-            result["pdf_url"] = f"/download_pdf/{pdf_filename}"
+            # result["pdf_url"] = f"/download_pdf/{pdf_filename}"
 
-            # # Send the PDF via email
-            # email_subject = "Your Pump Quote"
-            # email_body = "Please find attached the pump quote."
-            # to_emails = [user_email, "quotes@acuflow.com"]
-            # if send_email(to_emails, email_subject, email_body, pdf_filename):
-            #     result["email_status"] = "Email sent successfully"
-            # else:
-            #     result["email_status"] = "Failed to send email"
+            # Send the PDF via email
+            email_subject = "Your Pump Quote"
+            email_body = "Please find attached the pump quote."
+            to_emails = [user_email, "quotes@acuflow.com"]
+            if send_email(to_emails, email_subject, email_body, pdf_filename):
+                result["email_status"] = "Email sent successfully"
+            else:
+                result["email_status"] = "Failed to send email"
 
         return jsonify(result)
 
@@ -1230,4 +1260,5 @@ def test_db():
         return jsonify({"status": "error", "message": str(e)}), 500
 
 if __name__ == '__main__':
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    port = int(os.environ.get("PORT", 5000))  # Use Heroku's $PORT or default to 5000
+    app.run(host="0.0.0.0", port=port, debug=False)  # Disable debug mode for production
