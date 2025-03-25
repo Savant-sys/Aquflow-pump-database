@@ -1,6 +1,6 @@
 git add .
-git commit -m "Update customer name" 
-git push heroku main
+git commit -m "update ip address socks" 
+git push heroku master
 
 // when pushed, grab 2 ip addresses for godaddy whitelist DB under remote MySQL on CCPanel
 
