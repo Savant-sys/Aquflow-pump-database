@@ -333,7 +333,7 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
                    motor_power=None, spm=None, diaphragm=None, liquid_end_material=None, 
                    leak_detection=None, phase=None, degassing=None, flange=None, 
                    balls_type=None, suction_lift=None, ball_size=None, suction_flange_size=None, 
-                   discharge_flange_size=None, food_graded_oil=None):
+                   discharge_flange_size=None, food_graded_oil=None, spare_parts_kit=None):
     # Ensure either GPH or LPH is provided
     if gph is None and lph is None:
         return {"error": "Either GPH or LPH is required. Please provide one."}
@@ -1151,6 +1151,7 @@ def get_pump():
         discharge_flange_size = request.args.get('discharge_flange_size', type=str)
         food_graded_oil = request.args.get('food_graded_oil', type=str)
         user_email = request.args.get('user_email', type=str)
+        spare_parts_kit = request.args.get('spare_parts_kit', type=str)
 
         # Log the parsed parameters
         print("Parsed Parameters:", {
@@ -1175,7 +1176,8 @@ def get_pump():
             "suction_flange_size": suction_flange_size,
             "discharge_flange_size": discharge_flange_size,
             "food_graded_oil": food_graded_oil,
-            "user_email": user_email
+            "user_email": user_email,
+            "spare_parts_kit": spare_parts_kit
         })
 
         # Find the best pump
@@ -1183,7 +1185,7 @@ def get_pump():
             customer_name, gph, None, psi, None, hz, simplex_duplex, want_motor, motor_type, 
             motor_power, spm, diaphragm, liquid_end_material, leak_detection, 
             phase, degassing, flange, balls_type, suction_lift, ball_size, 
-            suction_flange_size, discharge_flange_size, food_graded_oil
+            suction_flange_size, discharge_flange_size, food_graded_oil, spare_parts_kit
         )
 
         # Log the result
