@@ -326,7 +326,7 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
                    motor_power=None, spm=None, diaphragm=None, liquid_end_material=None, 
                    leak_detection=None, phase=None, degassing=None, flange=None, 
                    balls_type=None, suction_lift=None, ball_size=None, suction_flange_size=None, 
-                   discharge_flange_size=None, food_graded_oil=None, spare_parts_kit=None):
+                   discharge_flange_size=None, food_graded_oil=None, spare_parts_kit=None, back_pressure_valve=None):
     # Ensure either GPH or LPH is provided
     if gph is None and lph is None:
         return {"error": "Either GPH or LPH is required. Please provide one."}
@@ -780,6 +780,27 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
             best_pump["spare_parts_kit_price"] = 0
             best_pump["spare_parts_kit_message"] = "Not included"
 
+        # --- Back Pressure Valve ---
+        back_pressure_valve_price = pump.get("Back_Pressure_Valve", 0)
+        connection_size = pump.get("Connection_Size", "N/A")
+        max_psi = pump.get("Max_Pressure_PSI", "N/A")
+
+        if back_pressure_valve == "Yes":
+            if back_pressure_valve_price in [None, 0, "0"]:
+                best_pump["back_pressure_valve_price"] = "C/F"
+                best_pump["back_pressure_valve_message"] = "C/F (Back Pressure Valve)"
+                optional_accessories_notes.append("C/F (Back Pressure Valve)")
+            else:
+                best_pump["back_pressure_valve_price"] = math.ceil(float(back_pressure_valve_price))
+                best_pump["back_pressure_valve_message"] = (
+                    f"Back Pressure Valve in {liquid_end_material} with {connection_size}. "
+                    f"Max Pressure is {max_psi} PSI."
+                )
+                optional_accessories_total_price += best_pump["back_pressure_valve_price"]
+        else:
+            best_pump["back_pressure_valve_price"] = 0
+            best_pump["back_pressure_valve_message"] = "Not included"
+
         # Save for PDF use
         best_pump["optional_accessories_total_price"] = optional_accessories_total_price
         best_pump["optional_accessories_notes"] = optional_accessories_notes
@@ -906,6 +927,9 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
 
         spare_parts_kit_price = None
         spare_parts_kit_message = None
+        back_pressure_valve_price = None
+        back_pressure_valve_message = None
+
         if spare_parts_kit == "Yes":
             if spare_parts_kit_price_value == 0:
                 spare_parts_kit_price = "C/F"
@@ -917,7 +941,6 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
             if spare_parts_kit_price != 0:
                 spare_parts_kit_price = math.ceil(spare_parts_kit_price)
                 if isinstance(best_pump["total_price"], str):
-                    # If total price is already a string (e.g., "C/F"), append the spare parts kit price
                     best_pump["total_price"] = f"{best_pump['total_price']} + ${spare_parts_kit_price}"
                 else:
                     best_pump["total_price"] += spare_parts_kit_price
@@ -930,6 +953,35 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
         # Add spare parts kit details to the best pump
         best_pump["spare_parts_kit"] = spare_parts_kit
         best_pump["spare_parts_kit_message"] = spare_parts_kit_message
+
+        # --- Back Pressure Valve (second optional accessory) ---
+        if back_pressure_valve == "Yes":
+            conn = mysql.connector.connect(**db_config)
+            cursor = conn.cursor(dictionary=True)
+            cursor.execute("SELECT Back_Pressure_Valve, Connection_Size, Max_Pressure_PSI FROM pumps WHERE Model = %s", (best_pump["model"],))
+            bp_data = cursor.fetchone()
+            cursor.close()
+            conn.close()
+
+            if bp_data:
+                bp_price = bp_data["Back_Pressure_Valve"]
+                if bp_price in [0, "0", None]:
+                    back_pressure_valve_price = "C/F"
+                    back_pressure_valve_message = "C/F (Back Pressure Valve)"
+                else:
+                    back_pressure_valve_price = math.ceil(float(bp_price))
+                    back_pressure_valve_message = (
+                        f"Back Pressure Valve in {best_pump['liquid_end_material']} with {bp_data['Connection_Size']}. Max Pressure is {psi} PSI"
+                    )
+
+                    if isinstance(best_pump["total_price"], str):
+                        best_pump["total_price"] = f"{best_pump['total_price']} + ${back_pressure_valve_price}"
+                    else:
+                        best_pump["total_price"] += back_pressure_valve_price
+
+        best_pump["back_pressure_valve"] = request.args.get("back_pressure_valve")
+        best_pump["back_pressure_valve_price"] = back_pressure_valve_price
+        best_pump["back_pressure_valve_message"] = back_pressure_valve_message
 
         return best_pump
     else:
@@ -1111,6 +1163,12 @@ def generate_pdf(pump_data, filename="pump_quote.pdf"):
         else:
             description += " Spare parts kit is C/F (call for pricing)."
 
+    if pump_data.get("back_pressure_valve", "").lower() == "yes":
+        if isinstance(pump_data.get("back_pressure_valve_price"), (int, float)):
+            description += f" Includes {pump_data.get('back_pressure_valve_message', '')}."
+        else:
+            description += " Back Pressure Valve is C/F (call for pricing)."
+
     if additional_features:
         description += " The pump also includes the following features: " + ", ".join(additional_features) + "."
 
@@ -1143,6 +1201,11 @@ def generate_pdf(pump_data, filename="pump_quote.pdf"):
             pump_specs.append(["Spare Parts Kit", f"${pump_data['spare_parts_kit_price']}"])
         else:
             pump_specs.append(["Spare Parts Kit", "C/F"])
+    if pump_data.get("back_pressure_valve", "").lower() == "yes":
+        if isinstance(pump_data.get("back_pressure_valve_price"), (int, float)):
+            pump_specs.append(["Back Pressure Valve", f"${pump_data['back_pressure_valve_price']}"])
+        else:
+            pump_specs.append(["Back Pressure Valve", "C/F"])
 
     # Remove empty rows
     pump_specs = [row for row in pump_specs if row]
@@ -1260,6 +1323,7 @@ def get_pump():
         food_graded_oil = request.args.get('food_graded_oil', type=str)
         user_email = request.args.get('user_email', type=str)
         spare_parts_kit = request.args.get('spare_parts_kit', type=str)
+        back_pressure_valve = request.args.get('back_pressure_valve', type=str)
 
         # Log the parsed parameters
         print("Parsed Parameters:", {
@@ -1285,7 +1349,8 @@ def get_pump():
             "discharge_flange_size": discharge_flange_size,
             "food_graded_oil": food_graded_oil,
             "user_email": user_email,
-            "spare_parts_kit": spare_parts_kit
+            "spare_parts_kit": spare_parts_kit,
+            "back_pressure_valve": back_pressure_valve
         })
 
         # Find the best pump
@@ -1311,7 +1376,8 @@ def get_pump():
             suction_flange_size, 
             discharge_flange_size, 
             food_graded_oil, 
-            spare_parts_kit
+            spare_parts_kit,
+            back_pressure_valve
         )
 
         # Log the result

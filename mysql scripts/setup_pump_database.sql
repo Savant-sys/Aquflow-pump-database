@@ -42,5 +42,8 @@ CREATE TABLE `pumps` (
      `Liq_Outlet` VARCHAR(255) NULL,
      `Spare_Parts_Kit` VARCHAR(255) NULL,
      `Spare_Parts_Kit_Price` DECIMAL(10,4) NULL,
-     `Spare_Parts_Kit_Info` VARCHAR(255) NULL
+     `Spare_Parts_Kit_Info` VARCHAR(255) NULL,
+     `Back_Pressure_Valve_150` DECIMAL(10,4) NULL,
+     `Back_Pressure_Valve_750` DECIMAL(10,4) NULL,
+     `Connection_Size` VARCHAR(255) NULL
 );
