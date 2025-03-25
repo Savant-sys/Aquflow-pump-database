@@ -56,19 +56,19 @@ def send_email(to_emails, subject, body, filename):
         return False
 
 # MySQL Database Configuration
-# db_config = {
-#     "host": "localhost",
-#     "user": "root",
-#     "password": "1234",
-#     "database": "Local_Pump_Info"
-# }
-
 db_config = {
-    "host": "132.148.249.113",
-    "user": "quote",
-    "password": ".2zKuI]4#n@V",
-    "database": "Quotes_Database_3_13_25"
+    "host": "localhost",
+    "user": "root",
+    "password": "1234",
+    "database": "Local_Pump_Info"
 }
+
+# db_config = {
+#     "host": "132.148.249.113",
+#     "user": "quote",
+#     "password": ".2zKuI]4#n@V",
+#     "database": "Quotes_Database_3_13_25"
+# }
 
 def get_flange_size_id(psi):
     if psi < 290:

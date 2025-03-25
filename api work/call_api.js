@@ -114,7 +114,8 @@ document.getElementById("pumpForm").addEventListener("submit", async (e) => {
 
     try {
         // Call the API
-        const apiUrl = new URL("https://www.acuflow.com/api-proxy.php");
+        // const apiUrl = new URL("https://www.acuflow.com/api-proxy.php");
+        const apiUrl = new URL("http://localhost:5000/get_pump")
         Object.keys(formData).forEach(key => apiUrl.searchParams.append(key, formData[key]));
         
         console.log("API URL:", apiUrl.toString()); // Debugging line
