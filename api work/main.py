@@ -605,13 +605,22 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
             else:
                 motor_price = float(motor_price_value) if motor_price_value is not None else 0
 
-        # Determine diaphragm price
+        # Determine diaphragm price - skip if price is 0
         if diaphragm.lower() == "viton":
-            diaphragm_price = float(pump["Viton"]) if pump["Viton"] is not None else 0
+            viton_price = pump["Viton"]
+            if viton_price is None or float(viton_price) == 0:
+                continue  # Skip this pump if Viton price is 0 or None
+            diaphragm_price = float(viton_price)
         elif diaphragm.lower() == "hypalon":
-            diaphragm_price = float(pump["Hypalon"]) if pump["Hypalon"] is not None else 0
+            hypalon_price = pump["Hypalon"]
+            if hypalon_price is None or float(hypalon_price) == 0:
+                continue  # Skip this pump if Hypalon price is 0 or None
+            diaphragm_price = float(hypalon_price)
         elif diaphragm.lower() == "epdm":
-            diaphragm_price = float(pump["EPDM"]) if pump["EPDM"] is not None else 0
+            epdm_price = pump["EPDM"]
+            if epdm_price is None or float(epdm_price) == 0:
+                continue  # Skip this pump if EPDM price is 0 or None
+            diaphragm_price = float(epdm_price)
         elif diaphragm.lower() != "ptfe":
             continue
 
@@ -638,7 +647,7 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
                 food_graded_oil_price = 44
 
         # Updated total price calculation
-        total_price = pump_price  # Always include the pump price
+        total_price = pump_price
 
         # Add degassing price if applicable
         if degassing.lower() == "yes":
