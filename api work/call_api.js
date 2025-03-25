@@ -104,6 +104,7 @@ document.getElementById("pumpForm").addEventListener("submit", async (e) => {
         ball_size: document.getElementById("ball_size").value,
         food_graded_oil: document.getElementById("food_graded_oil").value,
         user_email: document.getElementById("user_email").value,
+        spare_parts_kit: document.getElementById("spare_parts_kit").value,
     };
 
     // Add flange sizes if applicable
@@ -145,6 +146,7 @@ document.getElementById("pumpForm").addEventListener("submit", async (e) => {
                 <div style="margin-bottom: 15px;">
                     <p><strong>Model:</strong> ${data.model}</p>
                     <p><strong>Series:</strong> ${data.series}</p>
+                    <p><strong>Spare Parts Kit:</strong> ${data.spare_parts_kit || 'No'} ${data.spare_parts_kit === 'Yes' ? `(${data.spare_parts_kit_price === 'C/F' ? 'C/F' : '$' + data.spare_parts_kit_price})` : ''}</p>
                     <p><strong>Total Price:</strong> $${data.total_price}</p>
                 </div>
                 <div style="margin-top: 10px;">
