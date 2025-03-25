@@ -958,18 +958,23 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
         if back_pressure_valve == "Yes":
             conn = mysql.connector.connect(**db_config)
             cursor = conn.cursor(dictionary=True)
-            cursor.execute("SELECT Back_Pressure_Valve, Connection_Size, Max_Pressure_PSI FROM pumps WHERE Model = %s", (best_pump["model"],))
+            cursor.execute("SELECT Back_Pressure_Valve_150, Back_Pressure_Valve_750, Connection_Size FROM pumps WHERE Model = %s", (best_pump["model"],))
             bp_data = cursor.fetchone()
             cursor.close()
             conn.close()
 
+            selected_bp_price = None
             if bp_data:
-                bp_price = bp_data["Back_Pressure_Valve"]
-                if bp_price in [0, "0", None]:
+                if psi <= 150:
+                    selected_bp_price = bp_data["Back_Pressure_Valve_150"]
+                elif psi <= 750:
+                    selected_bp_price = bp_data["Back_Pressure_Valve_750"]
+
+                if selected_bp_price in [None, 0, "0", "C/F"]:
                     back_pressure_valve_price = "C/F"
                     back_pressure_valve_message = "C/F (Back Pressure Valve)"
                 else:
-                    back_pressure_valve_price = math.ceil(float(bp_price))
+                    back_pressure_valve_price = math.ceil(float(selected_bp_price))
                     back_pressure_valve_message = (
                         f"Back Pressure Valve in {best_pump['liquid_end_material']} with {bp_data['Connection_Size']}. Max Pressure is {psi} PSI"
                     )
@@ -979,7 +984,7 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
                     else:
                         best_pump["total_price"] += back_pressure_valve_price
 
-        best_pump["back_pressure_valve"] = request.args.get("back_pressure_valve")
+        best_pump["back_pressure_valve"] = back_pressure_valve
         best_pump["back_pressure_valve_price"] = back_pressure_valve_price
         best_pump["back_pressure_valve_message"] = back_pressure_valve_message
 
