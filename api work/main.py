@@ -63,13 +63,6 @@ db_config = {
     "database": "Local_Pump_Info"
 }
 
-# db_config = {
-#     "host": "132.148.249.113",
-#     "user": "quote",
-#     "password": ".2zKuI]4#n@V",
-#     "database": "Quotes_Database_3_13_25"
-# }
-
 def get_flange_size_id(psi):
     if psi < 290:
         return 150
@@ -579,7 +572,9 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
         diaphragm_price = 0
         leak_detection_price = 0
         flange_price = 0
-
+        spare_parts_kit_price_value = float(pump["Spare_Parts_Kit_Price"]) if pump["Spare_Parts_Kit_Price"] not in [None, "0"] else 0
+        spare_parts_kit_info = pump.get("Spare_Parts_Kit_Info")
+        
         # Determine correct motor price column
         if want_motor == "yes":
             if motor_type == "TEFC" and motor_power == "AC":
@@ -734,6 +729,8 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
             "Motor_HP_DC_XPFC": pump.get("Motor_HP_DC_XPFC", "N/A"),
             "food_graded_oil_price": food_graded_oil_price,
             "customer_name": customer_name,
+            "spare_parts_kit_price_value": spare_parts_kit_price_value,
+            "spare_parts_kit_info": spare_parts_kit_info,
         })
 
     # Inside the `find_best_pump` function, after selecting the best pump
@@ -758,6 +755,62 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
         best_pump["discharge_flange_size"] = discharge_flange_size
         best_pump["food_graded_oil"] = food_graded_oil
         best_pump["food_graded_oil_price"] = food_graded_oil_price
+
+        # Store base price (without optional accessories)
+        if isinstance(best_pump["total_price"], (int, float)):
+            best_pump["base_price"] = best_pump["total_price"]
+        else:
+            best_pump["base_price"] = "C/F"  # If base price already has C/F or text
+
+        # Initialize optional accessories price
+        optional_accessories_total_price = 0
+        optional_accessories_notes = []
+
+        # --- Spare Parts Kit (first optional accessory) ---
+        if spare_parts_kit == "Yes":
+            if best_pump["spare_parts_kit_price_value"] == 0:
+                best_pump["spare_parts_kit_price"] = "C/F"
+                best_pump["spare_parts_kit_message"] = "C/F (Spare Parts Kit)"
+                optional_accessories_notes.append("C/F (Spare Parts Kit)")
+            else:
+                best_pump["spare_parts_kit_price"] = math.ceil(best_pump["spare_parts_kit_price_value"])
+                best_pump["spare_parts_kit_message"] = best_pump["spare_parts_kit_info"]
+                optional_accessories_total_price += best_pump["spare_parts_kit_price"]
+        else:
+            best_pump["spare_parts_kit_price"] = 0
+            best_pump["spare_parts_kit_message"] = "Not included"
+
+        # Save for PDF use
+        best_pump["optional_accessories_total_price"] = optional_accessories_total_price
+        best_pump["optional_accessories_notes"] = optional_accessories_notes
+
+        # Final total (base + optional)
+        if isinstance(best_pump["base_price"], (int, float)) and isinstance(optional_accessories_total_price, (int, float)):
+            best_pump["final_total_price"] = best_pump["base_price"] + optional_accessories_total_price
+        elif isinstance(best_pump["base_price"], str):
+            best_pump["final_total_price"] = f"{best_pump['base_price']} + {optional_accessories_notes[0] if optional_accessories_notes else ''}"
+        else:
+            best_pump["final_total_price"] = "N/A"
+
+
+        # Calculate Final Total Price (base + spare parts kit)
+        if isinstance(best_pump["spare_parts_kit_price"], (int, float)):
+            best_pump["final_total_price"] = best_pump["base_price"] + best_pump["spare_parts_kit_price"]
+        else:
+            best_pump["final_total_price"] = f"{best_pump['base_price']} + {best_pump['spare_parts_kit_price']}"
+
+        # Later, when updating the total price with spare parts kit:
+        if spare_parts_kit == "Yes":
+            if best_pump["spare_parts_kit_price"] == "C/F":
+                if isinstance(best_pump["total_price"], str):
+                    best_pump["total_price"] = f"{best_pump['total_price']} + C/F (Spare Parts Kit)"
+                else:
+                    best_pump["total_price"] = f"{best_pump['total_price']} + C/F (Spare Parts Kit)"
+            elif best_pump["spare_parts_kit_price"] > 0:
+                if isinstance(best_pump["total_price"], str):
+                    best_pump["total_price"] = f"{best_pump['total_price']} + ${best_pump['spare_parts_kit_price']}"
+                else:
+                    best_pump["total_price"] += best_pump["spare_parts_kit_price"]
 
         # Add flange price AFTER choosing the cheapest pump
         flange_price = 0
@@ -850,6 +903,33 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
         # Add flange adaptor details to the best pump
         best_pump["flange_adaptor_price"] = flange_adaptor_price
         best_pump["flange_adaptor_message"] = flange_adaptor_message
+
+        spare_parts_kit_price = None
+        spare_parts_kit_message = None
+        if spare_parts_kit == "Yes":
+            if spare_parts_kit_price_value == 0:
+                spare_parts_kit_price = "C/F"
+                spare_parts_kit_message = "C/F (Spare Parts Kit)"
+            else:
+                spare_parts_kit_price = float(spare_parts_kit_price_value)
+
+            # Update total price with spare parts kit price (if applicable)
+            if spare_parts_kit_price != 0:
+                spare_parts_kit_price = math.ceil(spare_parts_kit_price)
+                if isinstance(best_pump["total_price"], str):
+                    # If total price is already a string (e.g., "C/F"), append the spare parts kit price
+                    best_pump["total_price"] = f"{best_pump['total_price']} + ${spare_parts_kit_price}"
+                else:
+                    best_pump["total_price"] += spare_parts_kit_price
+            elif spare_parts_kit_price == "C/F":
+                if isinstance(best_pump["total_price"], str):
+                    best_pump["total_price"] = f"{best_pump['total_price']} + C/F (Spare Parts Kit)"
+                else:
+                    best_pump["total_price"] = f"{best_pump['total_price']} + C/F (Spare Parts Kit)"
+
+        # Add spare parts kit details to the best pump
+        best_pump["spare_parts_kit"] = spare_parts_kit
+        best_pump["spare_parts_kit_message"] = spare_parts_kit_message
 
         return best_pump
     else:
@@ -1025,6 +1105,11 @@ def generate_pdf(pump_data, filename="pump_quote.pdf"):
         additional_features.append("food-graded oil")
     if pump_data.get("suction_lift", "").lower() == "yes":
         additional_features.append("suction lift")
+    if pump_data.get("spare_parts_kit", "").lower() == "yes":
+        if isinstance(pump_data.get("spare_parts_kit_price"), (int, float)):
+            description += f" Includes Spare Parts Kit ({pump_data.get('spare_parts_kit_info', '')})."
+        else:
+            description += " Spare parts kit is C/F (call for pricing)."
 
     if additional_features:
         description += " The pump also includes the following features: " + ", ".join(additional_features) + "."
@@ -1053,6 +1138,11 @@ def generate_pdf(pump_data, filename="pump_quote.pdf"):
         pump_specs.append(["Flange", "Yes"])
     if pump_data.get("suction_lift", "").lower() == "yes":
         pump_specs.append(["Suction Lift", "Yes"])
+    if pump_data.get("spare_parts_kit", "").lower() == "yes":
+        if isinstance(pump_data.get("spare_parts_kit_price"), (int, float)):
+            pump_specs.append(["Spare Parts Kit", f"${pump_data['spare_parts_kit_price']}"])
+        else:
+            pump_specs.append(["Spare Parts Kit", "C/F"])
 
     # Remove empty rows
     pump_specs = [row for row in pump_specs if row]
@@ -1069,22 +1159,40 @@ def generate_pdf(pump_data, filename="pump_quote.pdf"):
     elements.append(table)
     elements.append(Spacer(1, 20))
 
-    # ✅ Total Price
-    total_price = pump_data.get("total_price", "N/A")
-    if total_price != "N/A":  # Only add total price if it's not "N/A"
-        total_price_table = Table([
-            ["Total Price", f"${total_price}" if isinstance(total_price, (int, float)) else total_price]
-        ], colWidths=[200, 200])
-        total_price_table.setStyle(TableStyle([
-            ("BACKGROUND", (0, 0), (-1, 0), colors.lightgrey),
-            ("TEXTCOLOR", (0, 0), (-1, 0), colors.black),
-            ("ALIGN", (0, 0), (-1, -1), "CENTER"),
-            ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-            ("BOTTOMPADDING", (0, 0), (-1, 0), 12),
-            ("GRID", (0, 0), (-1, -1), 1, colors.black)
-        ]))
-        elements.append(total_price_table)
-        elements.append(Spacer(1, 5))
+    # ✅ Add Base Price, Optional Accessories, and Final Total
+    base_price = pump_data.get("base_price", "N/A")
+    optional_price = pump_data.get("optional_accessories_total_price", 0)
+    optional_notes = pump_data.get("optional_accessories_notes", [])
+    final_price = pump_data.get("final_total_price", "N/A")
+
+    # Format optional price if it's not numeric
+    optional_price_display = (
+        f"${optional_price}" if isinstance(optional_price, (int, float)) else
+        " + ".join(optional_notes) if optional_notes else "N/A"
+    )
+
+    # Format final total price
+    final_price_display = (
+        f"${final_price}" if isinstance(final_price, (int, float)) else final_price
+    )
+
+    price_table_data = [
+        ["Base Pump Price", f"${base_price}" if isinstance(base_price, (int, float)) else base_price],
+        ["Optional Accessories", optional_price_display],
+        ["Final Total Price", final_price_display]
+    ]
+
+    price_table = Table(price_table_data, colWidths=[200, 200])
+    price_table.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, 0), colors.lightgrey),
+        ("TEXTCOLOR", (0, 0), (-1, 0), colors.black),
+        ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+        ("BOTTOMPADDING", (0, 0), (-1, 0), 12),
+        ("GRID", (0, 0), (-1, -1), 1, colors.black)
+    ]))
+    elements.append(price_table)
+    elements.append(Spacer(1, 10))
 
     # ✅ Footer Notes
     elements.append(Paragraph("<b>Notes:</b>", footer_style))  # Add "Notes:" section
@@ -1182,10 +1290,28 @@ def get_pump():
 
         # Find the best pump
         result = find_best_pump(
-            customer_name, gph, None, psi, None, hz, simplex_duplex, want_motor, motor_type, 
-            motor_power, spm, diaphragm, liquid_end_material, leak_detection, 
-            phase, degassing, flange, balls_type, suction_lift, ball_size, 
-            suction_flange_size, discharge_flange_size, food_graded_oil, spare_parts_kit
+            customer_name, 
+            gph, 
+            None, 
+            psi, 
+            None, 
+            hz, 
+            simplex_duplex, 
+            want_motor, 
+            motor_type, 
+            motor_power, 
+            spm, 
+            diaphragm, 
+            liquid_end_material, 
+            leak_detection, 
+            phase, degassing, 
+            flange, balls_type, 
+            suction_lift, 
+            ball_size, 
+            suction_flange_size, 
+            discharge_flange_size, 
+            food_graded_oil, 
+            spare_parts_kit
         )
 
         # Log the result
