@@ -106,6 +106,7 @@ document.getElementById("pumpForm").addEventListener("submit", async (e) => {
         user_email: document.getElementById("user_email").value,
         spare_parts_kit: document.getElementById("spare_parts_kit").value,
         back_pressure_valve: document.getElementById("back_pressure_valve").value,
+        pressure_relief_valve: document.getElementById("pressure_relief_valve").value,
     };
 
     // Add flange sizes if applicable
@@ -183,6 +184,10 @@ document.getElementById("pumpForm").addEventListener("submit", async (e) => {
                 }</p>
                 <p><strong>Back Pressure Valve:</strong> ${data.back_pressure_valve || 'No'} ${data.back_pressure_valve === 'Yes'
                     ? `(${data.back_pressure_valve_price === 'C/F' ? 'C/F' : '$' + data.back_pressure_valve_price})`
+                    : ''
+                }</p>
+                <p><strong>Pressure Relief Valve:</strong> ${data.pressure_relief_valve || 'No'} ${data.pressure_relief_valve === 'Yes'
+                    ? `(${data.pressure_relief_valve_price === 'C/F' ? 'C/F' : '$' + data.pressure_relief_valve_price})`
                     : ''
                 }</p>
         
