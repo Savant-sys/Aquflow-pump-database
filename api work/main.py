@@ -782,25 +782,39 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
             best_pump["spare_parts_kit_message"] = "Not included"
 
         # --- Back Pressure Valve ---
-        back_pressure_valve_price = pump.get("Back_Pressure_Valve", 0)
-        connection_size = pump.get("Connection_Size", "N/A")
-        max_psi = pump.get("Max_Pressure_PSI", "N/A")
-
         if back_pressure_valve == "Yes":
-            if back_pressure_valve_price in [None, 0, "0"]:
+            conn = mysql.connector.connect(**db_config)
+            cursor = conn.cursor(dictionary=True)
+            cursor.execute("SELECT Back_Pressure_Valve_150, Back_Pressure_Valve_750, Connection_Size FROM pumps WHERE Model = %s", (best_pump["OG_Model"],))
+            bp_data = cursor.fetchone()
+            cursor.close()
+            conn.close()
+
+            selected_bp_price = None
+            connection_size = "N/A"
+
+            if bp_data:
+                connection_size = bp_data.get("Connection_Size", "N/A")
+
+                if psi <= 150:
+                    selected_bp_price = bp_data.get("Back_Pressure_Valve_150")
+                elif psi <= 750:
+                    selected_bp_price = bp_data.get("Back_Pressure_Valve_750")
+
+            if selected_bp_price in [None, 0, "0", "C/F"]:
                 best_pump["back_pressure_valve_price"] = "C/F"
                 best_pump["back_pressure_valve_message"] = "C/F (Back Pressure Valve)"
                 optional_accessories_notes.append("C/F (Back Pressure Valve)")
             else:
-                best_pump["back_pressure_valve_price"] = math.ceil(float(back_pressure_valve_price))
+                best_pump["back_pressure_valve_price"] = math.ceil(float(selected_bp_price))
                 best_pump["back_pressure_valve_message"] = (
-                    f"Back Pressure Valve in {liquid_end_material} with {connection_size}. "
-                    f"Max Pressure is {max_psi} PSI."
+                    f"Back Pressure Valve in {liquid_end_material} with {connection_size}. Max Pressure is {psi} PSI."
                 )
                 optional_accessories_total_price += best_pump["back_pressure_valve_price"]
         else:
             best_pump["back_pressure_valve_price"] = 0
             best_pump["back_pressure_valve_message"] = "Not included"
+
 
         # Save for PDF use
         best_pump["optional_accessories_total_price"] = optional_accessories_total_price
