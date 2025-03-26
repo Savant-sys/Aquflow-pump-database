@@ -138,11 +138,41 @@ document.getElementById("pumpForm").addEventListener("submit", async (e) => {
             console.error("Result content div not found!"); // Debugging line
             return;
         }
-
+        
         if (data.error) {
             console.error("API Error:", data.error); // Debugging line
             resultContent.innerHTML = `<p style="color: red;">${data.error}</p>`;
         } else {
+            // Final Total Price: Extract C/F from base and optional accessories
+            const basePrice = data.base_price;
+            const optionalNotes = data.optional_accessories_notes || [];
+
+            let cfNotes = [];
+
+            // Parse C/F notes from base_price if it's a string
+            if (typeof basePrice === "string" && basePrice.includes("C/F")) {
+                const baseCfMatches = basePrice.match(/C\/F\s*\(([^)]+)\)/g);
+                if (baseCfMatches) {
+                    cfNotes.push(...baseCfMatches.map(note => note.match(/\(([^)]+)\)/)[1]));
+                }
+            }
+
+            // Collect C/F notes from optional accessories
+            optionalNotes.forEach(note => {
+                const match = note.match(/C\/F\s*\(([^)]+)\)/);
+                if (match) {
+                    cfNotes.push(match[1]);
+                }
+            });
+
+            // Combine notes into one C/F string
+            let cfText = cfNotes.length > 0 ? ` + C/F (${cfNotes.join(" + ")})` : "";
+
+            // Format the final total price display
+            const formattedFinalTotal = typeof data.final_total_price === 'number'
+                ? `$${data.final_total_price}${cfText}`
+                : (data.final_total_price.startsWith('$') ? data.final_total_price : `$${data.final_total_price}`) + cfText;
+
             resultContent.innerHTML = `
             <div style="margin-bottom: 15px;">
                 <p><strong>Model:</strong> ${data.model}</p>
@@ -156,28 +186,27 @@ document.getElementById("pumpForm").addEventListener("submit", async (e) => {
                     : ''
                 }</p>
         
-                <p><strong>Base Pump Price:</strong> ${typeof data.base_price === 'number'
-                    ? `$${data.base_price}`
-                    : data.base_price
+                <p><strong>Base Pump Price:</strong> ${
+                    typeof data.base_price === 'number'
+                        ? `$${data.base_price}`
+                        : data.base_price // already includes C/F if needed
                 }</p>
         
-                <p><strong>Optional Accessories:</strong> ${typeof data.optional_accessories_total_price === 'number'
-                    ? `$${data.optional_accessories_total_price}`
-                    : (data.optional_accessories_notes || []).join(" + ")
+                <p><strong>Optional Accessories:</strong> ${
+                    typeof data.optional_accessories_total_price === 'number'
+                        ? `$${data.optional_accessories_total_price}${(data.optional_accessories_notes || []).length ? ' + ' + data.optional_accessories_notes.join(' + ') : ''}`
+                        : (data.optional_accessories_total_price || data.optional_accessories_notes || []).join(" + ")
                 }</p>
         
-                <p><strong>Final Total Price:</strong> ${typeof data.final_total_price === 'number'
-                    ? `$${data.final_total_price}`
-                    : data.final_total_price
-                }</p>
+                <p><strong>Final Total Price:</strong> ${formattedFinalTotal}</p>
             </div>
             <div style="margin-top: 10px;">
                 <p>
-                    <strong>${data.email_status || ''}</strong> The PDF has been created and sent to <strong>${formData.user_email}</strong>.
-                    If you haven’t received the PDF, please call us, contact our live chat support, or email us for assistance.
+                    <strong>${data.email_status || ''}</strong> A PDF copy was sent to <strong>${formData.user_email}</strong>.
+                    If you don’t receive it soon, give us a call, use live chat, or email us for assistance.
                 </p>
             </div>
-        `;
+        `;        
 
         }
     } catch (error) {

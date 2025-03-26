@@ -820,13 +820,37 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
         best_pump["optional_accessories_total_price"] = optional_accessories_total_price
         best_pump["optional_accessories_notes"] = optional_accessories_notes
 
-        # Final total (base + optional)
+        # Combine C/F notes from base_price and optional accessories
+        base_annotations = []
+        if isinstance(best_pump["total_price"], str) and "C/F" in best_pump["total_price"]:
+            if "Motor" in best_pump["total_price"]:
+                base_annotations.append("C/F (Motor)")
+            if "Flange" in best_pump["total_price"]:
+                base_annotations.append("C/F (Flange)")
+            if "HP" in best_pump["total_price"]:
+                base_annotations.append("C/F (HP)")
+            if "Suction Lift" in best_pump["total_price"]:
+                base_annotations.append("C/F (Suction Lift)")
+            if "Flange Adaptor" in best_pump["total_price"]:
+                base_annotations.append("C/F (Flange Adaptor)")
+
+        # Combine all C/F notes
+        all_cf_notes = base_annotations + optional_accessories_notes
+
+        # Final total price formatting
         if isinstance(best_pump["base_price"], (int, float)) and isinstance(optional_accessories_total_price, (int, float)):
-            best_pump["final_total_price"] = best_pump["base_price"] + optional_accessories_total_price
-        elif isinstance(best_pump["base_price"], str):
-            best_pump["final_total_price"] = f"{best_pump['base_price']} + {optional_accessories_notes[0] if optional_accessories_notes else ''}"
+            final_price = best_pump["base_price"] + optional_accessories_total_price
+            if all_cf_notes:
+                best_pump["final_total_price"] = f"${final_price} + {' + '.join(all_cf_notes)}"
+            else:
+                best_pump["final_total_price"] = f"${final_price}"
         else:
-            best_pump["final_total_price"] = "N/A"
+            price_str = f"{best_pump['base_price']}" if isinstance(best_pump["base_price"], str) else f"${best_pump['base_price']}"
+            if all_cf_notes:
+                best_pump["final_total_price"] = f"{price_str} + {' + '.join(all_cf_notes)}"
+            else:
+                best_pump["final_total_price"] = price_str
+
 
 
         # Calculate Final Total Price (base + spare parts kit)
