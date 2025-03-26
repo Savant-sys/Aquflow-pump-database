@@ -109,6 +109,7 @@ document.getElementById("pumpForm").addEventListener("submit", async (e) => {
         pressure_relief_valve: document.getElementById("pressure_relief_valve").value,
         pulsation_dampener: document.getElementById("pulsation_dampener").value,
         calibration_column: document.getElementById("calibration_column").value,
+        pressure_gauge: document.getElementById("pressure_gauge").value,
     };
 
     // Add flange sizes if applicable
@@ -214,6 +215,11 @@ document.getElementById("pumpForm").addEventListener("submit", async (e) => {
                     ? `(${data.calibration_column_price === 'C/F' ? 'C/F' : '$' + data.calibration_column_price})`
                     : ''
                 }</p>
+                <p><strong>Pressure Gauge:</strong> ${data.pressure_gauge || 'No'} ${data.pressure_gauge === 'Yes'
+                    ? `(${data.pressure_gauge_price === 'C/F' ? 'C/F' : '$' + data.pressure_gauge_price})`
+                    : ''
+                }</p>
+
                 
                 <p><strong>Base Pump Price:</strong> ${
                     typeof data.base_price === 'number'
