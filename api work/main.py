@@ -328,7 +328,7 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
                    balls_type=None, suction_lift=None, ball_size=None, suction_flange_size=None, 
                    discharge_flange_size=None, food_graded_oil=None, spare_parts_kit=None, 
                    back_pressure_valve=None, pressure_relief_valve=None, pulsation_dampener=None,
-                   calibration_column=None):
+                   calibration_column=None, pressure_gauge=None):
     # Ensure either GPH or LPH is provided
     if gph is None and lph is None:
         return {"error": "Either GPH or LPH is required. Please provide one."}
@@ -577,6 +577,7 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
         spare_parts_kit_price_value = float(pump["Spare_Parts_Kit_Price"]) if pump["Spare_Parts_Kit_Price"] not in [None, "0"] else 0
         spare_parts_kit_info = pump.get("Spare_Parts_Kit_Info")
         calibration_column_price_value = float(pump["Calibration_Column"])
+        pressure_gauge_price_value = float(pump["Pressure_Gauge"])
         
         # Determine correct motor price column
         if want_motor == "yes":
@@ -735,6 +736,7 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
             "spare_parts_kit_price_value": spare_parts_kit_price_value,
             "spare_parts_kit_info": spare_parts_kit_info,
             "calibration_column_price_value": calibration_column_price_value,
+            "pressure_gauge_price_value": pressure_gauge_price_value,
             "OG_Model": pump["Model"]
         })
 
@@ -883,11 +885,23 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
             best_pump["pulsation_dampener_message"] = "Not included"
         best_pump["pulsation_dampener"] = pulsation_dampener
 
+        # --- Calibration Column ---
         if calibration_column == "Yes":
             best_pump["calibration_column_price"] = math.ceil(best_pump["calibration_column_price_value"])
             optional_accessories_total_price += best_pump["calibration_column_price"]
         else:
             best_pump["calibration_column_price"] = 0
+
+        # --- Pressure Gauge ---
+        if pressure_gauge == "Yes":
+            if best_pump["pressure_gauge_price_value"] == 0:
+                best_pump["pressure_gauge_price"] = "C/F"
+                optional_accessories_notes.append("C/F (Pressure Gauge)")
+            else:
+                best_pump["pressure_gauge_price"] = math.ceil(best_pump["pressure_gauge_price_value"])
+                optional_accessories_total_price += best_pump["pressure_gauge_price"]
+        else:
+            best_pump["pressure_gauge_price"] = 0
 
         # Save for PDF use
         best_pump["optional_accessories_total_price"] = optional_accessories_total_price
@@ -948,6 +962,18 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
                     best_pump["total_price"] = f"{best_pump['total_price']} + ${best_pump['spare_parts_kit_price']}"
                 else:
                     best_pump["total_price"] += best_pump["spare_parts_kit_price"]
+
+        if pressure_gauge == "Yes":
+            if best_pump["pressure_gauge_price"] == "C/F":
+                if isinstance(best_pump["total_price"], str):
+                    best_pump["total_price"] = f"{best_pump['total_price']} + C/F (Pressure Gauge)"
+                else:
+                    best_pump["total_price"] = f"{best_pump['total_price']} + C/F (Pressure Gauge)"
+            elif best_pump["pressure_gauge_price"] > 0:
+                if isinstance(best_pump["total_price"], str):
+                    best_pump["total_price"] = f"{best_pump['total_price']} + ${best_pump['pressure_gauge_price']}"
+                else:
+                    best_pump["total_price"] += best_pump["pressure_gauge_price"]
 
         # Add flange price AFTER choosing the cheapest pump
         flange_price = 0
@@ -1106,6 +1132,20 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
         best_pump["back_pressure_valve"] = back_pressure_valve
         # best_pump["back_pressure_valve_price"] = back_pressure_valve_price
         # best_pump["back_pressure_valve_message"] = back_pressure_valve_message
+
+        if pressure_gauge == "Yes":
+            if best_pump["pressure_gauge_price"] == "C/F":
+                if isinstance(best_pump["total_price"], str):
+                    best_pump["total_price"] = f"{best_pump['total_price']} + C/F (Pressure Gauge)"
+                else:
+                    best_pump["total_price"] = f"{best_pump['total_price']} + C/F (Pressure Gauge)"
+            elif isinstance(best_pump["pressure_gauge_price"], (int, float)):
+                if isinstance(best_pump["total_price"], str):
+                    best_pump["total_price"] = f"{best_pump['total_price']} + ${best_pump['pressure_gauge_price']}"
+                else:
+                    best_pump["total_price"] += best_pump["pressure_gauge_price"]
+
+        best_pump["pressure_gauge"] = pressure_gauge
 
         return best_pump
     else:
@@ -1311,6 +1351,12 @@ def generate_pdf(pump_data, filename="pump_quote.pdf"):
         else:
             description += " Pressure Relief Valve is C/F (call for pricing)."
 
+    if pump_data.get("pressure_valve", "").lower() == "yes":
+        if isinstance(pump_data.get("pressure_valve_price"), (int, float)):
+            description += f" Includes {pump_data.get('pressure_valve_message', '')}."
+        else:
+            description += " Pressure Gauge is C/F (call for pricing)."
+
     if additional_features:
         description += " The pump also includes the following features: " + ", ".join(additional_features) + "."
 
@@ -1368,6 +1414,12 @@ def generate_pdf(pump_data, filename="pump_quote.pdf"):
             pump_specs.append(["Calibration Column", f"${pump_data['calibration_column_price']}"])
         else:
             pump_specs.append(["Calibration Column", "C/F"])
+
+    if pump_data.get("pressure_gauge", "") == "Yes":
+        if isinstance(pump_data.get("pressure_gauge_price"), (int, float)):
+            pump_specs.append(["Pressure Gauge", f"${pump_data['pressure_gauge_price']}"])
+        else:
+            pump_specs.append(["Pressure Gauge", "C/F"])
 
     # Remove empty rows
     pump_specs = [row for row in pump_specs if row]
@@ -1536,6 +1588,7 @@ def get_pump():
         pressure_relief_valve = request.args.get('pressure_relief_valve', type=str)
         pulsation_dampener = request.args.get('pulsation_dampener', type=str)
         calibration_column = request.args.get('calibration_column', type=str)
+        pressure_gauge = request.args.get('pressure_gauge', type=str)
         
         # Log the parsed parameters
         print("Parsed Parameters:", {
@@ -1565,7 +1618,8 @@ def get_pump():
             "back_pressure_valve": back_pressure_valve,
             "pressure_relief_valve": pressure_relief_valve,
             "pulsation_dampener": pulsation_dampener,
-            "calibration_column": calibration_column
+            "calibration_column": calibration_column,
+            "pressure_gauge": pressure_gauge,
         })
 
         # Find the best pump
@@ -1595,7 +1649,8 @@ def get_pump():
             back_pressure_valve,
             pressure_relief_valve,
             pulsation_dampener,
-            calibration_column
+            calibration_column,
+            pressure_gauge
         )
 
         # Log the result
