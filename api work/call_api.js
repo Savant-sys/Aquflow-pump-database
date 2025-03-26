@@ -215,7 +215,7 @@ document.getElementById("pumpForm").addEventListener("submit", async (e) => {
                 <p><strong>Base Pump Price:</strong> ${
                     typeof data.base_price === 'number'
                         ? `$${data.base_price}`
-                        : data.base_price // already includes C/F if needed
+                        : data.base_price
                 }</p>
         
                 <p><strong>Optional Accessories:</strong> ${formattedOptionalAccessories}</p>

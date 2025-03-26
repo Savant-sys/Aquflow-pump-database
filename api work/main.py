@@ -1092,8 +1092,8 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
                     best_pump["total_price"] = str(best_pump["total_price"]) + f" + ${best_pump['pulsation_dampener_price']}"
 
         best_pump["back_pressure_valve"] = back_pressure_valve
-        best_pump["back_pressure_valve_price"] = back_pressure_valve_price
-        best_pump["back_pressure_valve_message"] = back_pressure_valve_message
+        # best_pump["back_pressure_valve_price"] = back_pressure_valve_price
+        # best_pump["back_pressure_valve_message"] = back_pressure_valve_message
 
         return best_pump
     else:
