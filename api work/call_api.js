@@ -119,7 +119,7 @@ document.getElementById("pumpForm").addEventListener("submit", async (e) => {
         // const apiUrl = new URL("https://www.acuflow.com/api-proxy.php");
         const apiUrl = new URL("http://localhost:5000/get_pump")
         Object.keys(formData).forEach(key => apiUrl.searchParams.append(key, formData[key]));
-        
+
         console.log("API URL:", apiUrl.toString()); // Debugging line
 
         const response = await fetch(apiUrl);
@@ -144,17 +144,41 @@ document.getElementById("pumpForm").addEventListener("submit", async (e) => {
             resultContent.innerHTML = `<p style="color: red;">${data.error}</p>`;
         } else {
             resultContent.innerHTML = `
-                <div style="margin-bottom: 15px;">
-                    <p><strong>Model:</strong> ${data.model}</p>
-                    <p><strong>Series:</strong> ${data.series}</p>
-                    <p><strong>Spare Parts Kit:</strong> ${data.spare_parts_kit || 'No'} ${data.spare_parts_kit === 'Yes' ? `(${data.spare_parts_kit_price === 'C/F' ? 'C/F' : '$' + data.spare_parts_kit_price})` : ''}</p>
-                    <p><strong>Back Pressure Valve:</strong> ${data.back_pressure_valve || 'No'} ${data.back_pressure_valve === 'Yes' ? `(${data.back_pressure_valve_price === 'C/F' ? 'C/F' : '$' + data.back_pressure_valve_price})` : ''}</p>
-                    <p><strong>Total Price:</strong> $${data.total_price}</p>
-                </div>
-                <div style="margin-top: 10px;">
-                    <p><strong>${data.email_status}:</strong> The PDF has been created and sent to <strong>${formData.user_email}</strong> for more information.</p>
-                </div>
-            `;
+            <div style="margin-bottom: 15px;">
+                <p><strong>Model:</strong> ${data.model}</p>
+                <p><strong>Series:</strong> ${data.series}</p>
+                <p><strong>Spare Parts Kit:</strong> ${data.spare_parts_kit || 'No'} ${data.spare_parts_kit === 'Yes'
+                    ? `(${data.spare_parts_kit_price === 'C/F' ? 'C/F' : '$' + data.spare_parts_kit_price})`
+                    : ''
+                }</p>
+                <p><strong>Back Pressure Valve:</strong> ${data.back_pressure_valve || 'No'} ${data.back_pressure_valve === 'Yes'
+                    ? `(${data.back_pressure_valve_price === 'C/F' ? 'C/F' : '$' + data.back_pressure_valve_price})`
+                    : ''
+                }</p>
+        
+                <p><strong>Base Pump Price:</strong> ${typeof data.base_price === 'number'
+                    ? `$${data.base_price}`
+                    : data.base_price
+                }</p>
+        
+                <p><strong>Optional Accessories:</strong> ${typeof data.optional_accessories_total_price === 'number'
+                    ? `$${data.optional_accessories_total_price}`
+                    : (data.optional_accessories_notes || []).join(" + ")
+                }</p>
+        
+                <p><strong>Final Total Price:</strong> ${typeof data.final_total_price === 'number'
+                    ? `$${data.final_total_price}`
+                    : data.final_total_price
+                }</p>
+            </div>
+            <div style="margin-top: 10px;">
+                <p>
+                    <strong>${data.email_status || ''}</strong> The PDF has been created and sent to <strong>${formData.user_email}</strong>.
+                    If you haven’t received the PDF, please call us, contact our live chat support, or email us for assistance.
+                </p>
+            </div>
+        `;
+
         }
     } catch (error) {
         console.error("Error:", error); // Debugging line
