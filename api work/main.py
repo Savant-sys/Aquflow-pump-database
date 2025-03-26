@@ -731,6 +731,7 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
             "customer_name": customer_name,
             "spare_parts_kit_price_value": spare_parts_kit_price_value,
             "spare_parts_kit_info": spare_parts_kit_info,
+            "OG_Model": pump["Model"]
         })
 
     # Inside the `find_best_pump` function, after selecting the best pump
@@ -958,7 +959,7 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
         if back_pressure_valve == "Yes":
             conn = mysql.connector.connect(**db_config)
             cursor = conn.cursor(dictionary=True)
-            cursor.execute("SELECT Back_Pressure_Valve_150, Back_Pressure_Valve_750, Connection_Size FROM pumps WHERE Model = %s", (best_pump["model"],))
+            cursor.execute("SELECT Back_Pressure_Valve_150, Back_Pressure_Valve_750, Connection_Size FROM pumps WHERE Model = %s", (best_pump["OG_Model"],))
             bp_data = cursor.fetchone()
             cursor.close()
             conn.close()
