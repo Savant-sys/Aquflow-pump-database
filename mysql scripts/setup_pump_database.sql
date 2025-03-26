@@ -49,5 +49,6 @@ CREATE TABLE `pumps` (
      `Pressure_Relief_Valve_150` DECIMAL(10,4) NULL,
      `Pressure_Relief_Valve_750` DECIMAL(10,4) NULL,
      `Port` VARCHAR(255) NULL,
-     `Pulsation_Dampener` DECIMAL(10,4) NULL
+     `Pulsation_Dampener` DECIMAL(10,4) NULL,
+     `Calibration_Column` DECIMAL(10,4) NULL
 );
