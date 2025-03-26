@@ -828,7 +828,9 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
             selected_pr_price = None
             if pr_data:
                 connection_size = pr_data.get("Connection_Size", "N/A")
-                port = pr_data.get("Port", "N/A")
+                port = pr_data.get("Port")
+                if not port or port.strip() == "":
+                    port = "C/F Port"
 
                 if psi <= 150:
                     selected_pr_price = pr_data.get("Pressure_Relief_Valve_150")
