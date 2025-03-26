@@ -915,13 +915,17 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
             else:
                 best_pump["final_total_price"] = price_str
 
-
-
-        # Calculate Final Total Price (base + spare parts kit)
-        if isinstance(best_pump["spare_parts_kit_price"], (int, float)):
-            best_pump["final_total_price"] = best_pump["base_price"] + best_pump["spare_parts_kit_price"]
+        # Final Total Price (Base + Optional Accessories)
+        if isinstance(best_pump["base_price"], (int, float)) and isinstance(best_pump["optional_accessories_total_price"], (int, float)):
+            best_pump["final_total_price"] = best_pump["base_price"] + best_pump["optional_accessories_total_price"]
         else:
-            best_pump["final_total_price"] = f"{best_pump['base_price']} + {best_pump['spare_parts_kit_price']}"
+            # Handle C/F notes
+            price_str = f"${best_pump['base_price']}" if isinstance(best_pump["base_price"], (int, float)) else str(best_pump["base_price"])
+            cf_notes = [note for note in best_pump["optional_accessories_notes"] if "C/F" in note]
+            if cf_notes:
+                best_pump["final_total_price"] = f"{price_str} + {' + '.join(cf_notes)}"
+            else:
+                best_pump["final_total_price"] = price_str
 
         # Later, when updating the total price with spare parts kit:
         if spare_parts_kit == "Yes":
@@ -1057,35 +1061,35 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
         best_pump["spare_parts_kit"] = spare_parts_kit
         best_pump["spare_parts_kit_message"] = spare_parts_kit_message
 
-        # --- Back Pressure Valve (second optional accessory) ---
+        # Add Back Pressure Valve price to total_price
         if back_pressure_valve == "Yes":
-            conn = mysql.connector.connect(**db_config)
-            cursor = conn.cursor(dictionary=True)
-            cursor.execute("SELECT Back_Pressure_Valve_150, Back_Pressure_Valve_750, Connection_Size FROM pumps WHERE Model = %s", (best_pump["OG_Model"],))
-            bp_data = cursor.fetchone()
-            cursor.close()
-            conn.close()
-
-            selected_bp_price = None
-            if bp_data:
-                if psi <= 150:
-                    selected_bp_price = bp_data["Back_Pressure_Valve_150"]
-                elif psi <= 750:
-                    selected_bp_price = bp_data["Back_Pressure_Valve_750"]
-
-                if selected_bp_price in [None, 0, "0", "C/F"]:
-                    back_pressure_valve_price = "C/F"
-                    back_pressure_valve_message = "C/F (Back Pressure Valve)"
+            if best_pump["back_pressure_valve_price"] == "C/F":
+                if isinstance(best_pump["total_price"], str):
+                    best_pump["total_price"] = f"{best_pump['total_price']} + C/F (Back Pressure Valve)"
                 else:
-                    back_pressure_valve_price = math.ceil(float(selected_bp_price))
-                    back_pressure_valve_message = (
-                        f"Back Pressure Valve in {best_pump['liquid_end_material']} with {bp_data['Connection_Size']}. Max Pressure is {psi} PSI"
-                    )
+                    best_pump["total_price"] = f"{best_pump['total_price']} + C/F (Back Pressure Valve)"
+            elif isinstance(best_pump["back_pressure_valve_price"], (int, float)):
+                best_pump["total_price"] += best_pump["back_pressure_valve_price"]
 
-                    if isinstance(best_pump["total_price"], str):
-                        best_pump["total_price"] = f"{best_pump['total_price']} + ${back_pressure_valve_price}"
-                    else:
-                        best_pump["total_price"] += back_pressure_valve_price
+        # Add Pressure Relief Valve price to total_price
+        if pressure_relief_valve == "Yes":
+            if best_pump["pressure_relief_valve_price"] == "C/F":
+                if isinstance(best_pump["total_price"], str):
+                    best_pump["total_price"] = f"{best_pump['total_price']} + C/F (Pressure Relief Valve)"
+                else:
+                    best_pump["total_price"] = f"{best_pump['total_price']} + C/F (Pressure Relief Valve)"
+            elif isinstance(best_pump["pressure_relief_valve_price"], (int, float)):
+                best_pump["total_price"] += best_pump["pressure_relief_valve_price"]
+
+        # Add Pulsation Dampener price to total_price
+        if pulsation_dampener == "Yes":
+            if best_pump["pulsation_dampener_price"] == "C/F":
+                best_pump["total_price"] = str(best_pump["total_price"]) + " + C/F (Pulsation Dampener)"
+            elif isinstance(best_pump["pulsation_dampener_price"], (int, float)):
+                if isinstance(best_pump["total_price"], (int, float)):
+                    best_pump["total_price"] += best_pump["pulsation_dampener_price"]
+                else:
+                    best_pump["total_price"] = str(best_pump["total_price"]) + f" + ${best_pump['pulsation_dampener_price']}"
 
         best_pump["back_pressure_valve"] = back_pressure_valve
         best_pump["back_pressure_valve_price"] = back_pressure_valve_price
@@ -1318,26 +1322,34 @@ def generate_pdf(pump_data, filename="pump_quote.pdf"):
     ]
 
     # Add flange and suction lift only if marked as "yes"
-    if pump_data.get("flange", "").lower() == "yes":
+    if pump_data.get("flange", "") == "Yes":
         pump_specs.append(["Flange", "Yes"])
-    if pump_data.get("suction_lift", "").lower() == "yes":
+    if pump_data.get("suction_lift", "") == "Yes":
         pump_specs.append(["Suction Lift", "Yes"])
-    if pump_data.get("spare_parts_kit", "").lower() == "yes":
+
+    if pump_data.get("spare_parts_kit", "") == "Yes":
         if isinstance(pump_data.get("spare_parts_kit_price"), (int, float)):
             pump_specs.append(["Spare Parts Kit", f"${pump_data['spare_parts_kit_price']}"])
         else:
             pump_specs.append(["Spare Parts Kit", "C/F"])
-    if pump_data.get("back_pressure_valve", "").lower() == "yes":
+
+    if pump_data.get("back_pressure_valve", "") == "Yes":
         if isinstance(pump_data.get("back_pressure_valve_price"), (int, float)):
             pump_specs.append(["Back Pressure Valve", f"${pump_data['back_pressure_valve_price']}"])
         else:
             pump_specs.append(["Back Pressure Valve", "C/F"])
 
-    if pump_data.get("pressure_relief_valve", "").lower() == "yes":
+    if pump_data.get("pressure_relief_valve", "") == "Yes":
         if isinstance(pump_data.get("pressure_relief_valve_price"), (int, float)):
             pump_specs.append(["Pressure Relief Valve", f"${pump_data['pressure_relief_valve_price']}"])
         else:
             pump_specs.append(["Pressure Relief Valve", "C/F"])
+
+    if pump_data.get("pulsation_dampener", "") == "Yes":
+        if isinstance(pump_data.get("pulsation_dampener_price"), (int, float)):
+            pump_specs.append(["Pulsation Dampener", f"${pump_data['pulsation_dampener_price']}"])
+        else:
+            pump_specs.append(["Pulsation Dampener", "C/F"])
 
     # Remove empty rows
     pump_specs = [row for row in pump_specs if row]
@@ -1411,14 +1423,11 @@ def generate_pdf(pump_data, filename="pump_quote.pdf"):
 
     # Final price display logic
     if isinstance(final_price, (int, float)):
-        final_price_display = f"${final_price}{cf_combined}"
+        final_price_display = f"${final_price}"
+    elif isinstance(final_price, str):
+        final_price_display = final_price
     else:
-        # Make sure it starts with a $ if not already
-        if not str(final_price).startswith("$"):
-            final_price_display = f"${final_price}{cf_combined}"
-        else:
-            final_price_display = f"{final_price}{cf_combined}"
-
+        final_price_display = "N/A"
 
     # --- Price Table ---
     price_table_data = [
@@ -1426,7 +1435,6 @@ def generate_pdf(pump_data, filename="pump_quote.pdf"):
         ["Optional Accessories", optional_display],
         ["Final Total Price", final_price_display]
     ]
-
 
     price_table = Table(price_table_data, colWidths=[200, 200])
     price_table.setStyle(TableStyle([
