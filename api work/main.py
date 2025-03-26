@@ -1365,9 +1365,14 @@ def generate_pdf(pump_data, filename="pump_quote.pdf"):
 
     # --- Optional Accessories Display ---
     optional_display = f"${optional_price}" if isinstance(optional_price, (int, float)) else "N/A"
-    optional_notes = pump_data.get("optional_accessories_notes", [])
-    if optional_notes:
-        optional_display += " + " + " + ".join(optional_notes)
+
+    # Group C/F optional notes like: "C/F (Back Pressure Valve + Pressure Relief Valve)"
+    optional_cf_notes = [note for note in optional_notes if "C/F" in note]
+    optional_cf_combined = ""
+    if optional_cf_notes:
+        optional_cf_combined = f" + C/F ({' + '.join(note.replace('C/F (', '').replace(')', '') for note in optional_cf_notes)})"
+
+    optional_display += optional_cf_combined
 
     # --- Final Total Price Display ---
     all_cf_notes = base_notes + optional_notes

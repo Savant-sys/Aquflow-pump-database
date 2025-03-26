@@ -174,6 +174,20 @@ document.getElementById("pumpForm").addEventListener("submit", async (e) => {
                 ? `$${data.final_total_price}${cfText}`
                 : (data.final_total_price.startsWith('$') ? data.final_total_price : `$${data.final_total_price}`) + cfText;
 
+            // Optional Accessories C/F formatting
+            let optionalCfNotes = [];
+            (optionalNotes || []).forEach(note => {
+                const match = note.match(/C\/F\s*\(([^)]+)\)/);
+                if (match) {
+                    optionalCfNotes.push(match[1]);
+                }
+            });
+            const optionalCfText = optionalCfNotes.length > 0 ? ` + C/F (${optionalCfNotes.join(" + ")})` : "";
+            // Format the optional accessories display
+            const formattedOptionalAccessories = typeof data.optional_accessories_total_price === 'number'
+            ? `$${data.optional_accessories_total_price}${optionalCfText}`
+            : (data.optional_accessories_total_price || "N/A") + optionalCfText;
+
             resultContent.innerHTML = `
             <div style="margin-bottom: 15px;">
                 <p><strong>Model:</strong> ${data.model}</p>
@@ -197,11 +211,7 @@ document.getElementById("pumpForm").addEventListener("submit", async (e) => {
                         : data.base_price // already includes C/F if needed
                 }</p>
         
-                <p><strong>Optional Accessories:</strong> ${
-                    typeof data.optional_accessories_total_price === 'number'
-                        ? `$${data.optional_accessories_total_price}${(data.optional_accessories_notes || []).length ? ' + ' + data.optional_accessories_notes.join(' + ') : ''}`
-                        : (data.optional_accessories_total_price || data.optional_accessories_notes || []).join(" + ")
-                }</p>
+                <p><strong>Optional Accessories:</strong> ${formattedOptionalAccessories}</p>
         
                 <p><strong>Final Total Price:</strong> ${formattedFinalTotal}</p>
             </div>
