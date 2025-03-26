@@ -1371,12 +1371,22 @@ def generate_pdf(pump_data, filename="pump_quote.pdf"):
 
     # --- Final Total Price Display ---
     all_cf_notes = base_notes + optional_notes
+
+    # Combine all C/F notes into one line like "C/F (Back Pressure Valve + Pressure Relief Valve)"
+    cf_combined = ""
+    if all_cf_notes:
+        cf_combined = f" + C/F ({' + '.join(note.replace('C/F (', '').replace(')', '') for note in all_cf_notes)})"
+
+    # Final price display logic
     if isinstance(final_price, (int, float)):
-        final_price_display = f"${final_price}"
-        if all_cf_notes:
-            final_price_display += " + " + " + ".join(all_cf_notes)
+        final_price_display = f"${final_price}{cf_combined}"
     else:
-        final_price_display = final_price  # Already formatted
+        # Make sure it starts with a $ if not already
+        if not str(final_price).startswith("$"):
+            final_price_display = f"${final_price}{cf_combined}"
+        else:
+            final_price_display = f"{final_price}{cf_combined}"
+
 
     # --- Price Table ---
     price_table_data = [
