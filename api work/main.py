@@ -327,7 +327,7 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
                    leak_detection=None, phase=None, degassing=None, flange=None, 
                    balls_type=None, suction_lift=None, ball_size=None, suction_flange_size=None, 
                    discharge_flange_size=None, food_graded_oil=None, spare_parts_kit=None, 
-                   back_pressure_valve=None, pressure_relief_valve=None):
+                   back_pressure_valve=None, pressure_relief_valve=None, pulsation_dampener=None):
     # Ensure either GPH or LPH is provided
     if gph is None and lph is None:
         return {"error": "Either GPH or LPH is required. Please provide one."}
@@ -854,6 +854,31 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
         # Store the user's input
         best_pump["pressure_relief_valve"] = pressure_relief_valve
 
+        # --- Pulsation Dampener ---
+        if pulsation_dampener == "Yes":
+            conn = mysql.connector.connect(**db_config)
+            cursor = conn.cursor(dictionary=True)
+            cursor.execute("SELECT Pulsation_Dampener FROM pumps WHERE Model = %s", (best_pump["OG_Model"],))
+            pd_data = cursor.fetchone()
+            cursor.close()
+            conn.close()
+
+            pd_price = pd_data.get("Pulsation_Dampener") if pd_data else None
+
+            if pd_price in [None, 0, "0", "C/F"]:
+                best_pump["pulsation_dampener_price"] = "C/F"
+                best_pump["pulsation_dampener_message"] = "C/F (Pulsation Dampener)"
+                optional_accessories_notes.append("C/F (Pulsation Dampener)")
+            else:
+                best_pump["pulsation_dampener_price"] = math.ceil(float(pd_price))
+                best_pump["pulsation_dampener_message"] = (
+                    f"Pulsation Dampener in {liquid_end_material} with a Viton bladder and Max pressure of {psi} PSI."
+                )
+                optional_accessories_total_price += best_pump["pulsation_dampener_price"]
+        else:
+            best_pump["pulsation_dampener_price"] = 0
+            best_pump["pulsation_dampener_message"] = "Not included"
+        best_pump["pulsation_dampener"] = pulsation_dampener
 
         # Save for PDF use
         best_pump["optional_accessories_total_price"] = optional_accessories_total_price
@@ -1483,7 +1508,8 @@ def get_pump():
         spare_parts_kit = request.args.get('spare_parts_kit', type=str)
         back_pressure_valve = request.args.get('back_pressure_valve', type=str)
         pressure_relief_valve = request.args.get('pressure_relief_valve', type=str)
-
+        pulsation_dampener = request.args.get('pulsation_dampener', type=str)
+        
         # Log the parsed parameters
         print("Parsed Parameters:", {
             "customer_name" : customer_name,
@@ -1510,7 +1536,8 @@ def get_pump():
             "user_email": user_email,
             "spare_parts_kit": spare_parts_kit,
             "back_pressure_valve": back_pressure_valve,
-            "pressure_relief_valve": pressure_relief_valve
+            "pressure_relief_valve": pressure_relief_valve,
+            "pulsation_dampener": pulsation_dampener
         })
 
         # Find the best pump
@@ -1538,7 +1565,8 @@ def get_pump():
             food_graded_oil, 
             spare_parts_kit,
             back_pressure_valve,
-            pressure_relief_valve
+            pressure_relief_valve,
+            pulsation_dampener
         )
 
         # Log the result
