@@ -993,6 +993,18 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
     else:
         return {"error": "No suitable pump found for the given specifications."}
 
+def combine_cf_annotations(base, optional_notes):
+    annotations = []
+
+    if isinstance(base, str) and "C/F" in base:
+        annotations.append("C/F (Base Pump Price)")
+
+    annotations += [note for note in optional_notes if "C/F" in note]
+
+    if annotations:
+        return " + " + " + ".join(annotations)
+    return ""
+
 def generate_pdf(pump_data, filename="pump_quote.pdf"):
     """Generates a PDF quote for the pump and saves it as a file."""
     doc = SimpleDocTemplate(filename, pagesize=letter)
@@ -1245,11 +1257,47 @@ def generate_pdf(pump_data, filename="pump_quote.pdf"):
         f"${final_price}" if isinstance(final_price, (int, float)) else final_price
     )
 
+    # --- Base Pump Price Display ---
+    base_display = f"${base_price}" if isinstance(base_price, (int, float)) else base_price
+    base_notes = []
+
+    if isinstance(pump_data.get("total_price"), str) and "C/F" in pump_data["total_price"]:
+        if "Motor" in pump_data["total_price"]:
+            base_notes.append("C/F (Motor)")
+        if "Flange" in pump_data["total_price"]:
+            base_notes.append("C/F (Flange)")
+        if "HP" in pump_data["total_price"]:
+            base_notes.append("C/F (HP)")
+        if "Suction Lift" in pump_data["total_price"]:
+            base_notes.append("C/F (Suction Lift)")
+        if "Flange Adaptor" in pump_data["total_price"]:
+            base_notes.append("C/F (Flange Adaptor)")
+
+    if base_notes:
+        base_display += " + " + " + ".join(base_notes)
+
+    # --- Optional Accessories Display ---
+    optional_display = f"${optional_price}" if isinstance(optional_price, (int, float)) else "N/A"
+    optional_notes = pump_data.get("optional_accessories_notes", [])
+    if optional_notes:
+        optional_display += " + " + " + ".join(optional_notes)
+
+    # --- Final Total Price Display ---
+    all_cf_notes = base_notes + optional_notes
+    if isinstance(final_price, (int, float)):
+        final_price_display = f"${final_price}"
+        if all_cf_notes:
+            final_price_display += " + " + " + ".join(all_cf_notes)
+    else:
+        final_price_display = final_price  # Already formatted
+
+    # --- Price Table ---
     price_table_data = [
-        ["Base Pump Price", f"${base_price}" if isinstance(base_price, (int, float)) else base_price],
-        ["Optional Accessories", optional_price_display],
+        ["Base Pump Price", base_display],
+        ["Optional Accessories", optional_display],
         ["Final Total Price", final_price_display]
     ]
+
 
     price_table = Table(price_table_data, colWidths=[200, 200])
     price_table.setStyle(TableStyle([
