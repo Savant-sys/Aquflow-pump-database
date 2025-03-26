@@ -119,7 +119,7 @@ document.getElementById("pumpForm").addEventListener("submit", async (e) => {
         // const apiUrl = new URL("https://www.acuflow.com/api-proxy.php");
         const apiUrl = new URL("http://localhost:5000/get_pump")
         Object.keys(formData).forEach(key => apiUrl.searchParams.append(key, formData[key]));
-        
+
         console.log("API URL:", apiUrl.toString()); // Debugging line
 
         const response = await fetch(apiUrl);
@@ -138,23 +138,76 @@ document.getElementById("pumpForm").addEventListener("submit", async (e) => {
             console.error("Result content div not found!"); // Debugging line
             return;
         }
-
+        
         if (data.error) {
             console.error("API Error:", data.error); // Debugging line
             resultContent.innerHTML = `<p style="color: red;">${data.error}</p>`;
         } else {
+            // Final Total Price: Extract C/F from base and optional accessories
+            const basePrice = data.base_price;
+            const optionalNotes = data.optional_accessories_notes || [];
+
+            let cfNotes = [];
+
+            // Parse C/F notes from base_price if it's a string
+            if (typeof basePrice === "string" && basePrice.includes("C/F")) {
+                const baseCfMatches = basePrice.match(/C\/F\s*\(([^)]+)\)/g);
+                if (baseCfMatches) {
+                    cfNotes.push(...baseCfMatches.map(note => note.match(/\(([^)]+)\)/)[1]));
+                }
+            }
+
+            // Collect C/F notes from optional accessories
+            optionalNotes.forEach(note => {
+                const match = note.match(/C\/F\s*\(([^)]+)\)/);
+                if (match) {
+                    cfNotes.push(match[1]);
+                }
+            });
+
+            // Combine notes into one C/F string
+            let cfText = cfNotes.length > 0 ? ` + C/F (${cfNotes.join(" + ")})` : "";
+
+            // Format the final total price display
+            const formattedFinalTotal = typeof data.final_total_price === 'number'
+                ? `$${data.final_total_price}${cfText}`
+                : (data.final_total_price.startsWith('$') ? data.final_total_price : `$${data.final_total_price}`) + cfText;
+
             resultContent.innerHTML = `
-                <div style="margin-bottom: 15px;">
-                    <p><strong>Model:</strong> ${data.model}</p>
-                    <p><strong>Series:</strong> ${data.series}</p>
-                    <p><strong>Spare Parts Kit:</strong> ${data.spare_parts_kit || 'No'} ${data.spare_parts_kit === 'Yes' ? `(${data.spare_parts_kit_price === 'C/F' ? 'C/F' : '$' + data.spare_parts_kit_price})` : ''}</p>
-                    <p><strong>Back Pressure Valve:</strong> ${data.back_pressure_valve || 'No'} ${data.back_pressure_valve === 'Yes' ? `(${data.back_pressure_valve_price === 'C/F' ? 'C/F' : '$' + data.back_pressure_valve_price})` : ''}</p>
-                    <p><strong>Total Price:</strong> $${data.total_price}</p>
-                </div>
-                <div style="margin-top: 10px;">
-                    <p><strong>${data.email_status}:</strong> The PDF has been created and sent to <strong>${formData.user_email}</strong> for more information.</p>
-                </div>
-            `;
+            <div style="margin-bottom: 15px;">
+                <p><strong>Model:</strong> ${data.model}</p>
+                <p><strong>Series:</strong> ${data.series}</p>
+                <p><strong>Spare Parts Kit:</strong> ${data.spare_parts_kit || 'No'} ${data.spare_parts_kit === 'Yes'
+                    ? `(${data.spare_parts_kit_price === 'C/F' ? 'C/F' : '$' + data.spare_parts_kit_price})`
+                    : ''
+                }</p>
+                <p><strong>Back Pressure Valve:</strong> ${data.back_pressure_valve || 'No'} ${data.back_pressure_valve === 'Yes'
+                    ? `(${data.back_pressure_valve_price === 'C/F' ? 'C/F' : '$' + data.back_pressure_valve_price})`
+                    : ''
+                }</p>
+        
+                <p><strong>Base Pump Price:</strong> ${
+                    typeof data.base_price === 'number'
+                        ? `$${data.base_price}`
+                        : data.base_price // already includes C/F if needed
+                }</p>
+        
+                <p><strong>Optional Accessories:</strong> ${
+                    typeof data.optional_accessories_total_price === 'number'
+                        ? `$${data.optional_accessories_total_price}${(data.optional_accessories_notes || []).length ? ' + ' + data.optional_accessories_notes.join(' + ') : ''}`
+                        : (data.optional_accessories_total_price || data.optional_accessories_notes || []).join(" + ")
+                }</p>
+        
+                <p><strong>Final Total Price:</strong> ${formattedFinalTotal}</p>
+            </div>
+            <div style="margin-top: 10px;">
+                <p>
+                    <strong>${data.email_status || ''}</strong> A PDF copy was sent to <strong>${formData.user_email}</strong>.
+                    If you don’t receive it soon, give us a call, use live chat, or email us for assistance.
+                </p>
+            </div>
+        `;        
+
         }
     } catch (error) {
         console.error("Error:", error); // Debugging line
