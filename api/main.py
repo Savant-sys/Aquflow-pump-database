@@ -219,7 +219,7 @@ def calculate_flange_adaptor_price(psi, suction_flange_size, discharge_flange_si
         return {"total_flange_adaptor_price": "Unavailable (Flange Adaptor)"}  # Return Unavailable message
 
     # Calculate total flange adaptor price
-    total_price = (suction_price + discharge_price + suction_price_all + discharge_price_all) * (5 if simplex_duplex.lower() == "simplex" else 10)
+    total_price = (suction_price + discharge_price + suction_price_all + discharge_price_all) * (5 if simplex_duplex == "Simplex" else 10)
     return {"total_flange_adaptor_price": total_price}
 
 def get_flange_price(flange_size_id, flange_size, liquid_end_material):
@@ -263,7 +263,7 @@ def replace_last_letter(model, ball_size):
     Replace the last letter of the model name based on the ball size.
     Skip if ball_size is "Standard".
     """
-    if ball_size.lower() == "standard":
+    if ball_size == "Standard":
         return model  # Do not replace if ball_size is "Standard"
 
     # Get the replacement letter from the mapping
@@ -304,10 +304,10 @@ def replace_model_letters(model, liquid_end_material, balls_type):
 def calculate_suction_lift_price(series, liquid_end_material, suction_lift):
     """
     Calculate the suction lift price based on the series and liquid end material.
-    Only add the price if suction_lift is "yes".
+    Only add the price if suction_lift is "Yes".
     """
-    if suction_lift.lower() != "yes":
-        return 0  # Do not add suction lift price if customer selects "no"
+    if suction_lift != "Yes":
+        return 0  # Do not add suction lift price if customer selects "No"
 
     if series == "Series 1000":
         if liquid_end_material in ["316SS", "Alloy 20", "Hast. C", "PVC", "PVDF"]:
@@ -345,12 +345,12 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
     if not simplex_duplex:
         return {"error": "Simplex/Duplex is required. Please provide either 'Simplex', 'Duplex', or 'Both'."}
 
-    # Ensure want_motor is provided and is either "yes" or "no"
-    if want_motor.lower() not in ["yes", "no"]:
-        return {"error": "Want motor is required and must be either 'yes' or 'no'."}
+    # Ensure want_motor is provided and is either "Yes" or "No"
+    if want_motor not in ["Yes", "No"]:
+        return {"error": "Want motor is required and must be either 'Yes' or 'No'."}
 
     # If motor is required, ensure motor_type (TEFC/XPFC) and motor_power (AC/DC) are provided
-    if want_motor == "yes" and (motor_type is None or motor_power is None):
+    if want_motor == "Yes" and (motor_type is None or motor_power is None):
         return {"error": "Motor type (TEFC/XPFC) and motor power (AC/DC) must be provided when selecting a motor."}
 
     # Ensure SPM is provided and is one of the valid options
@@ -359,8 +359,8 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
         return {"error": "SPM is required and must be one of the following: 29, 44, 58, 88, 97, 117, 140, 170, 191."}
 
     # Ensure diaphragm is provided and is one of the valid options
-    valid_diaphragm_options = ["ptfe", "viton", "hypalon", "epdm"]
-    if diaphragm is None or diaphragm.lower() not in valid_diaphragm_options:
+    valid_diaphragm_options = ["PTFE", "Viton", "Hypalon", "EPDM"]
+    if diaphragm is None or diaphragm not in valid_diaphragm_options:
         return {"error": "Diaphragm is required and must be one of the following: PTFE, Viton, Hypalon, EPDM."}
 
     # Ensure liquid end material is provided and is one of the valid options
@@ -369,8 +369,8 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
         return {"error": "Liquid End Material is required and must be one of the following: 316SS, Alloy 20, Hast. C, PVC, PVDF."}
 
     # Ensure leak detection is provided and is one of the valid options
-    valid_leak_detection_options = ["no", "conductive", "vacuum"]
-    if leak_detection is None or leak_detection.lower() not in valid_leak_detection_options:
+    valid_leak_detection_options = ["No", "conductive", "vacuum"]
+    if leak_detection is None or leak_detection not in valid_leak_detection_options:
         return {"error": "Leak Detection is required and must be one of the following: No, Conductive, Vacuum."}
 
     # Ensure phase is provided and is one of the valid options
@@ -378,22 +378,22 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
     if phase is None or phase not in valid_phase_options:
         return {"error": "Phase is required and must be one of the following: 1 Ph, 3 Ph."}
 
-    # Ensure degassing is provided and is either "yes" or "no"
-    if degassing.lower() not in ["yes", "no"]:
-        return {"error": "Degassing is required and must be either 'yes' or 'no'."}
+    # Ensure degassing is provided and is either "Yes" or "No"
+    if degassing not in ["Yes", "No"]:
+        return {"error": "Degassing is required and must be either 'Yes' or 'No'."}
 
-    # Ensure flange is provided and is either "yes" or "no"
-    if flange.lower() not in ["yes", "no"]:
-        return {"error": "Flange is required and must be either 'yes' or 'no'."}
+    # Ensure flange is provided and is either "Yes" or "No"
+    if flange not in ["Yes", "No"]:
+        return {"error": "Flange is required and must be either 'Yes' or 'No'."}
 
     # Ensure balls type is provided and is one of the valid options
     valid_balls_type_options = ["Std.", "Tungsten", "Ceramic"]
     if balls_type is None or balls_type not in valid_balls_type_options:
         return {"error": "Balls Type is required and must be one of the following: Std., Tungsten, Ceramic."}
 
-    # Ensure suction_lift is provided and is either "yes" or "no"
-    if suction_lift.lower() not in ["yes", "no"]:
-        return {"error": "Suction Lift is required and must be either 'yes' or 'no'."}
+    # Ensure suction_lift is provided and is either "Yes" or "No"
+    if suction_lift not in ["Yes", "No"]:
+        return {"error": "Suction Lift is required and must be either 'Yes' or 'No'."}
 
     # Ensure ball_size is provided and is one of the valid options
     if balls_type in ["Tungsten", "Ceramic"]:
@@ -416,7 +416,7 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
         return {"error": f"Ball Size is required and must be one of the following: {', '.join(valid_ball_size_options)}."}
 
     # Ensure flange sizes are provided only if flange is "Yes"
-    if flange and flange.lower() == "yes":
+    if flange and flange == "Yes":
         print(f"Suction Flange Size: {suction_flange_size}")
         print(f"Discharge Flange Size: {discharge_flange_size}")
         if not suction_flange_size or not discharge_flange_size:
@@ -426,9 +426,9 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
         suction_flange_size = None
         discharge_flange_size = None
 
-    # Ensure Food_Graded_Oil is provided and is either "yes" or "no"
-    if food_graded_oil.lower() not in ["yes", "no"]:
-        return {"error": "Food Graded Oil is required and must be either 'yes' or 'no'."}
+    # Ensure Food_Graded_Oil is provided and is either "Yes" or "No"
+    if food_graded_oil not in ["Yes", "No"]:
+        return {"error": "Food Graded Oil is required and must be either 'Yes' or 'No'."}
 
     # Connect to MySQL database
     conn = mysql.connector.connect(**db_config)
@@ -481,34 +481,34 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
 
         final_model = pump["Model"]
 
-        if diaphragm.lower() == "ptfe":
-            if leak_detection.lower() == "no":
+        if diaphragm == "PTFE":
+            if leak_detection == "No":
                 final_model = final_model[:3] + "T" + final_model[4:]
-            elif leak_detection.lower() == "conductive":
+            elif leak_detection== "Conductive":
                 final_model = final_model[:3] + "W" + final_model[4:]
-            elif leak_detection.lower() == "vacuum":
+            elif leak_detection == "Vacuum":
                 final_model = final_model[:3] + "K" + final_model[4:]
-        elif diaphragm.lower() == "viton":
-            if leak_detection.lower() == "no":
+        elif diaphragm == "Viton":
+            if leak_detection == "No":
                 final_model = final_model[:3] + "B" + final_model[4:]
-            elif leak_detection.lower() == "conductive":
+            elif leak_detection == "Conductive":
                 final_model = final_model[:3] + "R" + final_model[4:]
-        elif diaphragm.lower() == "hypalon":
-            if leak_detection.lower() == "no":
+        elif diaphragm == "Hypalon":
+            if leak_detection == "No":
                 final_model = final_model[:3] + "A" + final_model[4:]
-            elif leak_detection.lower() == "conductive":
+            elif leak_detection == "Conductive":
                 final_model = final_model[:3] + "M" + final_model[4:]
-        elif diaphragm.lower() == "epdm":
-            if leak_detection.lower() == "no":
+        elif diaphragm == "EPDM":
+            if leak_detection == "No":
                 final_model = final_model[:3] + "C" + final_model[4:]
 
         # Replace the last letter based on ball_size (if not "Standard")
         final_model = replace_last_letter(final_model, ball_size)
         
-        if flange.lower() == "yes":
+        if flange == "Yes":
             final_model += "F"
 
-        if degassing.lower() == "yes":
+        if degassing == "Yes":
             final_model += "D"
 
         if use_hp:
@@ -565,7 +565,7 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
                         ball_size_price = base_price * 1.7  # Multiply by 1.7 for Ceramic
 
         # Ensure Simplex/Duplex matches or allow "both"
-        if simplex_duplex.lower() != "both" and pump["Simplex_Duplex"].lower() != simplex_duplex.lower():
+        if simplex_duplex != "Both" and pump["Simplex_Duplex"] != simplex_duplex:
             continue
 
         # Start total price calculation (without suction lift)
@@ -580,7 +580,7 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
         pressure_gauge_price_value = float(pump["Pressure_Gauge"])
         
         # Determine correct motor price column
-        if want_motor == "yes":
+        if want_motor == "Yes":
             if motor_type == "TEFC" and motor_power == "AC":
                 motor_price_column = "TEFC_AC_Price"
             elif motor_type == "XPFC" and motor_power == "AC":
@@ -605,35 +605,35 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
                 motor_price = float(motor_price_value) if motor_price_value is not None else 0
 
         # Determine diaphragm price - skip if price is 0
-        if diaphragm.lower() == "viton":
+        if diaphragm == "Viton":
             viton_price = pump["Viton"]
             if viton_price is None or float(viton_price) == 0:
                 continue  # Skip this pump if Viton price is 0 or None
             diaphragm_price = float(viton_price)
-        elif diaphragm.lower() == "hypalon":
+        elif diaphragm == "Hypalon":
             hypalon_price = pump["Hypalon"]
             if hypalon_price is None or float(hypalon_price) == 0:
                 continue  # Skip this pump if Hypalon price is 0 or None
             diaphragm_price = float(hypalon_price)
-        elif diaphragm.lower() == "epdm":
+        elif diaphragm == "EPDM":
             epdm_price = pump["EPDM"]
             if epdm_price is None or float(epdm_price) == 0:
                 continue  # Skip this pump if EPDM price is 0 or None
             diaphragm_price = float(epdm_price)
-        elif diaphragm.lower() != "ptfe":
+        elif diaphragm != "PTFE":
             continue
 
         # Determine leak detection price
-        if leak_detection.lower() == "conductive":
+        if leak_detection == "Conductive":
             leak_detection_price = float(pump["Conductive_Leak_Detection_Price_Adder"]) if pump["Conductive_Leak_Detection_Price_Adder"] is not None else 0
-        elif leak_detection.lower() == "vacuum":
+        elif leak_detection == "Vacuum":
             leak_detection_price = float(pump["Vacuum_Leak_Detection_Price_Adder"]) if pump["Vacuum_Leak_Detection_Price_Adder"] is not None else 0
         else:
             leak_detection_price = 0
 
         # Calculate Food Graded Oil price
         food_graded_oil_price = 0
-        if food_graded_oil.lower() == "yes":
+        if food_graded_oil == "Yes":
             if pump["Series"] == "Series 1000":
                 food_graded_oil_price = 140
             elif pump["Series"] == "Series 2000":
@@ -649,7 +649,7 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
         total_price = pump_price
 
         # Add degassing price if applicable
-        if degassing.lower() == "yes":
+        if degassing == "Yes":
             total_price += 450
 
         # Add ball size price if applicable
@@ -740,14 +740,12 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
             "OG_Model": pump["Model"]
         })
 
-    # Inside the `find_best_pump` function, after selecting the best pump
     if filtered_pumps:
-        # Sort pumps by total_price, GPH, SPM, and PSI
         filtered_pumps.sort(key=lambda x: (
-            float('inf') if isinstance(x["total_price"], str) else x["total_price"],  # Sort by price
-            x["gph"],  # Sort by GPH (ascending)
-            x["max_spm"],  # Sort by SPM (ascending)
-            x["psi"]  # Sort by PSI (ascending)
+            float('inf') if isinstance(x["total_price"], str) else x["total_price"],
+            x["gph"],
+            x["max_spm"],
+            x["psi"]
         ))
 
         best_pump = filtered_pumps[0]
@@ -767,9 +765,9 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
         if isinstance(best_pump["total_price"], (int, float)):
             best_pump["base_price"] = best_pump["total_price"]
         else:
-            best_pump["base_price"] = "C/F"  # If base price already has C/F or text
+            best_pump["base_price"] = "C/F"
 
-        # Initialize optional accessories price
+        # Initialize optional accessories
         optional_accessories_total_price = 0
         optional_accessories_notes = []
 
@@ -978,42 +976,28 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
         # Add flange price AFTER choosing the cheapest pump
         flange_price = 0
         flange_message = None
-        if flange and flange.lower() == "yes":
+        if flange and flange == "Yes":
             flange_price_result = calculate_flange_price(psi, suction_flange_size, discharge_flange_size, liquid_end_material)
             if "error" in flange_price_result:
-                return flange_price_result  # Return the error if any
+                return flange_price_result  # Return error if any
 
             flange_price = flange_price_result["total_flange_price"]
-            print(f"Total Flange Price: {flange_price}")  # Debug: Print total flange price
-
-            # Update total price with flange price (if applicable)
-            if isinstance(flange_price, str):  # Handle "C/F" or "Unavailable" cases
+            if isinstance(flange_price, str):  # Handle "C/F" cases
                 if isinstance(best_pump["total_price"], str):
-                    # If total price is already a string (e.g., "C/F"), append the flange price message
                     best_pump["total_price"] = f"{best_pump['total_price']} + {flange_price}"
                 else:
-                    # If total price is a number, convert it to a string and append the flange price message
                     best_pump["total_price"] = f"{best_pump['total_price']} + {flange_price}"
             else:
-                # If flange price is a number, add it to the total price
                 if isinstance(best_pump["total_price"], str):
-                    # If total price is already a string (e.g., "C/F"), append the flange price
                     best_pump["total_price"] = f"{best_pump['total_price']} + ${flange_price}"
                 else:
                     best_pump["total_price"] += flange_price
-        else:
-            # If flange is "No", set flange_price to 0
-            flange_price = 0
-            flange_message = "Flange not selected"
 
-        # Add flange details to the best pump
-        best_pump["flange_price"] = flange_price
-        best_pump["flange_message"] = flange_message
 
         # Add suction lift price AFTER choosing the cheapest pump
         suction_lift_price = 0
         suction_lift_message = None
-        if suction_lift.lower() == "yes":
+        if suction_lift == "Yes":
             suction_lift_price = calculate_suction_lift_price(best_pump["series"], liquid_end_material, suction_lift)
             if suction_lift_price == 0:  # Suction lift is not available for this series
                 suction_lift_message = "Suction lift is not available"
@@ -1034,27 +1018,19 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
 
         # Add flange adaptor price AFTER choosing the cheapest pump
         flange_adaptor_price = 0
-        flange_adaptor_message = None
-        if flange and flange.lower() == "yes":
+        if flange and flange == "Yes":
             flange_adaptor_price_result = calculate_flange_adaptor_price(psi, suction_flange_size, discharge_flange_size, liquid_end_material, simplex_duplex)
             if "error" in flange_adaptor_price_result:
-                return flange_adaptor_price_result  # Return the error if any
+                return flange_adaptor_price_result
 
             flange_adaptor_price = flange_adaptor_price_result["total_flange_adaptor_price"]
-            print(f"Total Flange Adaptor Price: {flange_adaptor_price}")  # Debug: Print total flange adaptor price
-
-            # Update total price with flange adaptor price (if applicable)
-            if isinstance(flange_adaptor_price, str):  # Handle "C/F" or "Unavailable" cases
+            if isinstance(flange_adaptor_price, str):  # Handle "C/F" cases
                 if isinstance(best_pump["total_price"], str):
-                    # If total price is already a string (e.g., "C/F"), append the flange adaptor price message
                     best_pump["total_price"] = f"{best_pump['total_price']} + {flange_adaptor_price}"
                 else:
-                    # If total price is a number, convert it to a string and append the flange adaptor price message
                     best_pump["total_price"] = f"{best_pump['total_price']} + {flange_adaptor_price}"
             else:
-                # If flange adaptor price is a number, add it to the total price
                 if isinstance(best_pump["total_price"], str):
-                    # If total price is already a string (e.g., "C/F"), append the flange adaptor price
                     best_pump["total_price"] = f"{best_pump['total_price']} + ${flange_adaptor_price}"
                 else:
                     best_pump["total_price"] += flange_adaptor_price
@@ -1164,51 +1140,44 @@ def combine_cf_annotations(base, optional_notes):
     return ""
 
 def generate_pdf(pump_data, filename="pump_quote.pdf"):
-    """Generates a PDF quote for the pump and saves it as a file."""
     doc = SimpleDocTemplate(filename, pagesize=letter)
     elements = []
-    
+
     styles = getSampleStyleSheet()
     title_style = ParagraphStyle(
         name="CenteredTitle",
         parent=styles["Heading2"],
-        fontSize=16,  # Increased font size
-        alignment=1,  # Center alignment
-        spaceAfter=6,  # Reduced space below the title
+        fontSize=12,
+        alignment=1,
+        spaceAfter=4,
     )
-    heading_style = styles["Heading2"]
-    normal_style = styles["BodyText"]
+    heading_style = ParagraphStyle(
+        name="SmallHeading",
+        parent=styles["Heading3"],
+        fontSize=10,
+        spaceAfter=4,
+    )
+    normal_style = ParagraphStyle(
+        name="SmallBody",
+        parent=styles["BodyText"],
+        fontSize=8,
+        leading=10
+    )
     footer_style = ParagraphStyle(
         name="FooterStyle",
         parent=normal_style,
-        fontSize=9,
+        fontSize=7,
         textColor=colors.grey,
-        leading=12,
+        leading=10,
         spaceBefore=10,
     )
 
-    # ✅ Generate Auto Date & Quote Number
+    # Generate Auto Date & Quote Number
     today = datetime.today()
-    quote_number = f"AQQ{today.strftime('%y%m%d')}__"  # Format: AQQYYMMDD__
-    formatted_date = today.strftime('%d-%b-%y')  # Format: DD-MMM-YY
+    quote_number = f"AQQ{today.strftime('%y%m%d')}__"
+    formatted_date = today.strftime('%d-%b-%y')
 
-    # ✅ Create Smaller 2x2 Table (Quote # | Date) with Reduced Column Widths
-    quote_date_table = Table([
-        ["Quote #", "Date"],           # Header row
-        [quote_number, formatted_date]  # Data row
-    ], colWidths=[110, 110])  # Smaller width for compact size
-
-    # ✅ Style the Quote Table
-    quote_date_table.setStyle(TableStyle([
-        ("BACKGROUND", (0, 0), (-1, 0), colors.grey),    # Grey background for headers
-        ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),  # White text for headers
-        ("ALIGN", (0, 0), (-1, -1), "CENTER"),  # Center-align text
-        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),  # Bold header text
-        ("BOTTOMPADDING", (0, 0), (-1, 0), 6),  # Smaller padding for compact look
-        ("GRID", (0, 0), (-1, -1), 1, colors.black)  # Black grid lines
-    ]))
-
-    # ✅ Logo (Left), Address (Middle), Quote Table (Right)
+    # Create a more compact header table
     logo_path = "logo.png"
     address = """<b><font size="9">Acuflow-Div. of Precision</font></b><br/>
     <b><font size="9">Flow Technologies Inc.</font></b><br/>
@@ -1216,68 +1185,82 @@ def generate_pdf(pump_data, filename="pump_quote.pdf"):
     Irvine, CA 92614<br/>
     Ph: (949) 757-1753</font>"""
 
+    # Create a 2x1 table for Customer information (more compact)
+    customer_name = pump_data.get("customer_name", "N/A")
+    customer_table = Table([
+        ["Customer"],  
+        [customer_name]  
+    ], colWidths=[120], rowHeights=[12, 12])  # Smaller row heights
+
+    # Style the Customer table
+    customer_table.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, 0), colors.grey),
+        ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
+        ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+        ("FONTSIZE", (0, 0), (-1, -1), 8),  # Smaller font size
+        ("BOTTOMPADDING", (0, 0), (-1, 0), 2),
+        ("GRID", (0, 0), (-1, -1), 1, colors.black)
+    ]))
+
+    # Create compact Quote # and Date table
+    quote_date_table = Table([
+        ["Quote #", "Date"],
+        [quote_number, formatted_date]
+    ], colWidths=[80, 80], rowHeights=[12, 12])  # Smaller dimensions
+
+    quote_date_table.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, 0), colors.grey),
+        ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
+        ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+        ("FONTSIZE", (0, 0), (-1, -1), 8),
+        ("BOTTOMPADDING", (0, 0), (-1, 0), 2),
+        ("GRID", (0, 0), (-1, -1), 1, colors.black)
+    ]))
+
     if os.path.exists(logo_path):
-        logo = Image(logo_path, width=100, height=50) 
+        logo = Image(logo_path, width=80, height=40)  # Smaller logo
 
-        # Add "Quote Form 2311" at the top right corner
-        quote_form_text = Paragraph("<font size='7'>Quote Form 2311</font>", normal_style)
-
-        # Create a 2x1 table for Customer information
-        customer_name = pump_data.get("customer_name", "N/A")
-        customer_table = Table([
-            ["Customer"],  # First row
-            [customer_name]  # Second row
-        ], colWidths=[215], rowHeights=[20, 20])  # Smaller row heights
-
-        # Style the Customer table
-        customer_table.setStyle(TableStyle([
-            ("BACKGROUND", (0, 0), (-1, 0), colors.grey),  # Grey background for the header
-            ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),  # White text for the header
-            ("ALIGN", (0, 0), (-1, -1), "CENTER"),  # Center-align text in all cells
-            ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),  # Vertically center-align text
-            ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),  # Bold header text
-            ("FONTSIZE", (0, 0), (-1, -1), 10),  # Slightly larger font size
-            ("BOTTOMPADDING", (0, 0), (-1, 0), 2),  # Padding for the header
-            ("TOPPADDING", (0, 1), (-1, 1), 5),  # Add padding to move the second row down
-            ("GRID", (0, 0), (-1, -1), 1, colors.black)  # Black grid lines
-        ]))
-
-        # Create a header table with 3 columns
+        # Create a header table with 3 columns (logo, address, quote info)
         header_table = Table([
-            [[logo, Spacer(1, 10), Spacer(1, 10), customer_table],  # Logo + Spacer + Customer Table
-             Paragraph(address, normal_style),  # Address
-             [quote_form_text, quote_date_table]  # Quote Form Text + Quote Table
-            ]
-        ], colWidths=[115, 250, 120])  # Adjust widths for correct alignment
+            [logo, Paragraph(address, normal_style), None],
+            [customer_table, None, quote_date_table]
+        ], colWidths=[100, 250, 160], rowHeights=[40, 24])  # Compact layout
 
-        # ✅ Align Everything in the Header
         header_table.setStyle(TableStyle([
-            ("VALIGN", (0, 0), (-1, -1), "TOP"),  # Align everything to the top
-            ("LEFTPADDING", (1, 0), (1, 0), 5),   # Reduce space between logo & address
-            ("ALIGN", (0, 0), (0, 0), "LEFT"),    # Left-align logo and customer table
-            ("ALIGN", (1, 0), (1, 0), "LEFT"),    # Left-align address
-            ("ALIGN", (2, 0), (2, 0), "RIGHT")    # Right-align Quote Form Text & Quote Table
+            ("VALIGN", (0, 0), (-1, -1), "TOP"),
+            ("ALIGN", (0, 0), (0, 0), "LEFT"),
+            ("ALIGN", (1, 0), (1, 0), "LEFT"),
+            ("ALIGN", (2, 0), (2, 0), "RIGHT"),
+            ("SPAN", (1, 0), (1, 1)),  # Address spans both rows
+            ("SPAN", (0, 0), (0, 1)),  # Logo spans both rows
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
+            ("LEFTPADDING", (0, 0), (-1, -1), 0),
+            ("RIGHTPADDING", (0, 0), (-1, -1), 0),
         ]))
 
         elements.append(header_table)
-        elements.append(Spacer(1, 20))  # Reduce space below
+        elements.append(Spacer(1, 10))  # Minimal space after header
 
-    # ✅ Pump Model Name (Centered and Larger Title)
+    # Pump Model Name
     pump_model = pump_data.get("model", "N/A")
     elements.append(Paragraph(f"<b>Pump Model:</b> {pump_model}", title_style))
 
-    # ✅ Description Section
+    # Description Section
     elements.append(Paragraph("<b>Description:</b>", heading_style))
 
-    # ✅ Dynamic Description (Combined into One Paragraph)
+    # Dynamic Description
     dynamic_description = []
     ball_type = pump_data.get("balls_type", "N/A")
     diaphragm = pump_data.get("diaphragm", "N/A")
-    suction_lift_text = "High Suction Lift " if pump_data.get("suction_lift", "").lower() == "yes" else ""
+    suction_lift_text = "High Suction Lift " if pump_data.get("suction_lift", "") == "Yes" else ""
 
-    if pump_data.get("flange", "").lower() == "yes":
+    if pump_data.get("flange", "") == "Yes":
         psi = pump_data.get("psi", 0)
-        flange_size_id = get_flange_size_id(psi)  # Assume this function is defined elsewhere
+        flange_size_id = get_flange_size_id(psi)
 
         description = (
             f"Acuflow {pump_data.get('series', 'N/A')} ({pump_data.get('simplex_duplex', 'N/A')}) "
@@ -1298,8 +1281,7 @@ def generate_pdf(pump_data, filename="pump_quote.pdf"):
             f"and a design pressure of {pump_data.get('psi', 'N/A')} PSI."
         )
 
-    # Add motor description if want_motor is "yes"
-    if pump_data.get("want_motor", "").lower() == "yes":
+    if pump_data.get("want_motor", "") == "Yes":
         motor_power = pump_data.get("motor_power", "").upper()
         hz = pump_data.get("hz", 60)
         phase = pump_data.get("phase", "1 Ph")
@@ -1317,143 +1299,84 @@ def generate_pdf(pump_data, filename="pump_quote.pdf"):
                     input_voltage = "230/400 VAC"
         elif motor_power == "DC":
             input_voltage = "90 VDC"
-            phase = ""  # Remove phase for DC motors
+            phase = ""
 
         motor_hp = pump_data.get("Motor_HP_AC", "N/A")
+        description += f" The pump comes with a {motor_hp} HP, {input_voltage}, {phase} {pump_data.get('motor_type', 'N/A')} motor."
 
-        description += (
-            f" The pump comes with a {motor_hp} HP, {input_voltage}, {phase} {pump_data.get('motor_type', 'N/A')} motor."
-        )
-
-    # Add additional features (only if marked as "yes")
     additional_features = []
-    if pump_data.get("degassing", "").lower() == "yes":
+    if pump_data.get("degassing", "") == "Yes":
         additional_features.append("degassing valve")
-    if pump_data.get("food_graded_oil", "").lower() == "yes":
+    if pump_data.get("food_graded_oil", "") == "Yes":
         additional_features.append("food-graded oil")
-    if pump_data.get("suction_lift", "").lower() == "yes":
+    if pump_data.get("suction_lift", "") == "Yes":
         additional_features.append("suction lift")
-    if pump_data.get("spare_parts_kit", "").lower() == "yes":
+    if pump_data.get("spare_parts_kit", "") == "Yes":
         if isinstance(pump_data.get("spare_parts_kit_price"), (int, float)):
             description += f" Includes Spare Parts Kit ({pump_data.get('spare_parts_kit_info', '')})."
         else:
             description += " Spare parts kit is C/F (call for pricing)."
 
-    if pump_data.get("back_pressure_valve", "").lower() == "yes":
+    if pump_data.get("back_pressure_valve", "") == "Yes":
         if isinstance(pump_data.get("back_pressure_valve_price"), (int, float)):
             description += f" Includes {pump_data.get('back_pressure_valve_message', '')}."
         else:
             description += " Back Pressure Valve is C/F (call for pricing)."
 
-    if pump_data.get("pressure_relief_valve", "").lower() == "yes":
+    if pump_data.get("pressure_relief_valve", "") == "Yes":
         if isinstance(pump_data.get("pressure_relief_valve_price"), (int, float)):
             description += f" Includes {pump_data.get('pressure_relief_valve_message', '')}."
         else:
             description += " Pressure Relief Valve is C/F (call for pricing)."
 
-    if pump_data.get("pressure_valve", "").lower() == "yes":
-        if isinstance(pump_data.get("pressure_valve_price"), (int, float)):
-            description += f" Includes {pump_data.get('pressure_valve_message', '')}."
-        else:
-            description += " Pressure Gauge is C/F (call for pricing)."
-
     if additional_features:
         description += " The pump also includes the following features: " + ", ".join(additional_features) + "."
 
-    # Add the combined description to the PDF
     elements.append(Paragraph(description, normal_style))
-    elements.append(Spacer(1, 12))  # Minimal space after description
+    elements.append(Spacer(1, 8))
 
-    # ✅ Key Specifications Table (Only include "yes" or valid data)
-    elements.append(Paragraph("<b>Optional Accessories:</b>", heading_style))
-    elements.append(Spacer(1, 6))  # Minimal space after heading
-    pump_specs = []
-    # pump_specs = [
-    #     ["Specification", "Value"],
-    #     ["Series", pump_data.get("series", "N/A")],
-    #     ["Flow Rate (GPH)", pump_data.get("gph", "N/A")],
-    #     ["Pressure (PSI)", pump_data.get("psi", "N/A")],
-    #     ["Frequency (Hz)", pump_data.get("hz", "N/A")],
-    #     ["Diaphragm Material", pump_data.get("diaphragm", "N/A")],
-    #     ["Liquid End Material", pump_data.get("liquid_end_material", "N/A")],
-    #     ["Balls Type", pump_data.get("balls_type", "N/A")],
-    # ]
+    # Optional Accessories Table
+    elements.append(Paragraph("<b>All Optional Accessories:</b>", heading_style))
+    elements.append(Spacer(1, 4))
 
-    # # Add flange and suction lift only if marked as "yes"
-    # if pump_data.get("flange", "") == "Yes":
-    #     pump_specs.append(["Flange", "Yes"])
-    # if pump_data.get("suction_lift", "") == "Yes":
-    #     pump_specs.append(["Suction Lift", "Yes"])
+    all_accessories = [
+        ("Spare Parts Kit", pump_data.get("spare_parts_kit_price_value", 0)),
+        ("Back Pressure Valve", pump_data.get("back_pressure_valve_price", 0)),
+        ("Pressure Relief Valve", pump_data.get("pressure_relief_valve_price", 0)),
+        ("Pulsation Dampener", pump_data.get("pulsation_dampener_price", 0)),
+        ("Calibration Column", pump_data.get("calibration_column_price_value", 0)),
+        ("Pressure Gauge", pump_data.get("pressure_gauge_price_value", 0)),
+    ]
 
-    if pump_data.get("spare_parts_kit", "") == "Yes":
-        if isinstance(pump_data.get("spare_parts_kit_price"), (int, float)):
-            pump_specs.append(["Spare Parts Kit", f"${pump_data['spare_parts_kit_price']}"])
-        else:
-            pump_specs.append(["Spare Parts Kit", "C/F"])
+    accessories_table_data = [["Accessory", "Description", "Price"]]
+    for name, price in all_accessories:
+        price_display = "C/F" if price in [None, 0, "0", "C/F"] else f"${math.ceil(float(price))}"
+        accessories_table_data.append([name, "", price_display])
 
-    if pump_data.get("back_pressure_valve", "") == "Yes":
-        if isinstance(pump_data.get("back_pressure_valve_price"), (int, float)):
-            pump_specs.append(["Back Pressure Valve", f"${pump_data['back_pressure_valve_price']}"])
-        else:
-            pump_specs.append(["Back Pressure Valve", "C/F"])
-
-    if pump_data.get("pressure_relief_valve", "") == "Yes":
-        if isinstance(pump_data.get("pressure_relief_valve_price"), (int, float)):
-            pump_specs.append(["Pressure Relief Valve", f"${pump_data['pressure_relief_valve_price']}"])
-        else:
-            pump_specs.append(["Pressure Relief Valve", "C/F"])
-
-    if pump_data.get("pulsation_dampener", "") == "Yes":
-        if isinstance(pump_data.get("pulsation_dampener_price"), (int, float)):
-            pump_specs.append(["Pulsation Dampener", f"${pump_data['pulsation_dampener_price']}"])
-        else:
-            pump_specs.append(["Pulsation Dampener", "C/F"])
-
-    if pump_data.get("calibration_column", "") == "Yes":
-        if isinstance(pump_data.get("calibration_column_price"), (int, float)):
-            pump_specs.append(["Calibration Column", f"${pump_data['calibration_column_price']}"])
-        else:
-            pump_specs.append(["Calibration Column", "C/F"])
-
-    if pump_data.get("pressure_gauge", "") == "Yes":
-        if isinstance(pump_data.get("pressure_gauge_price"), (int, float)):
-            pump_specs.append(["Pressure Gauge", f"${pump_data['pressure_gauge_price']}"])
-        else:
-            pump_specs.append(["Pressure Gauge", "C/F"])
-
-    # Remove empty rows
-    pump_specs = [row for row in pump_specs if row]
-
-    table = Table(pump_specs, colWidths=[200, 200])
-    table.setStyle(TableStyle([
-        ("BACKGROUND", (0, 0), (0, 0), colors.grey),
-        ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
+    accessories_table = Table(
+        accessories_table_data,
+        colWidths=[100, 200, 80],
+        rowHeights=20  # Compact row height
+    )
+    accessories_table.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, 0), colors.lightgrey),
+        ("TEXTCOLOR", (0, 0), (-1, 0), colors.black),
         ("ALIGN", (0, 0), (-1, -1), "CENTER"),
         ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-        ("BOTTOMPADDING", (0, 0), (-1, 0), 12),
-        ("GRID", (0, 0), (-1, -1), 1, colors.black)
+        ("FONTSIZE", (0, 0), (-1, -1), 8),
+        ("BOTTOMPADDING", (0, 0), (-1, 0), 2),
+        ("TOPPADDING", (0, 1), (-1, -1), 4), 
+        ("GRID", (0, 0), (-1, -1), 0.5, colors.black)
     ]))
-    elements.append(table)
-    elements.append(Spacer(1, 20))
+    elements.append(accessories_table)
+    elements.append(Spacer(1, 12))
 
-    # ✅ Add Base Price, Optional Accessories, and Final Total
+    # Price Summary
     base_price = pump_data.get("base_price", "N/A")
     optional_price = pump_data.get("optional_accessories_total_price", 0)
     optional_notes = pump_data.get("optional_accessories_notes", [])
     final_price = pump_data.get("final_total_price", "N/A")
 
-    # Format optional price if it's not numeric
-    optional_price_display = (
-        f"${optional_price}" if isinstance(optional_price, (int, float)) else
-        " + ".join(optional_notes) if optional_notes else "N/A"
-    )
-
-    # Format final total price
-    final_price_display = (
-        f"${final_price}" if isinstance(final_price, (int, float)) else final_price
-    )
-
-    # --- Base Pump Price Display ---
     base_display = f"${base_price}" if isinstance(base_price, (int, float)) else base_price
     base_notes = []
 
@@ -1472,56 +1395,33 @@ def generate_pdf(pump_data, filename="pump_quote.pdf"):
     if base_notes:
         base_display += " + " + " + ".join(base_notes)
 
-    # --- Optional Accessories Display ---
     optional_display = f"${optional_price}" if isinstance(optional_price, (int, float)) else "N/A"
-
-    # Group C/F optional notes like: "C/F (Back Pressure Valve + Pressure Relief Valve)"
     optional_cf_notes = [note for note in optional_notes if "C/F" in note]
     optional_cf_combined = ""
     if optional_cf_notes:
         optional_cf_combined = f" + C/F ({' + '.join(note.replace('C/F (', '').replace(')', '') for note in optional_cf_notes)})"
-
     optional_display += optional_cf_combined
 
-    # --- Final Total Price Display ---
-    all_cf_notes = base_notes + optional_notes
-
-    # Combine all C/F notes into one line like "C/F (Back Pressure Valve + Pressure Relief Valve)"
-    cf_combined = ""
-    if all_cf_notes:
-        cf_combined = f" + C/F ({' + '.join(note.replace('C/F (', '').replace(')', '') for note in all_cf_notes)})"
-
-    # Final price display logic
-    if isinstance(final_price, (int, float)):
-        final_price_display = f"${final_price}"
-    elif isinstance(final_price, str):
-        final_price_display = final_price
-    else:
-        final_price_display = "N/A"
-
-    # --- Price Table ---
     price_table_data = [
         ["Base Pump Price", base_display],
         ["Optional Accessories", optional_display],
-        ["Final Total Price", final_price_display]
+        ["Final Total Price", final_price]
     ]
 
-    price_table = Table(price_table_data, colWidths=[200, 200])
+    price_table = Table(price_table_data, colWidths=[150, 150])
     price_table.setStyle(TableStyle([
         ("BACKGROUND", (0, 0), (-1, 0), colors.lightgrey),
         ("TEXTCOLOR", (0, 0), (-1, 0), colors.black),
         ("ALIGN", (0, 0), (-1, -1), "CENTER"),
         ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-        ("BOTTOMPADDING", (0, 0), (-1, 0), 12),
+        ("BOTTOMPADDING", (0, 0), (-1, 0), 8),
         ("GRID", (0, 0), (-1, -1), 1, colors.black)
     ]))
     elements.append(price_table)
     elements.append(Spacer(1, 10))
 
-    # ✅ Footer Notes
-    elements.append(Paragraph("<b>Notes:</b>", footer_style))  # Add "Notes:" section
-
-    # Combine all notes into a single Paragraph with <br/> for line breaks
+    # Footer Notes
+    elements.append(Paragraph("<b>Notes:</b>", footer_style))
     footer_notes = [
         "1. Your above pricing are Net prices based on Ex work Irvine, CA. Prices valid 30 days from quote date.",
         "2. If you decided to add ECCA or Leak detection system, the pump model number will change.",
@@ -1529,10 +1429,8 @@ def generate_pdf(pump_data, filename="pump_quote.pdf"):
         "4. There will be price adder for Material Certificates, certificate of origin and Performance test.",
         "5. Anything not clearly stated in the quote above is deemed as not included in pricing, regardless of RFQ or Specs."
     ]
-
-    # Combine notes into a single string with <br/> tags
     footer_text = "<br/>".join(footer_notes)
-    elements.append(Paragraph(footer_text, footer_style))  # Add all notes in one Paragraph
+    elements.append(Paragraph(footer_text, footer_style))
 
     # Generate PDF
     doc.build(elements)
