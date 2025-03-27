@@ -1301,33 +1301,46 @@ def generate_pdf(pump_data, filename="pump_quote.pdf"):
         additional_features.append("food-graded oil")
     if pump_data.get("suction_lift", "") == "Yes":
         additional_features.append("suction lift")
-    if pump_data.get("spare_parts_kit", "") == "Yes":
-        if isinstance(pump_data.get("spare_parts_kit_price"), (int, float)):
-            description += f" Includes Spare Parts Kit ({pump_data.get('spare_parts_kit_info', '')})."
-        else:
-            description += " Spare parts kit is C/F (call for pricing)."
-
-    if pump_data.get("back_pressure_valve", "") == "Yes":
-        if isinstance(pump_data.get("back_pressure_valve_price"), (int, float)):
-            description += f" Includes {pump_data.get('back_pressure_valve_message', '')}."
-        else:
-            description += " Back Pressure Valve is C/F (call for pricing)."
-
-    if pump_data.get("pressure_relief_valve", "") == "Yes":
-        if isinstance(pump_data.get("pressure_relief_valve_price"), (int, float)):
-            description += f" Includes {pump_data.get('pressure_relief_valve_message', '')}."
-        else:
-            description += " Pressure Relief Valve is C/F (call for pricing)."
 
     if additional_features:
         description += " The pump also includes the following features: " + ", ".join(additional_features) + "."
 
+    # Add the combined description to the PDF
     elements.append(Paragraph(description, normal_style))
     elements.append(Spacer(1, 8))
 
     # Optional Accessories Table
     elements.append(Paragraph("<b>All Optional Accessories:</b>", heading_style))
     elements.append(Spacer(1, 4))
+
+    # Define descriptions for each accessory
+    liquid_end_material = pump_data.get("liquid_end_material", "N/A")
+    connection_size = pump_data.get("connection_size", "N/A")
+    port = pump_data.get("port", "N/A")
+    psi = pump_data.get("psi", "N/A")
+
+    spare_parts_info = pump_data.get('spare_parts_kit_info', 'Not included')
+    # Split the description into two parts if it's long enough
+    if len(spare_parts_info) > 40:
+        mid_point = len(spare_parts_info) // 2
+        # Look for the nearest space or period before the midpoint
+        split_chars = [' ', '.']
+        split_point = -1
+        for char in split_chars:
+            pos = spare_parts_info.rfind(char, 0, mid_point)
+            if pos > split_point:
+                split_point = pos
+        if split_point > 0:
+            spare_parts_info = spare_parts_info[:split_point] + '\n' + spare_parts_info[split_point:].lstrip()
+
+    accessory_descriptions = {
+        "Spare Parts Kit": spare_parts_info,
+        "Back Pressure Valve": f"{liquid_end_material} with {connection_size}, {psi} PSI",
+        "Pressure Relief Valve": f"{port} in {liquid_end_material}, {psi} PSI",
+        "Pulsation Dampener": f"{liquid_end_material} with Viton bladder, {psi} PSI",
+        "Calibration Column": "For accurate flow measurement",
+        "Pressure Gauge": "For system pressure monitoring"
+    }
 
     all_accessories = [
         ("Spare Parts Kit", pump_data.get("spare_parts_kit_price_value", 0)),
@@ -1341,12 +1354,13 @@ def generate_pdf(pump_data, filename="pump_quote.pdf"):
     accessories_table_data = [["Accessory", "Description", "Price"]]
     for name, price in all_accessories:
         price_display = "C/F" if price in [None, 0, "0", "C/F"] else f"${math.ceil(float(price))}"
-        accessories_table_data.append([name, "", price_display])
+        description = accessory_descriptions.get(name, "")
+        accessories_table_data.append([name, description, price_display])
 
     accessories_table = Table(
         accessories_table_data,
-        colWidths=[100, 200, 80],
-        rowHeights=20  # Compact row height
+        colWidths=[100, 300, 80],  # Reduced description column width to 300
+        rowHeights=30
     )
     accessories_table.setStyle(TableStyle([
         ("BACKGROUND", (0, 0), (-1, 0), colors.lightgrey),
@@ -1355,7 +1369,7 @@ def generate_pdf(pump_data, filename="pump_quote.pdf"):
         ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
         ("FONTSIZE", (0, 0), (-1, -1), 8),
         ("BOTTOMPADDING", (0, 0), (-1, 0), 2),
-        ("TOPPADDING", (0, 1), (-1, -1), 4), 
+        ("TOPPADDING", (0, 1), (-1, -1), 8),  # Increased top padding from 2 to 8
         ("GRID", (0, 0), (-1, -1), 0.5, colors.black)
     ]))
     elements.append(accessories_table)
