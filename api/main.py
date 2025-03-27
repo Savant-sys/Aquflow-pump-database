@@ -793,11 +793,17 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
         cursor.close()
         conn.close()
 
+        print("\n=== Back Pressure Valve Debug ===")
+        print(f"Back Pressure Valve Data for model {best_pump['OG_Model']}: {bp_data}")  # Debug log
+        print(f"Raw Connection Size from BP data: {bp_data.get('Connection_Size') if bp_data else 'No data'}")  # Debug log
+        print("===============================\n")
+
         selected_bp_price = None
         connection_size = "N/A"
 
         if bp_data:
             connection_size = bp_data.get("Connection_Size", "N/A")
+            print(f"Connection Size after assignment: {connection_size}")  # Debug log
 
             if psi <= 150:
                 selected_bp_price = bp_data.get("Back_Pressure_Valve_150")
@@ -812,7 +818,7 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
         else:
             best_pump["back_pressure_valve_price"] = math.ceil(float(selected_bp_price))
             best_pump["back_pressure_valve_message"] = (
-                f"Back Pressure Valve in {liquid_end_material} with {connection_size}. Max Pressure is {psi} PSI."
+                f"Back Pressure Valve in {liquid_end_material} with {connection_size if connection_size != 'N/A' else 'N/A'}. Max Pressure is {psi} PSI."
             )
             if back_pressure_valve == "Yes":
                 optional_accessories_total_price += best_pump["back_pressure_valve_price"]
@@ -825,17 +831,24 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
         cursor.close()
         conn.close()
 
+        print(f"Pressure Relief Valve Data for model {best_pump['OG_Model']}: {pr_data}")  # Debug log
+
         selected_pr_price = None
         if pr_data:
             connection_size = pr_data.get("Connection_Size", "N/A")
             port = pr_data.get("Port")
+            print(f"Connection Size: {connection_size}, Port: {port}")  # Debug log
+            print(f"Raw Connection Size value: {pr_data.get('Connection_Size')}")  # Debug log
+            
             if not port or port.strip() == "":
                 port = "C/F Port"
 
             if psi <= 150:
                 selected_pr_price = pr_data.get("Pressure_Relief_Valve_150")
+                print(f"Selected PR Price (150): {selected_pr_price}")  # Debug log
             elif psi <= 750:
                 selected_pr_price = pr_data.get("Pressure_Relief_Valve_750")
+                print(f"Selected PR Price (750): {selected_pr_price}")  # Debug log
 
             if selected_pr_price in [None, 0, "0", "C/F"]:
                 best_pump["pressure_relief_valve_price"] = "C/F"
@@ -845,10 +858,16 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
             else:
                 best_pump["pressure_relief_valve_price"] = math.ceil(float(selected_pr_price))
                 best_pump["pressure_relief_valve_message"] = (
-                    f"{port} Pressure Relief Valve in {liquid_end_material} with {connection_size}. Max. Pressure is {psi} PSI."
+                    f"{port} in {liquid_end_material} with {connection_size}, {psi} PSI"
                 )
                 if pressure_relief_valve == "Yes":
                     optional_accessories_total_price += best_pump["pressure_relief_valve_price"]
+        else:
+            print(f"No pressure relief valve data found for model {best_pump['OG_Model']}")  # Debug log
+            best_pump["pressure_relief_valve_price"] = "C/F"
+            best_pump["pressure_relief_valve_message"] = "C/F (Pressure Relief Valve)"
+            if pressure_relief_valve == "Yes":
+                optional_accessories_notes.append("C/F (Pressure Relief Valve)")
 
         # --- Pulsation Dampener ---
         conn = mysql.connector.connect(**db_config)
@@ -868,7 +887,7 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
         else:
             best_pump["pulsation_dampener_price"] = math.ceil(float(pd_price))
             best_pump["pulsation_dampener_message"] = (
-                f"Pulsation Dampener in {liquid_end_material} with a Viton bladder and Max pressure of {psi} PSI."
+                f"{liquid_end_material} with Viton bladder, {psi} PSI"
             )
             if pulsation_dampener == "Yes":
                 optional_accessories_total_price += best_pump["pulsation_dampener_price"]
@@ -1335,7 +1354,7 @@ def generate_pdf(pump_data, filename="pump_quote.pdf"):
 
     accessory_descriptions = {
         "Spare Parts Kit": spare_parts_info,
-        "Back Pressure Valve": f"{liquid_end_material} with {connection_size}, {psi} PSI",
+        "Back Pressure Valve": f"Back Pressure Valve in {liquid_end_material} with {pump_data.get('back_pressure_valve_message', '').split('with ')[-1].split('.')[0]}. Max pressure is {psi} PSI.",
         "Pressure Relief Valve": f"{port} in {liquid_end_material}, {psi} PSI",
         "Pulsation Dampener": f"{liquid_end_material} with Viton bladder, {psi} PSI",
         "Calibration Column": "For accurate flow measurement",
