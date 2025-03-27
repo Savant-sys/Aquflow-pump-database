@@ -51,5 +51,6 @@ CREATE TABLE `pumps` (
      `Port` VARCHAR(255) NULL,
      `Pulsation_Dampener` DECIMAL(10,4) NULL,
      `Calibration_Column` DECIMAL(10,4) NULL,
+     `Calibration_Column_Info` VARCHAR(255) NULL,
      `Pressure_Gauge` DECIMAL(10,4) NULL
 );
