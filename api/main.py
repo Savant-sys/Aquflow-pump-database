@@ -924,7 +924,7 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
 
         # Final total price formatting
         if isinstance(best_pump["base_price"], (int, float)) and isinstance(optional_accessories_total_price, (int, float)):
-            final_price = best_pump["base_price"] + optional_accessories_total_price
+            final_price = f"${best_pump["base_price"] + optional_accessories_total_price}"
             if all_cf_notes:
                 best_pump["final_total_price"] = f"${final_price} + {' + '.join(all_cf_notes)}"
             else:
@@ -932,13 +932,13 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
         else:
             price_str = f"{best_pump['base_price']}" if isinstance(best_pump["base_price"], str) else f"${best_pump['base_price']}"
             if all_cf_notes:
-                best_pump["final_total_price"] = f"{price_str} + {' + '.join(all_cf_notes)}"
+                best_pump["final_total_price"] = f"${price_str} + {' + '.join(all_cf_notes)}"
             else:
-                best_pump["final_total_price"] = price_str
+                best_pump["final_total_price"] = f"${price_str}"
 
         # Final Total Price (Base + Optional Accessories)
         if isinstance(best_pump["base_price"], (int, float)) and isinstance(best_pump["optional_accessories_total_price"], (int, float)):
-            best_pump["final_total_price"] = best_pump["base_price"] + best_pump["optional_accessories_total_price"]
+            best_pump["final_total_price"] = f"${best_pump["base_price"] + optional_accessories_total_price}"
         else:
             # Handle C/F notes
             price_str = f"${best_pump['base_price']}" if isinstance(best_pump["base_price"], (int, float)) else str(best_pump["base_price"])
@@ -946,7 +946,7 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
             if cf_notes:
                 best_pump["final_total_price"] = f"{price_str} + {' + '.join(cf_notes)}"
             else:
-                best_pump["final_total_price"] = price_str
+                best_pump["final_total_price"] = f"${price_str}"
 
         # Later, when updating the total price with spare parts kit:
         if spare_parts_kit == "Yes":
