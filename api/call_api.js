@@ -194,32 +194,30 @@ document.getElementById("pumpForm").addEventListener("submit", async (e) => {
             resultContent.innerHTML = `
             <div style="margin-bottom: 15px;">
                 <p><strong>Model:</strong> ${data.model}</p>
-                <p><strong>Series:</strong> ${data.series}</p>
-                <p><strong>Spare Parts Kit:</strong> ${data.spare_parts_kit || 'No'} ${data.spare_parts_kit === 'Yes'
-                    ? `(${data.spare_parts_kit_price === 'C/F' ? 'C/F' : '$' + data.spare_parts_kit_price})`
-                    : ''
-                }</p>
-                <p><strong>Back Pressure Valve:</strong> ${data.back_pressure_valve || 'No'} ${data.back_pressure_valve === 'Yes'
-                    ? `(${data.back_pressure_valve_price === 'C/F' ? 'C/F' : '$' + data.back_pressure_valve_price})`
-                    : ''
-                }</p>
-                <p><strong>Pressure Relief Valve:</strong> ${data.pressure_relief_valve || 'No'} ${data.pressure_relief_valve === 'Yes'
-                    ? `(${data.pressure_relief_valve_price === 'C/F' ? 'C/F' : '$' + data.pressure_relief_valve_price})`
-                    : ''
-                }</p>
-                <p><strong>Pulsation Dampener:</strong> ${data.pulsation_dampener || 'No'} ${data.pulsation_dampener === 'Yes'
-                    ? `(${data.pulsation_dampener_price === 'C/F' ? 'C/F' : '$' + data.pulsation_dampener_price})`
-                    : ''
-                }</p>
-                <p><strong>Calibration Column:</strong> ${data.calibration_column || 'No'} ${data.calibration_column === 'Yes'
-                    ? `(${data.calibration_column_price === 'C/F' ? 'C/F' : '$' + data.calibration_column_price})`
-                    : ''
-                }</p>
-                <p><strong>Pressure Gauge:</strong> ${data.pressure_gauge || 'No'} ${data.pressure_gauge === 'Yes'
-                    ? `(${data.pressure_gauge_price === 'C/F' ? 'C/F' : '$' + data.pressure_gauge_price})`
-                    : ''
-                }</p>
-
+                ${data.spare_parts_kit === 'Yes' ? `
+                <p><strong>Spare Parts Kit:</strong> ${data.spare_parts_kit} 
+                    (${data.spare_parts_kit_price === 'C/F' ? 'C/F' : '$' + data.spare_parts_kit_price})
+                </p>` : ''}
+                ${data.back_pressure_valve === 'Yes' ? `
+                <p><strong>Back Pressure Valve:</strong> ${data.back_pressure_valve} 
+                    (${data.back_pressure_valve_price === 'C/F' ? 'C/F' : '$' + data.back_pressure_valve_price})
+                </p>` : ''}
+                ${data.pressure_relief_valve === 'Yes' ? `
+                <p><strong>Pressure Relief Valve:</strong> ${data.pressure_relief_valve} 
+                    (${data.pressure_relief_valve_price === 'C/F' ? 'C/F' : '$' + data.pressure_relief_valve_price})
+                </p>` : ''}
+                ${data.pulsation_dampener === 'Yes' ? `
+                <p><strong>Pulsation Dampener:</strong> ${data.pulsation_dampener} 
+                    (${data.pulsation_dampener_price === 'C/F' ? 'C/F' : '$' + data.pulsation_dampener_price})
+                </p>` : ''}
+                ${data.calibration_column === 'Yes' ? `
+                <p><strong>Calibration Column:</strong> ${data.calibration_column} 
+                    (${data.calibration_column_price === 'C/F' ? 'C/F' : '$' + data.calibration_column_price})
+                </p>` : ''}
+                ${data.pressure_gauge === 'Yes' ? `
+                <p><strong>Pressure Gauge:</strong> ${data.pressure_gauge} 
+                    (${data.pressure_gauge_price === 'C/F' ? 'C/F' : '$' + data.pressure_gauge_price})
+                </p>` : ''}
                 
                 <p><strong>Base Pump Price:</strong> ${
                     typeof data.base_price === 'number'
@@ -234,7 +232,7 @@ document.getElementById("pumpForm").addEventListener("submit", async (e) => {
             <div style="margin-top: 10px;">
                 <p>
                     <strong>${data.email_status || ''}</strong> A PDF copy was sent to <strong>${formData.user_email}</strong>.
-                    If you don’t receive it soon, give us a call, use live chat, or email us for assistance.
+                    If you don't receive it soon, give us a call, use live chat, or email us for assistance.
                 </p>
             </div>
         `;        
