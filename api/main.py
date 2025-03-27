@@ -1365,25 +1365,25 @@ def generate_pdf(pump_data, filename="pump_quote.pdf"):
     elements.append(Spacer(1, 12))  # Minimal space after description
 
     # ✅ Key Specifications Table (Only include "yes" or valid data)
-    elements.append(Paragraph("<b>Key Specifications:</b>", heading_style))
+    elements.append(Paragraph("<b>Optional Accessories:</b>", heading_style))
     elements.append(Spacer(1, 6))  # Minimal space after heading
+    pump_specs = []
+    # pump_specs = [
+    #     ["Specification", "Value"],
+    #     ["Series", pump_data.get("series", "N/A")],
+    #     ["Flow Rate (GPH)", pump_data.get("gph", "N/A")],
+    #     ["Pressure (PSI)", pump_data.get("psi", "N/A")],
+    #     ["Frequency (Hz)", pump_data.get("hz", "N/A")],
+    #     ["Diaphragm Material", pump_data.get("diaphragm", "N/A")],
+    #     ["Liquid End Material", pump_data.get("liquid_end_material", "N/A")],
+    #     ["Balls Type", pump_data.get("balls_type", "N/A")],
+    # ]
 
-    pump_specs = [
-        ["Specification", "Value"],
-        ["Series", pump_data.get("series", "N/A")],
-        ["Flow Rate (GPH)", pump_data.get("gph", "N/A")],
-        ["Pressure (PSI)", pump_data.get("psi", "N/A")],
-        ["Frequency (Hz)", pump_data.get("hz", "N/A")],
-        ["Diaphragm Material", pump_data.get("diaphragm", "N/A")],
-        ["Liquid End Material", pump_data.get("liquid_end_material", "N/A")],
-        ["Balls Type", pump_data.get("balls_type", "N/A")],
-    ]
-
-    # Add flange and suction lift only if marked as "yes"
-    if pump_data.get("flange", "") == "Yes":
-        pump_specs.append(["Flange", "Yes"])
-    if pump_data.get("suction_lift", "") == "Yes":
-        pump_specs.append(["Suction Lift", "Yes"])
+    # # Add flange and suction lift only if marked as "yes"
+    # if pump_data.get("flange", "") == "Yes":
+    #     pump_specs.append(["Flange", "Yes"])
+    # if pump_data.get("suction_lift", "") == "Yes":
+    #     pump_specs.append(["Suction Lift", "Yes"])
 
     if pump_data.get("spare_parts_kit", "") == "Yes":
         if isinstance(pump_data.get("spare_parts_kit_price"), (int, float)):
@@ -1426,7 +1426,7 @@ def generate_pdf(pump_data, filename="pump_quote.pdf"):
 
     table = Table(pump_specs, colWidths=[200, 200])
     table.setStyle(TableStyle([
-        ("BACKGROUND", (0, 0), (-1, 0), colors.grey),
+        ("BACKGROUND", (0, 0), (0, 0), colors.grey),
         ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
         ("ALIGN", (0, 0), (-1, -1), "CENTER"),
         ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
