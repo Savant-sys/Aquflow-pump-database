@@ -1103,11 +1103,9 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
         else:
             # If flange is "No", set flange_adaptor_price to 0
             flange_adaptor_price = 0
-            flange_adaptor_message = "Flange Adaptor not selected"
 
         # Add flange adaptor details to the best pump
         best_pump["flange_adaptor_price"] = flange_adaptor_price
-        best_pump["flange_adaptor_message"] = flange_adaptor_message
 
         spare_parts_kit_price = None
         spare_parts_kit_message = None

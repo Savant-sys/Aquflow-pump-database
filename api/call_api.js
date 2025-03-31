@@ -262,7 +262,7 @@ function callAPI() {
                         ${optionalAccessoriesHtml}
                         <p><strong>Optional Accessories Total:</strong> $${data.optional_accessories_total_price}</p>
                     ` : ''}
-                    
+                    <h4 style="margin-top: 20px; color: #28a745;">FINAL PRICE:</h4>
                     <p><strong>Final Total Price:</strong> ${formattedFinalTotal}</p>
                     
                     <p style="margin-top: 15px; color: #666; font-style: italic;">
