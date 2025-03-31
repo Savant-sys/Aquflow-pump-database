@@ -1588,11 +1588,6 @@ def get_lead_time(series):
 @app.route('/get_pump', methods=['GET'])
 def get_pump():
     try:
-        # Add debug logging
-        print("Received parameters:")
-        print("ECCA:", request.args.get('ecca'))
-        print("VFD:", request.args.get('vfd'))
-
         # Get parameters from the request
         customer_name = request.args.get('customer_name', type=str)
         gph = request.args.get('gph', type=float)
