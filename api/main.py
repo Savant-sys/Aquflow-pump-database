@@ -369,7 +369,7 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
         return {"error": "Liquid End Material is required and must be one of the following: 316SS, Alloy 20, Hast. C, PVC, PVDF."}
 
     # Ensure leak detection is provided and is one of the valid options
-    valid_leak_detection_options = ["No", "conductive", "vacuum"]
+    valid_leak_detection_options = ["No", "Conductive", "Vacuum"]
     if leak_detection is None or leak_detection not in valid_leak_detection_options:
         return {"error": "Leak Detection is required and must be one of the following: No, Conductive, Vacuum."}
 
