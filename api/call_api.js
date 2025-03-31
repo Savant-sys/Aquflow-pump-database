@@ -301,7 +301,7 @@ function getQuotePDF() {
     // Show success message
     emailStatus.innerHTML = `
         <div style="color: #28a745; margin-top: 10px; padding: 10px; background-color: #fff; border-radius: 5px;">
-            <p>✓ PDF has been downloaded to your computer</p>
+            <p>✓ PDF has been downloaded to your computer.</p>
             ${currentFormData.user_email ? `<p>✓ Quote has been sent to ${currentFormData.user_email}</p>` : ''}
         </div>
     `;
@@ -315,3 +315,29 @@ document.getElementById('pumpForm').onsubmit = function(e) {
     e.preventDefault();
     callAPI();
 };
+
+// Add this near the top of your file with other event listeners
+document.addEventListener('DOMContentLoaded', function() {
+    // Initial setup
+    const wantMotorSelect = document.getElementById('want_motor');
+    const motorOptions = document.querySelectorAll('.motor-option');
+    
+    // Function to toggle motor options visibility
+    function toggleMotorOptions() {
+        const showMotorOptions = wantMotorSelect.value === 'Yes';
+        motorOptions.forEach(option => {
+            option.style.display = showMotorOptions ? 'block' : 'none';
+            // Make fields required only when visible
+            const select = option.querySelector('select');
+            if (select) {
+                select.required = showMotorOptions;
+            }
+        });
+    }
+
+    // Set up event listener for want_motor changes
+    wantMotorSelect.addEventListener('change', toggleMotorOptions);
+    
+    // Initial check on page load
+    toggleMotorOptions();
+});
