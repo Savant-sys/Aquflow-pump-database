@@ -254,7 +254,7 @@ function callAPI() {
                 <div style="background-color: #fff; padding: 15px; border-radius: 5px;">
                     <h3 style="color: #28a745; margin-bottom: 15px;">Recommended Pump:</h3>
                     <p><strong>Model:</strong> ${data.model}</p>
-                    <p><strong>Series:</strong> ${data.series}</p>
+                    <p><strong>${data.series}</strong></p>
                     <p><strong>Base Price:</strong> $${data.base_price}</p>
                     
                     ${optionalAccessoriesHtml ? `
