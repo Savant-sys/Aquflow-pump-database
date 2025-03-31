@@ -8,6 +8,8 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, Image
 from datetime import datetime
 import os
+import threading
+import time
 
 app = Flask(__name__)
 CORS(app)  # Allows frontend access to API
@@ -1642,6 +1644,22 @@ def get_lead_time(series):
     else:
         return "N/A"
 
+def delete_file_after_delay(filename, delay=10):
+    """Delete the specified file after a delay in seconds."""
+    def delete_file():
+        time.sleep(delay)
+        try:
+            if os.path.exists(filename):
+                os.remove(filename)
+                print(f"✅ Deleted temporary file: {filename}")
+        except Exception as e:
+            print(f"Error deleting file {filename}: {e}")
+    
+    # Start deletion thread
+    thread = threading.Thread(target=delete_file)
+    thread.daemon = True  # Thread will exit when main program exits
+    thread.start()
+
 @app.route('/get_pump', methods=['GET'])
 def get_pump():
     try:
@@ -1752,7 +1770,6 @@ def get_pump():
 
         # Generate PDF
         if "error" not in result:
-            # Include additional details in the result for the PDF
             result["hz"] = hz
             result["diaphragm"] = diaphragm
             result["psi"] = psi
@@ -1761,18 +1778,29 @@ def get_pump():
             result["balls_type"] = balls_type
             result["suction_lift"] = suction_lift
             result["ball_size"] = ball_size
-            pdf_filename = generate_pdf(result)
+            
+            # Generate unique filename using timestamp
+            timestamp = int(time.time())
+            pdf_filename = f"pump_quote_{timestamp}.pdf" # IMPORTANT: This is where it needs to be changed to the actual filename by the txt file based on the day
+            # CREATE TXT FILE FOR THAT AND MAKE SURE TO UPDATE THE TXT FILE WHEN THE DAY IS OVER
+            # MAKE SURE TO UPDATE THE TXT FILE WHEN THE BUTTON "GET THE PDF" IS CLICKED
+            # Generate the PDF
+            pdf_filename = generate_pdf(result, pdf_filename)
             result["pdf_url"] = f"/download_pdf/{pdf_filename}"
 
-            # Send the PDF via email
-            if user_email:  # Only send if email is provided
-                email_subject = "Your Pump Quote"
-                email_body = "Please find attached the pump quote."
-                to_emails = [user_email, "quotes@acuflow.com"]
-                if send_email(to_emails, email_subject, email_body, pdf_filename):
-                    result["email_status"] = "Email sent successfully"
-                else:
-                    result["email_status"] = "Failed to send email"
+            # if user_email:  # Only send if email is provided
+            #     email_subject = "Your Pump Quote"
+            #     email_body = "Please find attached the pump quote."
+            #     to_emails = [user_email, "quotes@acuflow.com"]
+            #     if send_email(to_emails, email_subject, email_body, pdf_filename):
+            #         result["email_status"] = "Email sent successfully"
+            #     else:
+            #         result["email_status"] = "Failed to send email"
+            # Schedule the PDF for deletion after 10 seconds
+            delete_file_after_delay(pdf_filename)
+
+            # Send email if provided
+            
 
         return jsonify(result)
 
@@ -1783,9 +1811,14 @@ def get_pump():
 @app.route('/download_pdf/<filename>', methods=['GET'])
 def download_pdf(filename):
     try:
-        return send_file(filename, as_attachment=True)
-    except FileNotFoundError:
-        return jsonify({"error": "PDF not found"}), 404
+        if os.path.exists(filename):
+            return send_file(filename, as_attachment=True)
+        else:
+            return jsonify({
+                "error": "PDF has expired. Please generate a new quote."
+            }), 404
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/test_db')
 def test_db():
