@@ -577,7 +577,9 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
         spare_parts_kit_price_value = float(pump["Spare_Parts_Kit_Price"]) if pump["Spare_Parts_Kit_Price"] not in [None, "0"] else 0
         spare_parts_kit_info = pump.get("Spare_Parts_Kit_Info")
         calibration_column_price_value = float(pump["Calibration_Column"])
+        calibration_column_info = pump.get("Calibration_Column_Info", "")
         pressure_gauge_price_value = float(pump["Pressure_Gauge"])
+        pressure_gauge_info = pump.get("Pressure_Gauge_Info", "")
         
         # Determine correct motor price column
         if want_motor == "Yes":
@@ -736,7 +738,9 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
             "spare_parts_kit_price_value": spare_parts_kit_price_value,
             "spare_parts_kit_info": spare_parts_kit_info,
             "calibration_column_price_value": calibration_column_price_value,
+            "calibration_column_info": calibration_column_info,
             "pressure_gauge_price_value": pressure_gauge_price_value,
+            "pressure_gauge_info": pressure_gauge_info,
             "OG_Model": pump["Model"]
         })
 
@@ -1335,31 +1339,53 @@ def generate_pdf(pump_data, filename="pump_quote.pdf"):
     port = pump_data.get("port", "N/A")
     psi = pump_data.get("psi", "N/A")
 
-    def split_long_description(description):
-        if len(description) > 90:  # Changed from 60 to 90
-            mid_point = len(description) // 2
-            split_chars = [' ', '.']
-            split_point = -1
-            for char in split_chars:
-                pos = description.rfind(char, 0, mid_point)
-                if pos > split_point:
-                    split_point = pos
-            if split_point > 0:
-                return description[:split_point] + '\n' + description[split_point:].lstrip()
-        return description
+    # Update the split_long_description function to be more precise
+    def split_long_description(description, max_length=72):
+        if not description:
+            return description
+            
+        words = description.split()
+        lines = []
+        current_line = []
+        current_length = 0
 
-    # Get and split spare parts info
+        for word in words:
+            word_length = len(word)
+            if current_length + word_length + 1 <= max_length:
+                current_line.append(word)
+                current_length += word_length + 1
+            else:
+                lines.append(' '.join(current_line))
+                current_line = [word]
+                current_length = word_length + 1
+
+        if current_line:
+            lines.append(' '.join(current_line))
+
+        return '\n'.join(lines)
+
+    # Get and split all accessory descriptions
     spare_parts_info = split_long_description(pump_data.get('spare_parts_kit_info', 'Not included'))
 
-    # Create and split other descriptions
     back_pressure_desc = split_long_description(
-        f"Back Pressure Valve in {liquid_end_material} with {pump_data.get('back_pressure_valve_message', '').split('with ')[-1].split('.')[0]}. Max pressure is {psi} PSI."
+        f"Back Pressure Valve in {liquid_end_material} with "
+        f"{pump_data.get('back_pressure_valve_message', '').split('with ')[-1].split('.')[0]}. "
+        f"Max pressure is {psi} PSI."
     )
 
     pressure_relief_desc = split_long_description(pump_data.get("pressure_relief_valve_message", "Not included"))
 
     pulsation_dampener_desc = split_long_description(
-        f"Pulsation Dampener in {liquid_end_material} with a Viton bladder and Max Pressure of {psi} PSI."
+        f"Pulsation Dampener in {liquid_end_material} with a Viton bladder "
+        f"and Max Pressure of {psi} PSI."
+    )
+
+    calibration_column_desc = split_long_description(
+        f"Calibration Column {pump_data.get('calibration_column_info', '')}."
+    )
+
+    pressure_gauge_desc = split_long_description(
+        f"{pump_data.get('pressure_gauge_info', '')}"
     )
 
     accessory_descriptions = {
@@ -1367,8 +1393,8 @@ def generate_pdf(pump_data, filename="pump_quote.pdf"):
         "Back Pressure Valve": back_pressure_desc,
         "Pressure Relief Valve": pressure_relief_desc,
         "Pulsation Dampener": pulsation_dampener_desc,
-        "Calibration Column": "For accurate flow measurement",
-        "Pressure Gauge": "For system pressure monitoring"
+        "Calibration Column": calibration_column_desc,
+        "Pressure Gauge": pressure_gauge_desc
     }
 
     all_accessories = [
@@ -1384,22 +1410,30 @@ def generate_pdf(pump_data, filename="pump_quote.pdf"):
     for name, price in all_accessories:
         price_display = "C/F" if price in [None, 0, "0", "C/F"] else f"${math.ceil(float(price))}"
         description = accessory_descriptions.get(name, "")
+        # Calculate row height based on number of lines
+        num_lines = len(description.split('\n')) if description else 1
+        row_height = max(20, num_lines * 12)  # Base height of 20, or 12 points per line
         accessories_table_data.append([name, description, price_display])
 
     accessories_table = Table(
         accessories_table_data,
-        colWidths=[100, 300, 80],  # Reduced description column width to 300
-        rowHeights=30
+        colWidths=[100, 300, 80],
+        rowHeights=[20] + [None] * (len(accessories_table_data) - 1)  # Auto-height for content rows
     )
+    
+    # Update table style to handle multiline content better
     accessories_table.setStyle(TableStyle([
         ("BACKGROUND", (0, 0), (-1, 0), colors.lightgrey),
         ("TEXTCOLOR", (0, 0), (-1, 0), colors.black),
         ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),  # Vertical alignment
         ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
         ("FONTSIZE", (0, 0), (-1, -1), 8),
         ("BOTTOMPADDING", (0, 0), (-1, 0), 2),
-        ("TOPPADDING", (0, 1), (-1, -1), 8),  # Increased top padding from 2 to 8
-        ("GRID", (0, 0), (-1, -1), 0.5, colors.black)
+        ("TOPPADDING", (0, 1), (-1, -1), 4),
+        ("BOTTOMPADDING", (0, 1), (-1, -1), 4),
+        ("GRID", (0, 0), (-1, -1), 0.5, colors.black),
+        ("WORDWRAP", (0, 0), (-1, -1), True)
     ]))
     elements.append(accessories_table)
     elements.append(Spacer(1, 12))
