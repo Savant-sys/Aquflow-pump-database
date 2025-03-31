@@ -756,6 +756,22 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
 
         best_pump = filtered_pumps[0]
         
+        # Add leak detection prices to best_pump dictionary
+        # Get these values from the original pump data that matched
+        conn = mysql.connector.connect(**db_config)
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("SELECT Conductive_Leak_Detection_Price_Adder, Vacuum_Leak_Detection_Price_Adder FROM pumps WHERE Model = %s", (best_pump["OG_Model"],))
+        leak_detection_data = cursor.fetchone()
+        cursor.close()
+        conn.close()
+
+        if leak_detection_data:
+            best_pump["Conductive_Leak_Detection_Price_Adder"] = float(leak_detection_data["Conductive_Leak_Detection_Price_Adder"]) if leak_detection_data["Conductive_Leak_Detection_Price_Adder"] not in [None, "0", 0] else 0
+            best_pump["Vacuum_Leak_Detection_Price_Adder"] = float(leak_detection_data["Vacuum_Leak_Detection_Price_Adder"]) if leak_detection_data["Vacuum_Leak_Detection_Price_Adder"] not in [None, "0", 0] else 0
+        else:
+            best_pump["Conductive_Leak_Detection_Price_Adder"] = 0
+            best_pump["Vacuum_Leak_Detection_Price_Adder"] = 0
+
         # Initialize optional accessories total price
         optional_accessories_total_price = 0
         optional_accessories_notes = []
@@ -1452,7 +1468,9 @@ def generate_pdf(pump_data, filename="pump_quote.pdf"):
         "Calibration Column": calibration_column_desc,
         "Pressure Gauge": pressure_gauge_desc,
         "ECCA": "Electronic Capacity Control Actuator",
-        "VFD": "Variable Frequency Drive"
+        "VFD": "Variable Frequency Drive",
+        "Conductive Leak Detection": "Conductive Leak Detection Only. (No Relay Included.)",
+        "Vacuum Leak Detection": "Vacuum Leak Detection"
     }
 
     all_accessories = [
@@ -1463,7 +1481,9 @@ def generate_pdf(pump_data, filename="pump_quote.pdf"):
         ("Calibration Column", pump_data.get("calibration_column_price_value", 0)),
         ("Pressure Gauge", pump_data.get("pressure_gauge_price_value", 0)),
         ("ECCA", pump_data.get("ECCA_Price", 0)),
-        ("VFD", pump_data.get("VFD_Price", 0))
+        ("VFD", pump_data.get("VFD_Price", 0)),
+        ("Conductive Leak Detection", pump_data.get("Conductive_Leak_Detection_Price_Adder")),
+        ("Vacuum Leak Detection", pump_data.get("Vacuum_Leak_Detection_Price_Adder"))
     ]
 
     accessories_table_data = [["Accessory", "Description", "Price"]]
@@ -1677,8 +1697,8 @@ def get_pump():
             pulsation_dampener,
             calibration_column,
             pressure_gauge,
-            ecca,    # Make sure these parameters are being passed
-            vfd      # Make sure these parameters are being passed
+            ecca,
+            vfd
         )
 
         # Log the result
