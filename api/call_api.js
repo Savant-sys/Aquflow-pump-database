@@ -74,6 +74,17 @@ document.addEventListener("DOMContentLoaded", () => {
     toggleFlangeSizeOptions();
 });
 
+// Update your existing leak detection event listener to use the new ID
+document.getElementById('leak_detection').addEventListener('change', function() {
+    const relayOptionGroup = document.getElementById('relay-option-group');
+    if (this.value === 'Conductive') {
+        relayOptionGroup.style.display = 'block';
+    } else {
+        relayOptionGroup.style.display = 'none';
+        document.getElementById('relay_option').value = 'No'; // Reset to No when not Conductive
+    }
+});
+
 // Handle form submission
 document.getElementById("pumpForm").addEventListener("submit", async (e) => {
     e.preventDefault(); // Prevent form submission and page reload
@@ -112,6 +123,7 @@ document.getElementById("pumpForm").addEventListener("submit", async (e) => {
         pressure_gauge: document.getElementById("pressure_gauge").value,
         ecca: document.getElementById("ecca").value,
         vfd: document.getElementById("vfd").value,
+        relay_option: document.getElementById("relay_option").value
     };
 
     // Add flange sizes if applicable
@@ -229,9 +241,18 @@ document.getElementById("pumpForm").addEventListener("submit", async (e) => {
                         (${data.vfd_price === 'C/F' ? 'C/F' : '$' + data.vfd_price})
                     </p>` : ''}
                 ${formData.leak_detection !== 'No' ? `
-                <p><strong>Leak Detection System:</strong> ${formData.leak_detection} 
-                    (${data.leak_detection_price === 'C/F' ? 'C/F' : '$' + data.leak_detection_price})
-                </p>` : ''}
+                <p><strong>Leak Detection System:</strong> ${
+                    formData.leak_detection === 'Conductive' 
+                        ? `Conductive ${formData.relay_option === 'Yes' ? 'with' : 'without'} Relay` 
+                        : formData.leak_detection
+                } (${
+                    data.leak_detection_price === 'C/F' 
+                        ? 'C/F' 
+                        : '$' + (
+                            data.leak_detection_price + 
+                            (formData.leak_detection === 'Conductive' && formData.relay_option === 'Yes' ? 889 : 0)
+                        )
+                })</p>` : ''}
 
                 <p><strong>Base Pump Price:</strong> ${
                     typeof data.base_price === 'number'

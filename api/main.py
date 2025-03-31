@@ -328,7 +328,7 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
                    balls_type=None, suction_lift=None, ball_size=None, suction_flange_size=None, 
                    discharge_flange_size=None, food_graded_oil=None, spare_parts_kit=None, 
                    back_pressure_valve=None, pressure_relief_valve=None, pulsation_dampener=None,
-                   calibration_column=None, pressure_gauge=None, ecca=None, vfd=None):
+                   calibration_column=None, pressure_gauge=None, ecca=None, vfd=None, relay_option=None):
     # Ensure either GPH or LPH is provided
     if gph is None and lph is None:
         return {"error": "Either GPH or LPH is required. Please provide one."}
@@ -628,6 +628,8 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
         # Determine leak detection price
         if leak_detection == "Conductive":
             leak_detection_price = float(pump["Conductive_Leak_Detection_Price_Adder"]) if pump["Conductive_Leak_Detection_Price_Adder"] is not None else 0
+            if relay_option == "Yes":
+                leak_detection_price += 889  # Add relay price if selected
         elif leak_detection == "Vacuum":
             leak_detection_price = float(pump["Vacuum_Leak_Detection_Price_Adder"]) if pump["Vacuum_Leak_Detection_Price_Adder"] is not None else 0
         else:
@@ -744,6 +746,8 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
             "VFD_Price": pump.get("VFD_Price", 0),
             "ecca_price": math.ceil(float(pump.get("ECCA_Price", 0))) if pump.get("ECCA_Price") not in [None, 0, "0"] else 0,
             "vfd_price": math.ceil(float(pump.get("VFD_Price", 0))) if pump.get("VFD_Price") not in [None, 0, "0"] else 0,
+            "relay_option": relay_option if leak_detection == "Conductive" else "N/A",
+            "relay_price": 889 if leak_detection == "Conductive" and relay_option == "Yes" else 0,
         })
 
     if filtered_pumps:
@@ -777,7 +781,7 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
         optional_accessories_notes = []
 
         optional_accessories_total_price += leak_detection_price
-
+ 
         # Add additional details to the best_pump dictionary
         best_pump["want_motor"] = want_motor
         best_pump["motor_type"] = motor_type
@@ -1470,6 +1474,7 @@ def generate_pdf(pump_data, filename="pump_quote.pdf"):
         "ECCA": "Electronic Capacity Control Actuator",
         "VFD": "Variable Frequency Drive",
         "Conductive Leak Detection": "Conductive Leak Detection Only. (No Relay Included.)",
+        "Relay": "Relay for Conductive Leak Detection System",
         "Vacuum Leak Detection": "Vacuum Leak Detection"
     }
 
@@ -1483,6 +1488,7 @@ def generate_pdf(pump_data, filename="pump_quote.pdf"):
         ("ECCA", pump_data.get("ECCA_Price", 0)),
         ("VFD", pump_data.get("VFD_Price", 0)),
         ("Conductive Leak Detection", pump_data.get("Conductive_Leak_Detection_Price_Adder")),
+        ("Relay", 889),
         ("Vacuum Leak Detection", pump_data.get("Vacuum_Leak_Detection_Price_Adder"))
     ]
 
@@ -1633,6 +1639,7 @@ def get_pump():
         pressure_gauge = request.args.get('pressure_gauge', type=str)
         ecca = request.args.get('ecca', type=str)
         vfd = request.args.get('vfd', type=str)
+        relay_option = request.args.get('relay_option', type=str)
         
         # Log the parsed parameters
         print("Parsed Parameters:", {
@@ -1666,6 +1673,7 @@ def get_pump():
             "pressure_gauge": pressure_gauge,
             "ecca": ecca,
             "vfd": vfd,
+            "relay_option": relay_option,
         })
 
         # Find the best pump
@@ -1698,7 +1706,8 @@ def get_pump():
             calibration_column,
             pressure_gauge,
             ecca,
-            vfd
+            vfd,
+            relay_option
         )
 
         # Log the result
