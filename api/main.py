@@ -433,7 +433,7 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
     # Connect to MySQL database
     conn = mysql.connector.connect(**db_config)
     cursor = conn.cursor(dictionary=True)
-    query = "SELECT * FROM pumps"
+    query = "SELECT *, Spare_Parts_Kit_Model FROM pumps"
     cursor.execute(query)
     pumps = cursor.fetchall()
     cursor.close()
@@ -735,6 +735,7 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
             "Motor_HP_DC_XPFC": pump.get("Motor_HP_DC_XPFC", "N/A"),
             "food_graded_oil_price": food_graded_oil_price,
             "customer_name": customer_name,
+            "Spare_Parts_Kit_Model": pump.get("Spare_Parts_Kit_Model", "Spare Parts Kit"),
             "spare_parts_kit_price_value": spare_parts_kit_price_value,
             "spare_parts_kit_info": spare_parts_kit_info,
             "calibration_column_price_value": calibration_column_price_value,
@@ -1389,7 +1390,7 @@ def generate_pdf(pump_data, filename="pump_quote.pdf"):
     )
 
     accessory_descriptions = {
-        "Spare Parts Kit": spare_parts_info,
+        pump_data.get("Spare_Parts_Kit_Model", "Spare Parts Kit"): spare_parts_info,
         "Back Pressure Valve": back_pressure_desc,
         "Pressure Relief Valve": pressure_relief_desc,
         "Pulsation Dampener": pulsation_dampener_desc,
@@ -1398,7 +1399,7 @@ def generate_pdf(pump_data, filename="pump_quote.pdf"):
     }
 
     all_accessories = [
-        ("Spare Parts Kit", pump_data.get("spare_parts_kit_price_value", 0)),
+        (pump_data.get("Spare_Parts_Kit_Model", "Spare Parts Kit"), pump_data.get("spare_parts_kit_price_value", 0)),
         ("Back Pressure Valve", pump_data.get("back_pressure_valve_price", 0)),
         ("Pressure Relief Valve", pump_data.get("pressure_relief_valve_price", 0)),
         ("Pulsation Dampener", pump_data.get("pulsation_dampener_price", 0)),
@@ -1426,7 +1427,7 @@ def generate_pdf(pump_data, filename="pump_quote.pdf"):
         ("BACKGROUND", (0, 0), (-1, 0), colors.lightgrey),
         ("TEXTCOLOR", (0, 0), (-1, 0), colors.black),
         ("ALIGN", (0, 0), (-1, -1), "CENTER"),
-        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),  # Vertical alignment
+        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
         ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
         ("FONTSIZE", (0, 0), (-1, -1), 8),
         ("BOTTOMPADDING", (0, 0), (-1, 0), 2),
