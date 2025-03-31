@@ -433,7 +433,7 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
     # Connect to MySQL database
     conn = mysql.connector.connect(**db_config)
     cursor = conn.cursor(dictionary=True)
-    query = "SELECT *, Spare_Parts_Kit_Model FROM pumps"
+    query = "SELECT *, Spare_Parts_Kit_Model, ECCA_Price, VFD_Price FROM pumps"  # Added ECCA_Price and VFD_Price
     cursor.execute(query)
     pumps = cursor.fetchall()
     cursor.close()
@@ -742,7 +742,9 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
             "calibration_column_info": calibration_column_info,
             "pressure_gauge_price_value": pressure_gauge_price_value,
             "pressure_gauge_info": pressure_gauge_info,
-            "OG_Model": pump["Model"]
+            "OG_Model": pump["Model"],
+            "ECCA_Price": pump.get("ECCA_Price", 0),
+            "VFD_Price": pump.get("VFD_Price", 0)
         })
 
     if filtered_pumps:
@@ -1395,7 +1397,9 @@ def generate_pdf(pump_data, filename="pump_quote.pdf"):
         "Pressure Relief Valve": pressure_relief_desc,
         "Pulsation Dampener": pulsation_dampener_desc,
         "Calibration Column": calibration_column_desc,
-        "Pressure Gauge": pressure_gauge_desc
+        "Pressure Gauge": pressure_gauge_desc,
+        "ECCA": "Electronic Capacity Control Actuator",
+        "VFD": "Variable Frequency Drive"
     }
 
     all_accessories = [
@@ -1405,6 +1409,8 @@ def generate_pdf(pump_data, filename="pump_quote.pdf"):
         ("Pulsation Dampener", pump_data.get("pulsation_dampener_price", 0)),
         ("Calibration Column", pump_data.get("calibration_column_price_value", 0)),
         ("Pressure Gauge", pump_data.get("pressure_gauge_price_value", 0)),
+        ("ECCA", pump_data.get("ECCA_Price", 0)),
+        ("VFD", pump_data.get("VFD_Price", 0))
     ]
 
     accessories_table_data = [["Accessory", "Description", "Price"]]
