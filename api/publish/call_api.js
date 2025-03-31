@@ -87,7 +87,26 @@ document.getElementById('leak_detection').addEventListener('change', function() 
 
 // Add this function to handle the download
 function downloadPDF(pdfUrl) {
-    window.location.href = pdfUrl;
+    // Add error handling for the download
+    fetch(pdfUrl)
+        .then(response => {
+            if (!response.ok) throw new Error('PDF download failed');
+            return response.blob();
+        })
+        .then(blob => {
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'pump_quote.pdf';
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+        })
+        .catch(error => {
+            console.error('Download error:', error);
+            alert('Failed to download PDF. Please try again.');
+        });
 }
 
 // Add these variables at the top of your file
@@ -125,7 +144,7 @@ function callAPI() {
         .join('&');
 
     // First API call to get pump data
-    fetch(`http://localhost:5000/get_pump?${queryString}`, {
+    fetch(`https://your-heroku-app.herokuapp.com/get_pump?${queryString}`, {
         method: 'GET',
         headers: {
             'Accept': 'application/json',
@@ -144,7 +163,7 @@ function callAPI() {
             document.getElementById('get-quote-button').style.display = 'none';
         } else {
             // Store the PDF URL for later use
-            currentPdfUrl = `http://localhost:5000${data.pdf_url}`;
+            currentPdfUrl = `https://your-heroku-app.herokuapp.com${data.pdf_url}`;
 
             // Final Total Price: Extract C/F from base and optional accessories
             const basePrice = data.base_price;

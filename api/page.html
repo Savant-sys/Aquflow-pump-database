@@ -345,7 +345,7 @@
             </div>
         </div>
 
-        <button type="submit">Find Pump</button>
+        <button type="submit" style="background-color: #28a745;">Find Pump</button>
     </form>
 
     <div id="result" style="display: none; margin-top: 20px; padding: 20px; background-color: #f9f9f9; border-radius: 8px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);">
@@ -353,6 +353,13 @@
         <div id="result-content">
             <!-- Results will be dynamically inserted here -->
         </div>
+        <div style="margin-top: 20px;">
+            <button id="get-quote-button" style="display: none; background-color: #007bff; width: 200px; margin: 0 auto;" onclick="getQuotePDF()">Get Quote PDF</button>
+        </div>
+    </div>
+
+    <div id="download-section" style="display: none; margin-top: 20px; text-align: center;">
+        <div id="email-status" style="margin-bottom: 10px;"></div>
     </div>
 
     <script src="call_api.js"></script>
