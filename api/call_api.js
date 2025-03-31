@@ -188,8 +188,10 @@ document.getElementById("pumpForm").addEventListener("submit", async (e) => {
 
             // Format the final total price display
             const formattedFinalTotal = typeof data.final_total_price === 'number'
-                ? `$${data.final_total_price}${cfText}`
-                : (data.final_total_price.startsWith('$') ? data.final_total_price : `$${data.final_total_price}`) + cfText;
+                ? `$${Math.ceil(data.final_total_price)}${cfText}`
+                : (data.final_total_price.startsWith('$') 
+                    ? '$' + Math.ceil(parseFloat(data.final_total_price.replace('$', ''))) + cfText
+                    : data.final_total_price + cfText);
 
             // Optional Accessories C/F formatting
             let optionalCfNotes = [];
@@ -202,7 +204,7 @@ document.getElementById("pumpForm").addEventListener("submit", async (e) => {
             const optionalCfText = optionalCfNotes.length > 0 ? ` + C/F (${optionalCfNotes.join(" + ")})` : "";
             // Format the optional accessories display
             const formattedOptionalAccessories = typeof data.optional_accessories_total_price === 'number'
-            ? `$${data.optional_accessories_total_price}${optionalCfText}`
+            ? `$${Math.ceil(data.optional_accessories_total_price)}${optionalCfText}`
             : (data.optional_accessories_total_price || "N/A") + optionalCfText;
 
             resultContent.innerHTML = `

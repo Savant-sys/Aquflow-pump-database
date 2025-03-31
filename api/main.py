@@ -744,8 +744,8 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
             "OG_Model": pump["Model"],
             "ECCA_Price": pump.get("ECCA_Price", 0),
             "VFD_Price": pump.get("VFD_Price", 0),
-            "ecca_price": math.ceil(float(pump.get("ECCA_Price", 0))) if pump.get("ECCA_Price") not in [None, 0, "0"] else 0,
-            "vfd_price": math.ceil(float(pump.get("VFD_Price", 0))) if pump.get("VFD_Price") not in [None, 0, "0"] else 0,
+            "ecca_price": int(math.ceil(float(pump.get("ECCA_Price", 0)))) if pump.get("ECCA_Price") not in [None, 0, "0"] else 0,
+            "vfd_price": int(math.ceil(float(pump.get("VFD_Price", 0)))) if pump.get("VFD_Price") not in [None, 0, "0"] else 0,
             "relay_option": relay_option if leak_detection == "Conductive" else "N/A",
             "relay_price": 889 if leak_detection == "Conductive" and relay_option == "Yes" else 0,
         })
@@ -940,14 +940,24 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
         if ecca == "Yes":
             ecca_price = float(best_pump.get("ECCA_Price", 0))
             if ecca_price > 0:
+                ecca_price = int(math.ceil(ecca_price))
                 optional_accessories_total_price += ecca_price
+                if isinstance(best_pump["total_price"], str):
+                    best_pump["total_price"] = f"{best_pump['total_price']} + ${ecca_price}"
+                else:
+                    best_pump["total_price"] += ecca_price
                 print(f"Adding ECCA price: ${ecca_price}")
 
         # Handle VFD price
         if vfd == "Yes":
             vfd_price = float(best_pump.get("VFD_Price", 0))
             if vfd_price > 0:
+                vfd_price = int(math.ceil(vfd_price))
                 optional_accessories_total_price += vfd_price
+                if isinstance(best_pump["total_price"], str):
+                    best_pump["total_price"] = f"{best_pump['total_price']} + ${vfd_price}"
+                else:
+                    best_pump["total_price"] += vfd_price
                 print(f"Adding VFD price: ${vfd_price}")
 
         # Update the final total price
@@ -1208,6 +1218,29 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
 
         best_pump["ecca"] = ecca
         best_pump["vfd"] = vfd
+
+        # Update price calculations to use int() to remove decimals
+        if isinstance(best_pump["total_price"], (int, float)):
+            best_pump["total_price"] = int(math.ceil(best_pump["total_price"]))
+
+        if isinstance(best_pump["base_price"], (int, float)):
+            best_pump["base_price"] = int(math.ceil(best_pump["base_price"]))
+
+        if isinstance(best_pump["optional_accessories_total_price"], (int, float)):
+            best_pump["optional_accessories_total_price"] = int(math.ceil(best_pump["optional_accessories_total_price"]))
+
+        # Update individual accessory prices
+        for accessory in ["spare_parts_kit_price", "back_pressure_valve_price", 
+                         "pressure_relief_valve_price", "pulsation_dampener_price",
+                         "calibration_column_price", "pressure_gauge_price",
+                         "ecca_price", "vfd_price"]:
+            if isinstance(best_pump.get(accessory), (int, float)) and best_pump[accessory] != 0:
+                best_pump[accessory] = int(math.ceil(best_pump[accessory]))
+
+        # Format final total price
+        if isinstance(best_pump["base_price"], (int, float)) and isinstance(optional_accessories_total_price, (int, float)):
+            final_total = int(math.ceil(best_pump["base_price"] + optional_accessories_total_price))
+            best_pump["final_total_price"] = f"${final_total}"
 
         return best_pump
     else:
@@ -1485,8 +1518,8 @@ def generate_pdf(pump_data, filename="pump_quote.pdf"):
         ("Pulsation Dampener", pump_data.get("pulsation_dampener_price", 0)),
         ("Calibration Column", pump_data.get("calibration_column_price_value", 0)),
         ("Pressure Gauge", pump_data.get("pressure_gauge_price_value", 0)),
-        ("ECCA", pump_data.get("ECCA_Price", 0)),
-        ("VFD", pump_data.get("VFD_Price", 0)),
+        ("ECCA", int(math.ceil(float(pump_data.get("ECCA_Price", 0)))) if pump_data.get("ECCA_Price") not in [None, 0, "0"] else 0),
+        ("VFD", int(math.ceil(float(pump_data.get("VFD_Price", 0)))) if pump_data.get("VFD_Price") not in [None, 0, "0"] else 0),
         ("Conductive Leak Detection", pump_data.get("Conductive_Leak_Detection_Price_Adder")),
         ("Relay", 889),
         ("Vacuum Leak Detection", pump_data.get("Vacuum_Leak_Detection_Price_Adder"))
@@ -1494,11 +1527,14 @@ def generate_pdf(pump_data, filename="pump_quote.pdf"):
 
     accessories_table_data = [["Accessory", "Description", "Price"]]
     for name, price in all_accessories:
-        price_display = "C/F" if price in [None, 0, "0", "C/F"] else f"${math.ceil(float(price))}"
+        # Round up the price and remove decimal .0
+        if isinstance(price, (int, float)) and price not in [0, None]:
+            price_display = f"${int(math.ceil(price))}"  # Convert to int to remove decimal
+        else:
+            price_display = "C/F" if price in [None, 0, "0", "C/F"] else f"${price}"
         description = accessory_descriptions.get(name, "")
-        # Calculate row height based on number of lines
         num_lines = len(description.split('\n')) if description else 1
-        row_height = max(20, num_lines * 12)  # Base height of 20, or 12 points per line
+        row_height = max(20, num_lines * 12)
         accessories_table_data.append([name, description, price_display])
 
     accessories_table = Table(
@@ -1530,7 +1566,7 @@ def generate_pdf(pump_data, filename="pump_quote.pdf"):
     optional_notes = pump_data.get("optional_accessories_notes", [])
     final_price = pump_data.get("final_total_price", "N/A")
 
-    base_display = f"${base_price}" if isinstance(base_price, (int, float)) else base_price
+    base_display = f"${int(base_price)}" if isinstance(base_price, (int, float)) else base_price
     base_notes = []
 
     if isinstance(pump_data.get("total_price"), str) and "C/F" in pump_data["total_price"]:
@@ -1548,7 +1584,7 @@ def generate_pdf(pump_data, filename="pump_quote.pdf"):
     if base_notes:
         base_display += " + " + " + ".join(base_notes)
 
-    optional_display = f"${optional_price}" if isinstance(optional_price, (int, float)) else "N/A"
+    optional_display = f"${int(optional_price)}" if isinstance(optional_price, (int, float)) else "N/A"
     optional_cf_notes = [note for note in optional_notes if "C/F" in note]
     optional_cf_combined = ""
     if optional_cf_notes:
