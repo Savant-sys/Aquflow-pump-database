@@ -679,9 +679,6 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
         # Add diaphragm price if not "ptfe"
         total_price += diaphragm_price
 
-        # Add leak detection price
-        total_price += leak_detection_price
-
         # Add HP adder price if it's not "C/F"
         if use_hp and pump["High_Pressure_Adder_Price"] is not None and pump["High_Pressure_Adder_Price"] != "C/F":
             total_price += float(pump["High_Pressure_Adder_Price"])
@@ -758,6 +755,13 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
         ))
 
         best_pump = filtered_pumps[0]
+        
+        # Initialize optional accessories total price
+        optional_accessories_total_price = 0
+        optional_accessories_notes = []
+
+        optional_accessories_total_price += leak_detection_price
+
         # Add additional details to the best_pump dictionary
         best_pump["want_motor"] = want_motor
         best_pump["motor_type"] = motor_type
@@ -775,10 +779,6 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
             best_pump["base_price"] = best_pump["total_price"]
         else:
             best_pump["base_price"] = "C/F"
-
-        # Initialize optional accessories total price
-        optional_accessories_total_price = 0
-        optional_accessories_notes = []
 
         # --- Spare Parts Kit (first optional accessory) ---
         if spare_parts_kit == "Yes":
@@ -937,12 +937,6 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
         
         # Save the optional accessories total
         best_pump["optional_accessories_total_price"] = optional_accessories_total_price
-
-        # Add debug logging
-        print(f"ECCA selected: {ecca}")
-        print(f"VFD selected: {vfd}")
-        print(f"Optional accessories total: ${optional_accessories_total_price}")
-        print(f"Final total price: {best_pump['final_total_price']}")
 
         # Combine C/F notes from base_price and optional accessories
         base_annotations = []
