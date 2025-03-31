@@ -110,6 +110,8 @@ document.getElementById("pumpForm").addEventListener("submit", async (e) => {
         pulsation_dampener: document.getElementById("pulsation_dampener").value,
         calibration_column: document.getElementById("calibration_column").value,
         pressure_gauge: document.getElementById("pressure_gauge").value,
+        ecca: document.getElementById("ecca").value,
+        vfd: document.getElementById("vfd").value,
     };
 
     // Add flange sizes if applicable
@@ -218,7 +220,15 @@ document.getElementById("pumpForm").addEventListener("submit", async (e) => {
                 <p><strong>Pressure Gauge:</strong> ${data.pressure_gauge} 
                     (${data.pressure_gauge_price === 'C/F' ? 'C/F' : '$' + data.pressure_gauge_price})
                 </p>` : ''}
-                
+                ${data.ecca === 'Yes' ? `
+                    <p><strong>ECCA:</strong> ${data.ecca} 
+                        (${data.ecca_price === 'C/F' ? 'C/F' : '$' + data.ecca_price})
+                    </p>` : ''}
+                ${data.vfd === 'Yes' ? `
+                    <p><strong>VFD:</strong> ${data.vfd} 
+                        (${data.vfd_price === 'C/F' ? 'C/F' : '$' + data.vfd_price})
+                    </p>` : ''}
+
                 <p><strong>Base Pump Price:</strong> ${
                     typeof data.base_price === 'number'
                         ? `$${data.base_price}`
