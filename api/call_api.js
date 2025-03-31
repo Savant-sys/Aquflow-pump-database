@@ -228,8 +228,8 @@ document.getElementById("pumpForm").addEventListener("submit", async (e) => {
                     <p><strong>VFD:</strong> ${data.vfd} 
                         (${data.vfd_price === 'C/F' ? 'C/F' : '$' + data.vfd_price})
                     </p>` : ''}
-                ${data.leak_detection !== 'No' ? `
-                <p><strong>Leak Detection System:</strong> ${data.leak_detection} 
+                ${formData.leak_detection !== 'No' ? `
+                <p><strong>Leak Detection System:</strong> ${formData.leak_detection} 
                     (${data.leak_detection_price === 'C/F' ? 'C/F' : '$' + data.leak_detection_price})
                 </p>` : ''}
 
