@@ -328,7 +328,7 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
                    balls_type=None, suction_lift=None, ball_size=None, suction_flange_size=None, 
                    discharge_flange_size=None, food_graded_oil=None, spare_parts_kit=None, 
                    back_pressure_valve=None, pressure_relief_valve=None, pulsation_dampener=None,
-                   calibration_column=None, pressure_gauge=None):
+                   calibration_column=None, pressure_gauge=None, ecca=None, vfd=None):
     # Ensure either GPH or LPH is provided
     if gph is None and lph is None:
         return {"error": "Either GPH or LPH is required. Please provide one."}
@@ -433,7 +433,7 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
     # Connect to MySQL database
     conn = mysql.connector.connect(**db_config)
     cursor = conn.cursor(dictionary=True)
-    query = "SELECT *, Spare_Parts_Kit_Model, ECCA_Price, VFD_Price FROM pumps"  # Added ECCA_Price and VFD_Price
+    query = "SELECT *, Spare_Parts_Kit_Model, ECCA_Price, VFD_Price FROM pumps"
     cursor.execute(query)
     pumps = cursor.fetchall()
     cursor.close()
@@ -744,7 +744,9 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
             "pressure_gauge_info": pressure_gauge_info,
             "OG_Model": pump["Model"],
             "ECCA_Price": pump.get("ECCA_Price", 0),
-            "VFD_Price": pump.get("VFD_Price", 0)
+            "VFD_Price": pump.get("VFD_Price", 0),
+            "ecca_price": math.ceil(float(pump.get("ECCA_Price", 0))) if pump.get("ECCA_Price") not in [None, 0, "0"] else 0,
+            "vfd_price": math.ceil(float(pump.get("VFD_Price", 0))) if pump.get("VFD_Price") not in [None, 0, "0"] else 0,
         })
 
     if filtered_pumps:
@@ -774,7 +776,7 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
         else:
             best_pump["base_price"] = "C/F"
 
-        # Initialize optional accessories
+        # Initialize optional accessories total price
         optional_accessories_total_price = 0
         optional_accessories_notes = []
 
@@ -914,9 +916,33 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
         else:
             best_pump["pressure_gauge_price"] = 0
 
-        # Save for PDF use
+        # Handle ECCA price
+        if ecca == "Yes":
+            ecca_price = float(best_pump.get("ECCA_Price", 0))
+            if ecca_price > 0:
+                optional_accessories_total_price += ecca_price
+                print(f"Adding ECCA price: ${ecca_price}")
+
+        # Handle VFD price
+        if vfd == "Yes":
+            vfd_price = float(best_pump.get("VFD_Price", 0))
+            if vfd_price > 0:
+                optional_accessories_total_price += vfd_price
+                print(f"Adding VFD price: ${vfd_price}")
+
+        # Update the final total price
+        if isinstance(best_pump["base_price"], (int, float)):
+            final_total = best_pump["base_price"] + optional_accessories_total_price
+            best_pump["final_total_price"] = f"${final_total}"
+        
+        # Save the optional accessories total
         best_pump["optional_accessories_total_price"] = optional_accessories_total_price
-        best_pump["optional_accessories_notes"] = optional_accessories_notes
+
+        # Add debug logging
+        print(f"ECCA selected: {ecca}")
+        print(f"VFD selected: {vfd}")
+        print(f"Optional accessories total: ${optional_accessories_total_price}")
+        print(f"Final total price: {best_pump['final_total_price']}")
 
         # Combine C/F notes from base_price and optional accessories
         base_annotations = []
@@ -1135,6 +1161,39 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
                     best_pump["total_price"] += best_pump["pressure_gauge_price"]
 
         best_pump["pressure_gauge"] = pressure_gauge
+
+        if ecca == "Yes":
+            if isinstance(best_pump["ecca_price"], (int, float)):
+                optional_accessories_total_price += best_pump["ecca_price"]
+                if isinstance(best_pump["total_price"], str):
+                    best_pump["total_price"] = f"{best_pump['total_price']} + ${best_pump['ecca_price']}"
+                else:
+                    best_pump["total_price"] += best_pump["ecca_price"]
+                optional_accessories_notes.append("C/F (ECCA)")
+            elif isinstance(best_pump["ecca_price"], (int, float)):
+                if isinstance(best_pump["total_price"], str):
+                    best_pump["total_price"] = f"{best_pump['total_price']} + ${best_pump['ecca_price']}"
+                else:
+                    best_pump["total_price"] += best_pump["ecca_price"]
+                optional_accessories_total_price += best_pump["ecca_price"]
+
+        if vfd == "Yes":
+            if isinstance(best_pump["vfd_price"], (int, float)):
+                optional_accessories_total_price += best_pump["vfd_price"]
+                if isinstance(best_pump["total_price"], str):
+                    best_pump["total_price"] = f"{best_pump['total_price']} + ${best_pump['vfd_price']}"
+                else:
+                    best_pump["total_price"] += best_pump["vfd_price"]
+                optional_accessories_notes.append("C/F (VFD)")
+            elif isinstance(best_pump["vfd_price"], (int, float)):
+                if isinstance(best_pump["total_price"], str):
+                    best_pump["total_price"] = f"{best_pump['total_price']} + ${best_pump['vfd_price']}"
+                else:
+                    best_pump["total_price"] += best_pump["vfd_price"]
+                optional_accessories_total_price += best_pump["vfd_price"]
+
+        best_pump["ecca"] = ecca
+        best_pump["vfd"] = vfd
 
         return best_pump
     else:
@@ -1529,8 +1588,10 @@ def get_lead_time(series):
 @app.route('/get_pump', methods=['GET'])
 def get_pump():
     try:
-        # Log the incoming request parameters
-        print("Request Args:", request.args)
+        # Add debug logging
+        print("Received parameters:")
+        print("ECCA:", request.args.get('ecca'))
+        print("VFD:", request.args.get('vfd'))
 
         # Get parameters from the request
         customer_name = request.args.get('customer_name', type=str)
@@ -1561,6 +1622,8 @@ def get_pump():
         pulsation_dampener = request.args.get('pulsation_dampener', type=str)
         calibration_column = request.args.get('calibration_column', type=str)
         pressure_gauge = request.args.get('pressure_gauge', type=str)
+        ecca = request.args.get('ecca', type=str)
+        vfd = request.args.get('vfd', type=str)
         
         # Log the parsed parameters
         print("Parsed Parameters:", {
@@ -1592,6 +1655,8 @@ def get_pump():
             "pulsation_dampener": pulsation_dampener,
             "calibration_column": calibration_column,
             "pressure_gauge": pressure_gauge,
+            "ecca": ecca,
+            "vfd": vfd,
         })
 
         # Find the best pump
@@ -1622,7 +1687,9 @@ def get_pump():
             pressure_relief_valve,
             pulsation_dampener,
             calibration_column,
-            pressure_gauge
+            pressure_gauge,
+            ecca,    # Make sure these parameters are being passed
+            vfd      # Make sure these parameters are being passed
         )
 
         # Log the result
