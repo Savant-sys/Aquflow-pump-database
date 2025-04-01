@@ -160,7 +160,7 @@ async function callAPI() {
         // Display the results
         let resultHTML = `
             <div style="background-color: #fff; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
-                <h3 style="color: #28a745; margin-bottom: 15px;">Recommended Pump:</h3>
+                <h3 style="color: #003A63; margin-bottom: 15px;">Recommended Pump:</h3>
                 <p><strong>Model:</strong> ${data.pump_model || data.model}</p>
                 <p><strong>Motor:</strong> ${data.want_motor === 'Yes' ? 
                     `${data.motor_type || ''} ${data.motor_power || ''} HP, ${data.phase || ''}` 
@@ -172,7 +172,7 @@ async function callAPI() {
                 
                 <!-- Total Price Section -->
                 <div style="margin-top: 20px; padding-top: 10px; border-top: 2px solid #eee;">
-                    <h4 style="color: #28a745;">FINAL PRICE: $${data.total_price || data.base_price || 0}</h4>
+                    <h4 style="color: #003A63;">FINAL PRICE: $${data.total_price || data.base_price || 0}</h4>
                 </div>
             </div>
         `;
