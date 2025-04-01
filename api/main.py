@@ -1261,15 +1261,13 @@ def combine_cf_annotations(base, optional_notes):
         return " + " + " + ".join(annotations)
     return ""
 
-def generate_pdf(pump_data, filename="pump_quote.pdf"):
+def generate_pdf(pump_data, filename="pump_quote.pdf", quote_number=None):
     # Get the customer name from pump_data
     customer_name = pump_data.get("customer_name", "Unknown Customer")
     
-    # Get the quote number at the start with customer name
-    quote_number, generated_filename = get_next_quote_number(customer_name)
-    
-    # Use the generated filename if no specific filename was provided
-    if filename == "pump_quote.pdf":
+    # Only generate quote number if not provided
+    if quote_number is None:
+        quote_number, generated_filename = get_next_quote_number(customer_name)
         filename = generated_filename
     
     doc = SimpleDocTemplate(filename, pagesize=letter)
@@ -1674,7 +1672,7 @@ def delete_file_after_delay(filename, delay=3600):
 
 def get_next_quote_number(customer_name):
     today = datetime.today()
-    date_prefix = today.strftime('%y%m%d')
+    date_prefix = today.strftime('%y%m%d')  # This keeps the date format as YYMMDD with leading zeros
     filename = "quote_counter.txt"
     
     try:
@@ -1700,8 +1698,8 @@ def get_next_quote_number(customer_name):
     with open(filename, 'w') as f:
         f.write(f"{date_prefix},{counter}")
     
-    # Format the quote number
-    quote_number = f"AQQ{date_prefix}{counter:02}"
+    # Format the quote number - removed :02 to avoid leading zeros in the counter
+    quote_number = f"AQQ{date_prefix}{counter}"
     
     # Clean customer name for filename (remove invalid characters)
     clean_customer_name = "".join(c for c in customer_name if c.isalnum() or c in (' ', '-', '_')).strip()
@@ -1872,11 +1870,11 @@ def generate_quote_pdf():
         if not pump_data:
             return jsonify({"error": "No pump data provided"}), 400
 
-        # Generate quote number and filename with customer name
+        # Generate quote number and filename with customer name once
         quote_number, pdf_filename = get_next_quote_number(customer_name)
 
-        # Generate the PDF
-        generate_pdf(pump_data, pdf_filename)
+        # Pass the quote number to generate_pdf
+        generate_pdf(pump_data, pdf_filename, quote_number)
 
         # Schedule file deletion after 1 minute
         delete_file_after_delay(pdf_filename, delay=60)
