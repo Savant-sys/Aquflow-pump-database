@@ -274,8 +274,11 @@ async function handleGetQuotePDF() {
         // Set hasGeneratedPDF to true after successful generation
         hasGeneratedPDF = true;
         
-        // Set the PDF URL for download
-        pdfUrl = `${API_BASE_URL}/download_pdf/${data.pdf_url}`;
+        // Set the PDF URL for download - fix the URL construction
+        pdfUrl = `${API_BASE_URL}${data.pdf_url}`;  // data.pdf_url already includes /download_pdf/
+        
+        // Trigger immediate download
+        window.location.href = pdfUrl;
         
         // Create success message with backup download button
         createSuccessMessageAndBackupButton(data.quote_number);

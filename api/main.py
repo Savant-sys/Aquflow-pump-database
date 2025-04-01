@@ -25,6 +25,7 @@ SMTP_SERVER = 'smtp.bizmail.yahoo.com'
 SMTP_PORT = 465
 EMAIL_ADDRESS = 'quotes@acuflow.com'
 
+
 # Add these at the top of the file with other global variables
 # PDF_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'pdfs')
 # os.makedirs(PDF_DIR, exist_ok=True)
@@ -1659,7 +1660,7 @@ def get_lead_time(series):
     else:
         return "N/A"
 
-def delete_file_after_delay(filename, delay=5):
+def delete_file_after_delay(filename, delay):
     """Delete the file after specified delay"""
     def delete_file():
         try:
