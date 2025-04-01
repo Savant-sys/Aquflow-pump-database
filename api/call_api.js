@@ -1,6 +1,10 @@
 // Add this at the very top of your file
 console.log('call_api.js loaded');
 
+// Add this at the top of your file with other global variables
+let pdfUrl = null;
+let pdfDownloadButtonTimer = null;
+
 // Function to update ball size options
 function updateBallSizeOptions() {
     const ballsType = document.getElementById("balls_type").value;
@@ -198,15 +202,18 @@ async function handleGetQuotePDF() {
             return;
         }
 
-        // Get customer name directly from the form again to ensure we have it
         const customerName = document.getElementById('customer_name').value;
         if (!customerName) {
             alert('Customer name is required.');
             return;
         }
 
-        // Show generating message
-        const resultContent = document.getElementById('result-content');
+        // Disable the Get Quote PDF button and update text
+        const getQuoteButton = document.getElementById('getQuotePDF');
+        if (getQuoteButton) {
+            getQuoteButton.disabled = true;
+            getQuoteButton.innerHTML = 'Generating and Sending Quote...';
+        }
 
         // Generate PDF with customer name
         const response = await fetch('http://localhost:5000/generate_quote_pdf', {
@@ -217,7 +224,7 @@ async function handleGetQuotePDF() {
             body: JSON.stringify({
                 pump_data: {
                     ...storedPumpData,
-                    customer_name: customerName // Ensure customer name is included
+                    customer_name: customerName
                 }
             })
         });
@@ -225,18 +232,114 @@ async function handleGetQuotePDF() {
         const data = await response.json();
         
         if (data.success && data.pdf_url) {
-            // Trigger download
-            window.location.href = `http://localhost:5000${data.pdf_url}`;
+            // Store the PDF URL
+            pdfUrl = `http://localhost:5000${data.pdf_url}`;
             
-            // Show success message with customer name
-            alert(`Quote ${data.quote_number} for ${customerName} has been generated successfully.`);
+            // Trigger automatic download
+            window.location.href = pdfUrl;
+            
+            // Hide the Get Quote PDF button
+            if (getQuoteButton) {
+                getQuoteButton.style.display = 'none';
+            }
+
+            // Create success message and backup download button
+            createSuccessMessageAndBackupButton(data.quote_number, customerName);
+
         } else {
             throw new Error(data.error || 'Failed to generate PDF');
         }
     } catch (error) {
         console.error('Error generating PDF:', error);
         alert('Error generating PDF. Please try again.');
+        
+        // Re-enable the Get Quote PDF button on error
+        const getQuoteButton = document.getElementById('getQuotePDF');
+        if (getQuoteButton) {
+            getQuoteButton.disabled = false;
+            getQuoteButton.innerHTML = 'Get Quote PDF';
+        }
     }
+}
+
+// Update the openSupportChat function
+function openSupportChat() {
+    // Open Aquflow's website in a new tab
+    window.open('https://www.aquflow.com/contact-us/', '_blank');
+}
+
+// Update the success message HTML in createSuccessMessageAndBackupButton function
+function createSuccessMessageAndBackupButton(quoteNumber, customerName) {
+    // Clear any existing timer
+    if (pdfDownloadButtonTimer) {
+        clearTimeout(pdfDownloadButtonTimer);
+    }
+
+    // Create or get the container
+    let container = document.getElementById('quote-success-container');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'quote-success-container';
+        // Insert after the Get Quote PDF button
+        const getQuoteButton = document.getElementById('getQuotePDF');
+        if (getQuoteButton && getQuoteButton.parentNode) {
+            getQuoteButton.parentNode.insertBefore(container, getQuoteButton.nextSibling);
+        }
+    }
+
+    // Create the success message and backup download button
+    container.innerHTML = `
+        <div style="margin: 20px 0; padding: 15px; background-color: #f8f9fa; border-radius: 5px; text-align: center;">
+            <p style="color: #28a745; font-size: 16px; margin-bottom: 10px;">
+                ✓ Quote ${quoteNumber} has been generated and sent to your email.
+            </p>
+            <p style="color: #666; font-size: 14px; margin-bottom: 15px;">
+                If you have any issues downloading the quote, please:
+            </p>
+            <div style="margin-bottom: 15px;">
+                <button id="backupDownloadPDF" class="btn btn-outline-primary" style="margin: 5px;">
+                    Click here to download again
+                </button>
+            </div>
+            <div style="font-size: 13px; color: #666;">
+                <p style="margin: 5px;">Still need help? Contact us:</p>
+                <p style="margin: 5px;">
+                    <a href="tel:+19497571753" style="color: #007bff; text-decoration: none;">📞 (949) 757-1753</a>
+                </p>
+                <p style="margin: 5px;">
+                    <a href="mailto:sales@aquflow.com" style="color: #007bff; text-decoration: none;">✉️ sales@aquflow.com</a>
+                </p>
+                <p style="margin: 5px;">
+                    <a href="https://www.acuflow.com/contact-acuflow/" target="_blank" style="color: #007bff; text-decoration: none;">💬 Contact Our Team</a>
+                </p>
+            </div>
+        </div>
+    `;
+
+    // Add click event listener to the backup download button
+    const backupDownloadButton = document.getElementById('backupDownloadPDF');
+    if (backupDownloadButton) {
+        backupDownloadButton.addEventListener('click', () => {
+            if (pdfUrl) {
+                window.location.href = pdfUrl;
+            }
+        });
+    }
+
+    // Set timer to remove the container after 1 hour
+    pdfDownloadButtonTimer = setTimeout(() => {
+        if (container) {
+            container.remove();
+            // Show the Get Quote PDF button again
+            const getQuoteButton = document.getElementById('getQuotePDF');
+            if (getQuoteButton) {
+                getQuoteButton.style.display = 'block';
+                getQuoteButton.disabled = false;
+                getQuoteButton.innerHTML = 'Get Quote PDF';
+            }
+        }
+        pdfUrl = null;
+    }, 3600000); // 1 hour in milliseconds
 }
 
 // Add event listeners when the document is loaded

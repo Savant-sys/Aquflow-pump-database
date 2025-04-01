@@ -1658,7 +1658,7 @@ def get_lead_time(series):
     else:
         return "N/A"
 
-def delete_file_after_delay(filename, delay=60):
+def delete_file_after_delay(filename, delay=3600):
     """Delete the file after specified delay"""
     def delete_file():
         try:
