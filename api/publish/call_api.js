@@ -1,3 +1,13 @@
+// Add this at the very top of your file
+console.log('call_api.js loaded');
+
+// Add this at the top of your file with other global variables
+let pdfUrl = null;
+let pdfDownloadButtonTimer = null;
+
+// Replace all instances of 'http://localhost:5000' with the Heroku URL
+const API_BASE_URL = 'https://quote-api-server-95d1a0cadf67.herokuapp.com';
+
 // Function to update ball size options
 function updateBallSizeOptions() {
     const ballsType = document.getElementById("balls_type").value;
@@ -87,38 +97,23 @@ document.getElementById('leak_detection').addEventListener('change', function() 
 
 // Add this function to handle the download
 function downloadPDF(pdfUrl) {
-    // Add error handling for the download
-    fetch(pdfUrl)
-        .then(response => {
-            if (!response.ok) throw new Error('PDF download failed');
-            return response.blob();
-        })
-        .then(blob => {
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'pump_quote.pdf';
-            document.body.appendChild(a);
-            a.click();
-            window.URL.revokeObjectURL(url);
-            document.body.removeChild(a);
-        })
-        .catch(error => {
-            console.error('Download error:', error);
-            alert('Failed to download PDF. Please try again.');
-        });
+    window.location.href = pdfUrl;
 }
 
-// Add these variables at the top of your file
-let currentPdfUrl = null;
-let currentFormData = null;
+// Store pump data globally
+let storedPumpData = null;
 
-// Update the callAPI function while keeping original display logic
-function callAPI() {
+// Function to handle finding pump
+async function callAPI() {
     const form = document.getElementById('pumpForm');
-    const resultContent = document.getElementById('result-content');
+    const resultSection = document.querySelector('.results-section');
     const result = document.getElementById('result');
-    
+    const resultContent = document.getElementById('result-content');
+    const pdfButton = document.getElementById('getQuotePDF');
+
+    // Add this inside your callAPI function at the start
+    console.log('callAPI function called');
+
     // Validate form
     if (!form.checkValidity()) {
         alert('Please fill in all required fields before finding a pump.');
@@ -126,211 +121,327 @@ function callAPI() {
     }
 
     // Show loading message
-    resultContent.innerHTML = '<p style="text-align: center;">Finding the best pump for your requirements...</p>';
     result.style.display = 'block';
-    document.getElementById('get-quote-button').style.display = 'none';
+    resultContent.innerHTML = '<p style="text-align: center; padding: 20px;">Finding the best pump for your requirements...</p>';
 
-    // Collect all form data
-    const formData = new FormData(form);
-    const params = {};
-    for (let [key, value] of formData.entries()) {
-        params[key] = value;
+    // Hide PDF button while loading
+    if (pdfButton) {
+        pdfButton.style.display = 'none';
     }
-    currentFormData = params;
 
-    // Convert parameters to query string
-    const queryString = Object.keys(params)
-        .map(key => `${encodeURIComponent(key)}=${encodeURIComponent(params[key])}`)
-        .join('&');
+    try {
+        // Collect form data
+        const formData = new FormData(form);
+        const params = {};
+        for (let [key, value] of formData.entries()) {
+            params[key] = value;
+        }
 
-    // First API call to get pump data
-    fetch(`https://your-heroku-app.herokuapp.com/get_pump?${queryString}`, {
-        method: 'GET',
-        headers: {
-            'Accept': 'application/json',
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (!resultContent) {
-            console.error("Result content div not found!");
-            return;
-        }
-        
+        // Convert to query string
+        const queryString = Object.keys(params)
+            .map(key => `${encodeURIComponent(key)}=${encodeURIComponent(params[key])}`)
+            .join('&');
+
+        console.log('Sending request to:', `${API_BASE_URL}/get_pump?${queryString}`);
+
+        // Make API call
+        const response = await fetch(`${API_BASE_URL}/get_pump?${queryString}`);
+        const data = await response.json();
+
         if (data.error) {
             console.error("API Error:", data.error);
-            resultContent.innerHTML = `<p style="color: red;">${data.error}</p>`;
-            document.getElementById('get-quote-button').style.display = 'none';
-        } else {
-            // Store the PDF URL for later use
-            currentPdfUrl = `https://your-heroku-app.herokuapp.com${data.pdf_url}`;
-
-            // Final Total Price: Extract C/F from base and optional accessories
-            const basePrice = data.base_price;
-            const optionalNotes = data.optional_accessories_notes || [];
-
-            let cfNotes = [];
-
-            // Parse C/F notes from base_price if it's a string
-            if (typeof basePrice === "string" && basePrice.includes("C/F")) {
-                const baseCfMatches = basePrice.match(/C\/F\s*\(([^)]+)\)/g);
-                if (baseCfMatches) {
-                    cfNotes.push(...baseCfMatches.map(note => note.match(/\(([^)]+)\)/)[1]));
-                }
-            }
-
-            // Collect C/F notes from optional accessories
-            optionalNotes.forEach(note => {
-                const match = note.match(/C\/F\s*\(([^)]+)\)/);
-                if (match) {
-                    cfNotes.push(match[1]);
-                }
-            });
-
-            // Combine notes into one C/F string
-            let cfText = cfNotes.length > 0 ? ` + C/F (${cfNotes.join(" + ")})` : "";
-
-            // Format the final total price display
-            const formattedFinalTotal = typeof data.final_total_price === 'number'
-                ? `$${Math.ceil(data.final_total_price)}${cfText}`
-                : (data.final_total_price.startsWith('$') 
-                    ? '$' + Math.ceil(parseFloat(data.final_total_price.replace('$', ''))) + cfText
-                    : data.final_total_price + cfText);
-
-            // Build the HTML for optional accessories
-            let optionalAccessoriesHtml = '';
-            
-            // Spare Parts Kit
-            if (data.spare_parts_kit === "Yes") {
-                optionalAccessoriesHtml += `
-                    <p><strong>Spare Parts Kit:</strong> ${data.spare_parts_kit_price === "C/F" ? "C/F" : `$${data.spare_parts_kit_price}`}
-                    <br>${data.spare_parts_kit_message || ''}</p>`;
-            }
-
-            // Back Pressure Valve
-            if (data.back_pressure_valve === "Yes") {
-                optionalAccessoriesHtml += `
-                    <p><strong>Back Pressure Valve:</strong> ${data.back_pressure_valve_price === "C/F" ? "C/F" : `$${data.back_pressure_valve_price}`}
-                    <br>${data.back_pressure_valve_message || ''}</p>`;
-            }
-
-            // Pressure Relief Valve
-            if (data.pressure_relief_valve === "Yes") {
-                optionalAccessoriesHtml += `
-                    <p><strong>Pressure Relief Valve:</strong> ${data.pressure_relief_valve_price === "C/F" ? "C/F" : `$${data.pressure_relief_valve_price}`}
-                    <br>${data.pressure_relief_valve_message || ''}</p>`;
-            }
-
-            // Pulsation Dampener
-            if (data.pulsation_dampener === "Yes") {
-                optionalAccessoriesHtml += `
-                    <p><strong>Pulsation Dampener:</strong> ${data.pulsation_dampener_price === "C/F" ? "C/F" : `$${data.pulsation_dampener_price}`}
-                    <br>${data.pulsation_dampener_message || ''}</p>`;
-            }
-
-            // Calibration Column
-            if (data.calibration_column === "Yes") {
-                optionalAccessoriesHtml += `
-                    <p><strong>Calibration Column:</strong> $${data.calibration_column_price}
-                    <br>${data.calibration_column_info || ''}</p>`;
-            }
-
-            // Pressure Gauge
-            if (data.pressure_gauge === "Yes") {
-                optionalAccessoriesHtml += `
-                    <p><strong>Pressure Gauge:</strong> ${data.pressure_gauge_price === "C/F" ? "C/F" : `$${data.pressure_gauge_price}`}
-                    <br>${data.pressure_gauge_info || ''}</p>`;
-            }
-
-            // ECCA
-            if (data.ecca === "Yes") {
-                optionalAccessoriesHtml += `
-                    <p><strong>ECCA:</strong> $${data.ecca_price}</p>`;
-            }
-
-            // VFD
-            if (data.vfd === "Yes") {
-                optionalAccessoriesHtml += `
-                    <p><strong>VFD:</strong> $${data.vfd_price}</p>`;
-            }
-
-            // Leak Detection System
-            if (data.leak_detection !== 'No') {
-                const leakDetectionText = data.leak_detection === 'Conductive' 
-                    ? `Conductive ${data.relay_option === 'Yes' ? 'with' : 'without'} Relay` 
-                    : data.leak_detection;
-                const leakDetectionPrice = data.leak_detection_price === 'C/F' 
-                    ? 'C/F' 
-                    : '$' + (
-                        data.leak_detection_price + 
-                        (data.leak_detection === 'Conductive' && data.relay_option === 'Yes' ? 889 : 0)
-                    );
-                optionalAccessoriesHtml += `<p><strong>Leak Detection System:</strong> ${leakDetectionText} (${leakDetectionPrice})</p>`;
-            }
-
-            // Display the results with all details
-            resultContent.innerHTML = `
-                <div style="background-color: #fff; padding: 15px; border-radius: 5px;">
-                    <h3 style="color: #28a745; margin-bottom: 15px;">Recommended Pump:</h3>
-                    <p><strong>Model:</strong> ${data.model}</p>
-                    <p><strong>Series:</strong> ${data.series}</p>
-                    <p><strong>Base Price:</strong> $${data.base_price}</p>
-                    
-                    ${optionalAccessoriesHtml ? `
-                        <h4 style="margin-top: 20px; color: #28a745;">Optional Accessories:</h4>
-                        ${optionalAccessoriesHtml}
-                        <p><strong>Optional Accessories Total:</strong> $${data.optional_accessories_total_price}</p>
-                    ` : ''}
-                    
-                    <p><strong>Final Total Price:</strong> ${formattedFinalTotal}</p>
-                    
-                    <p style="margin-top: 15px; color: #666; font-style: italic;">
-                        If you would like to receive this quote as a PDF, click the "Get Quote PDF" button below.
-                    </p>
-                </div>
-            `;
-
-            // Show the result section and the "Get Quote PDF" button
-            result.style.display = 'block';
-            document.getElementById('get-quote-button').style.display = 'block';
-            document.getElementById('get-quote-button').disabled = false;
+            resultContent.innerHTML = `<p style="color: red; padding: 20px;">${data.error}</p>`;
+            return;
         }
-    })
-    .catch(error => {
-        resultContent.innerHTML = `<p style="color: #dc3545;">Error connecting to server: ${error}</p>`;
-        document.getElementById('get-quote-button').style.display = 'none';
-    });
+
+        // Store the pump data for PDF generation - make sure we get customer name
+        const customerName = document.getElementById('customer_name').value;
+        storedPumpData = {
+            ...data,
+            customer_name: customerName, // Get it directly from the form
+            email: params.email
+        };
+
+        console.log('Received pump data:', storedPumpData);
+
+        // Display the results
+        let resultHTML = `
+            <div style="background-color: #fff; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
+                <h3 style="color: #003A63; margin-bottom: 15px;">Recommended Pump:</h3>
+                <p><strong>Model:</strong> ${data.pump_model || data.model}</p>
+                <p><strong>Motor:</strong> ${data.want_motor === 'Yes' ? 
+                    `${data.motor_type || ''} ${data.motor_power || ''} HP, ${data.phase || ''}` 
+                    : 'Without Motor'}</p>
+                <p><strong>Series:</strong> ${data.series || ''}</p>
+                <p><strong>Base Price:</strong> $${data.base_price || 0}</p>
+                
+                ${generateOptionalAccessoriesSection(data)}
+                
+                <!-- Total Price Section -->
+                <div style="margin-top: 20px; padding-top: 10px; border-top: 2px solid #eee;">
+                    <h4 style="color: #003A63;">FINAL PRICE: $${data.total_price || data.base_price || 0}</h4>
+                </div>
+            </div>
+        `;
+
+        resultContent.innerHTML = resultHTML;
+
+        // Show the PDF button after results are displayed
+        if (pdfButton) {
+            pdfButton.style.display = 'block';
+        }
+
+    } catch (error) {
+        console.error('Error:', error);
+        resultContent.innerHTML = '<p style="color: red; padding: 20px;">Error connecting to server. Please try again.</p>';
+    }
 }
 
-// Update the getQuotePDF function to handle the full URL
-function getQuotePDF() {
-    if (!currentPdfUrl) {
-        alert('Please wait for the quote to be generated first.');
-        return;
+// Function to handle PDF generation
+async function handleGetQuotePDF() {
+    try {
+        if (!storedPumpData) {
+            alert('Please find a pump first before generating a quote PDF.');
+            return;
+        }
+
+        const customerName = document.getElementById('customer_name').value;
+        if (!customerName) {
+            alert('Customer name is required.');
+            return;
+        }
+
+        // Disable the Get Quote PDF button and update text
+        const getQuoteButton = document.getElementById('getQuotePDF');
+        if (getQuoteButton) {
+            getQuoteButton.disabled = true;
+            getQuoteButton.innerHTML = 'Generating and Sending Quote...';
+        }
+
+        // Generate PDF with customer name
+        const response = await fetch(`${API_BASE_URL}/generate_quote_pdf`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                pump_data: {
+                    ...storedPumpData,
+                    customer_name: customerName
+                }
+            })
+        });
+
+        const data = await response.json();
+        
+        if (data.success && data.pdf_url) {
+            // Store the PDF URL - update to use Heroku URL
+            pdfUrl = `${API_BASE_URL}${data.pdf_url}`;
+            
+            // Trigger automatic download
+            window.location.href = pdfUrl;
+            
+            // Hide the Get Quote PDF button
+            if (getQuoteButton) {
+                getQuoteButton.style.display = 'none';
+            }
+
+            // Create success message and backup download button
+            createSuccessMessageAndBackupButton(data.quote_number, customerName);
+
+        } else {
+            throw new Error(data.error || 'Failed to generate PDF');
+        }
+    } catch (error) {
+        console.error('Error generating PDF:', error);
+        alert('Error generating PDF. Please try again.');
+        
+        // Re-enable the Get Quote PDF button on error
+        const getQuoteButton = document.getElementById('getQuotePDF');
+        if (getQuoteButton) {
+            getQuoteButton.disabled = false;
+            getQuoteButton.innerHTML = 'Get Quote PDF';
+        }
+    }
+}
+
+// Update the openSupportChat function
+function openSupportChat() {
+    // Open Aquflow's website in a new tab
+    window.open('https://www.aquflow.com/contact-us/', '_blank');
+}
+
+// Update the success message HTML in createSuccessMessageAndBackupButton function
+function createSuccessMessageAndBackupButton(quoteNumber, customerName) {
+    // Clear any existing timer
+    if (pdfDownloadButtonTimer) {
+        clearTimeout(pdfDownloadButtonTimer);
     }
 
-    // Show loading message
-    const emailStatus = document.getElementById('email-status');
-    emailStatus.innerHTML = '<p style="color: #007bff;">Processing your request...</p>';
-    document.getElementById('download-section').style.display = 'block';
+    // Create or get the container
+    let container = document.getElementById('quote-success-container');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'quote-success-container';
+        // Insert after the Get Quote PDF button
+        const getQuoteButton = document.getElementById('getQuotePDF');
+        if (getQuoteButton && getQuoteButton.parentNode) {
+            getQuoteButton.parentNode.insertBefore(container, getQuoteButton.nextSibling);
+        }
+    }
 
-    // Trigger the download using the full URL
-    window.location.href = currentPdfUrl;
-
-    // Show success message
-    emailStatus.innerHTML = `
-        <div style="color: #28a745; margin-top: 10px; padding: 10px; background-color: #fff; border-radius: 5px;">
-            <p>✓ PDF has been downloaded to your computer</p>
-            ${currentFormData.user_email ? `<p>✓ Quote has been sent to ${currentFormData.user_email}</p>` : ''}
+    // Create the success message and backup download button
+    container.innerHTML = `
+        <div style="margin: 20px 0; padding: 15px; background-color: #f8f9fa; border-radius: 5px; text-align: center;">
+            <p style="color: #28a745; font-size: 16px; margin-bottom: 10px;">
+                ✓ Quote ${quoteNumber} has been generated and sent to your email.
+            </p>
+            <p style="color: #666; font-size: 14px; margin-bottom: 15px;">
+                If you have any issues downloading the quote, please:
+            </p>
+            <div style="margin-bottom: 15px;">
+                <button id="backupDownloadPDF" class="btn btn-outline-primary" style="margin: 5px;">
+                    Click here to download again
+                </button>
+            </div>
+            <div style="font-size: 13px; color: #666;">
+                <p style="margin: 5px;">Still need help? Contact us:</p>
+                <p style="margin: 5px;">
+                    <a href="tel:+19497571753" style="color: #007bff; text-decoration: none;">📞 (949) 757-1753</a>
+                </p>
+                <p style="margin: 5px;">
+                    <a href="mailto:sales@aquflow.com" style="color: #007bff; text-decoration: none;">✉️ sales@aquflow.com</a>
+                </p>
+                <p style="margin: 5px;">
+                    <a href="https://www.acuflow.com/contact-acuflow/" target="_blank" style="color: #007bff; text-decoration: none;">💬 Contact Our Team</a>
+                </p>
+            </div>
         </div>
     `;
 
-    // Disable the "Get Quote PDF" button after use
-    document.getElementById('get-quote-button').disabled = true;
+    // Add click event listener to the backup download button
+    const backupDownloadButton = document.getElementById('backupDownloadPDF');
+    if (backupDownloadButton) {
+        backupDownloadButton.addEventListener('click', () => {
+            if (pdfUrl) {
+                window.location.href = pdfUrl;
+            }
+        });
+    }
+
+    // Set timer to remove the container after 1 hour
+    pdfDownloadButtonTimer = setTimeout(() => {
+        if (container) {
+            container.remove();
+            // Show the Get Quote PDF button again
+            const getQuoteButton = document.getElementById('getQuotePDF');
+            if (getQuoteButton) {
+                getQuoteButton.style.display = 'block';
+                getQuoteButton.disabled = false;
+                getQuoteButton.innerHTML = 'Get Quote PDF';
+            }
+        }
+        pdfUrl = null;
+    }, 3600000); // 1 hour in milliseconds
 }
 
-// Form submission handler
-document.getElementById('pumpForm').onsubmit = function(e) {
-    e.preventDefault();
-    callAPI();
-};
+// Add event listeners when the document is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM Content Loaded - Setting up event listeners');
+    
+    // Set up form submission
+    const form = document.getElementById('pumpForm');
+    if (form) {
+        form.onsubmit = function(e) {
+            e.preventDefault();
+            console.log('Form submitted - calling API');
+            callAPI();
+        };
+    }
+
+    // Set up PDF button
+    const pdfButton = document.getElementById('getQuotePDF');
+    if (pdfButton) {
+        pdfButton.style.display = 'none';
+        pdfButton.addEventListener('click', handleGetQuotePDF);
+    }
+});
+
+// Helper functions for generating HTML and formatting prices
+function generateOptionalAccessoriesHTML(data) {
+    // Your existing optional accessories HTML generation code
+    // ... (keep your existing code for this)
+}
+
+function formatFinalPrice(data) {
+    // Your existing price formatting code
+    // ... (keep your existing code for this)
+}
+
+// Add this near the top of your file with other event listeners
+document.addEventListener('DOMContentLoaded', function() {
+    // Initial setup
+    const wantMotorSelect = document.getElementById('want_motor');
+    const motorOptions = document.querySelectorAll('.motor-option');
+    
+    // Function to toggle motor options visibility
+    function toggleMotorOptions() {
+        const showMotorOptions = wantMotorSelect.value === 'Yes';
+        motorOptions.forEach(option => {
+            option.style.display = showMotorOptions ? 'block' : 'none';
+            // Make fields required only when visible
+            const select = option.querySelector('select');
+            if (select) {
+                select.required = showMotorOptions;
+            }
+        });
+    }
+
+    // Set up event listener for want_motor changes
+    wantMotorSelect.addEventListener('change', toggleMotorOptions);
+    
+    // Initial check on page load
+    toggleMotorOptions();
+});
+
+// Add this function to generate the optional accessories section
+function generateOptionalAccessoriesSection(data) {
+    // Create array of accessory HTML strings
+    const accessories = [
+        data.leak_detection && data.leak_detection !== 'No' ? 
+            `<p>Leak Detection System: ${data.leak_detection} ${data.relay_option === 'Yes' ? 'with Relay' : 'without Relay'} ($${data.leak_detection_price || 0})</p>` 
+            : '',
+        data.degassing === 'Yes' ? 
+            `<p>Degassing Valve ($${data.degassing_price || 0})</p>` 
+            : '',
+        data.back_pressure_valve === 'Yes' ? 
+            `<p>Back Pressure Valve ($${data.back_pressure_valve_price || 0})</p>` 
+            : '',
+        data.pressure_relief_valve === 'Yes' ? 
+            `<p>Pressure Relief Valve ($${data.pressure_relief_valve_price || 0})</p>` 
+            : '',
+        data.pulsation_dampener === 'Yes' ? 
+            `<p>Pulsation Dampener ($${data.pulsation_dampener_price || 0})</p>` 
+            : '',
+        data.calibration_column === 'Yes' ? 
+            `<p>Calibration Column ($${data.calibration_column_price || 0})</p>` 
+            : '',
+        data.pressure_gauge === 'Yes' ? 
+            `<p>Pressure Gauge ($${data.pressure_gauge_price || 0})</p>` 
+            : ''
+    ].filter(item => item !== ''); // Remove empty strings
+
+    // Only return the section if there are accessories to show
+    if (accessories.length > 0) {
+        return `
+            <!-- Optional Accessories Section -->
+            <div style="margin-top: 20px;">
+                <h4 style="color: #666;">Optional Accessories:</h4>
+                ${accessories.join('')}
+            </div>
+        `;
+    }
+    
+    // Return empty string if no accessories
+    return '';
+}
