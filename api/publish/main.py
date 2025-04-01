@@ -1905,59 +1905,6 @@ def get_pump():
             result["suction_lift"] = suction_lift
             result["ball_size"] = ball_size
 
-        # In the get_pump route, update the email sending section:
-        if "error" not in result:
-            # Generate the PDF
-            pdf_filename = generate_pdf(result)
-            
-            # Get quote number from the filename
-            quote_number = pdf_filename.split(' - ')[0]
-            
-            # Prepare customer email
-            customer_email_subject = f"Your Acuflow Pump Quote {quote_number}"
-            customer_email_body = f"""
-Your pump quote (Quote #{quote_number}) has been generated and is attached to this email.
-
-Pump Model: {result.get('model', 'N/A')}
-Total Price: {result.get('final_total_price', 'N/A')}
-
-This quote is valid for 30 days from the date of issue.
-            """
-            
-            # Send to customer
-            customer_success = send_email(
-                [user_email], 
-                customer_email_subject,
-                customer_email_body,
-                pdf_filename
-            )
-            
-            # Prepare internal email
-            internal_email_subject = f"New Pump Quote Generated - {quote_number}"
-            internal_email_body = f"""
-A new pump quote has been generated.
-
-Customer Name: {customer_name}
-Customer Email: {user_email}
-Quote Number: {quote_number}
-Pump Model: {result.get('model', 'N/A')}
-Total Price: {result.get('final_total_price', 'N/A')}
-            """
-            
-            # Send to internal team
-            internal_success = send_email(
-                ["quotes@acuflow.com"],
-                internal_email_subject,
-                internal_email_body,
-                pdf_filename
-            )
-            
-            # Update result with email status
-            result["email_status"] = {
-                "customer": "Sent successfully" if customer_success else "Failed to send",
-                "internal": "Sent successfully" if internal_success else "Failed to send"
-            }
-
         return jsonify(result)
 
     except Exception as e:
@@ -1994,6 +1941,7 @@ def generate_quote_pdf():
     try:
         data = request.get_json()
         pump_data = data.get('pump_data')
+        user_email = data.get('user_email')
         
         if not pump_data:
             return jsonify({"error": "No pump data provided"}), 400
@@ -2003,6 +1951,47 @@ def generate_quote_pdf():
 
         # Generate the PDF
         generate_pdf(pump_data, pdf_filename)
+
+        # Send emails if user_email is provided
+        if user_email:
+            # Prepare customer email
+            customer_email_subject = f"Your Acuflow Pump Quote {quote_number}"
+            customer_email_body = f"""
+Your pump quote (Quote #{quote_number}) has been generated and is attached to this email.
+
+Pump Model: {pump_data.get('model', 'N/A')}
+Total Price: {pump_data.get('final_total_price', 'N/A')}
+
+This quote is valid for 30 days from the date of issue.
+            """
+            
+            # Send to customer
+            customer_success = send_email(
+                [user_email], 
+                customer_email_subject,
+                customer_email_body,
+                pdf_filename
+            )
+            
+            # Prepare internal email
+            internal_email_subject = f"New Pump Quote Generated - {quote_number}"
+            internal_email_body = f"""
+A new pump quote has been generated.
+
+Customer Name: {pump_data.get('customer_name', 'Unknown')}
+Customer Email: {user_email}
+Quote Number: {quote_number}
+Pump Model: {pump_data.get('model', 'N/A')}
+Total Price: {pump_data.get('final_total_price', 'N/A')}
+            """
+            
+            # Send to internal team
+            internal_success = send_email(
+                ["quotes@acuflow.com"],
+                internal_email_subject,
+                internal_email_body,
+                pdf_filename
+            )
 
         # Get the full URL for the PDF
         pdf_url = f'/download_pdf/{pdf_filename}'
