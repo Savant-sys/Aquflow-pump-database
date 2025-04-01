@@ -1658,21 +1658,19 @@ def get_lead_time(series):
     else:
         return "N/A"
 
-def delete_file_after_delay(filename, delay=30):
-    """Delete the specified file after a delay in seconds."""
+def delete_file_after_delay(filename, delay=60):
+    """Delete the file after specified delay"""
     def delete_file():
-        time.sleep(delay)
         try:
             if os.path.exists(filename):
                 os.remove(filename)
-                print(f"✅ Deleted temporary file: {filename}")
+                print(f"Deleted file: {filename}")
         except Exception as e:
             print(f"Error deleting file {filename}: {e}")
-    
-    # Start deletion thread
-    thread = threading.Thread(target=delete_file)
-    thread.daemon = True  # Thread will exit when main program exits
-    thread.start()
+
+    # Schedule the deletion
+    timer = threading.Timer(delay, delete_file)
+    timer.start()
 
 def get_next_quote_number(customer_name):
     today = datetime.today()
@@ -1681,12 +1679,21 @@ def get_next_quote_number(customer_name):
     
     try:
         with open(filename, 'r') as f:
-            last_date, counter = f.read().strip().split(',')
+            content = f.read().strip()
+            # Handle both cases: with or without comma
+            if ',' in content:
+                last_date, counter = content.split(',')
+            else:
+                last_date = content
+                counter = '1'
+                
             if last_date != date_prefix:
                 counter = 1
             else:
                 counter = int(counter) + 1
     except FileNotFoundError:
+        # File doesn't exist yet, start with 1
+        last_date = date_prefix
         counter = 1
     
     # Write the updated counter
@@ -1698,6 +1705,8 @@ def get_next_quote_number(customer_name):
     
     # Clean customer name for filename (remove invalid characters)
     clean_customer_name = "".join(c for c in customer_name if c.isalnum() or c in (' ', '-', '_')).strip()
+    if not clean_customer_name:
+        clean_customer_name = "Unknown"
     
     # Create filename with quote number and customer name
     pdf_filename = f"{quote_number} - {clean_customer_name}.pdf"
@@ -1858,7 +1867,7 @@ def generate_quote_pdf():
     try:
         data = request.get_json()
         pump_data = data.get('pump_data')
-        customer_name = data.get('customer_name', 'Unknown Customer')
+        customer_name = pump_data.get('customer_name', 'Unknown Customer')
 
         if not pump_data:
             return jsonify({"error": "No pump data provided"}), 400
@@ -1866,8 +1875,11 @@ def generate_quote_pdf():
         # Generate quote number and filename with customer name
         quote_number, pdf_filename = get_next_quote_number(customer_name)
 
-        # Generate the PDF with the new filename
+        # Generate the PDF
         generate_pdf(pump_data, pdf_filename)
+
+        # Schedule file deletion after 1 minute
+        delete_file_after_delay(pdf_filename, delay=60)
 
         return jsonify({
             "success": True,

@@ -147,11 +147,12 @@ async function callAPI() {
             return;
         }
 
-        // Store the pump data for PDF generation
+        // Store the pump data for PDF generation - make sure we get customer name
+        const customerName = document.getElementById('customer_name').value;
         storedPumpData = {
             ...data,
-            customer_name: params.customer_name,
-            email: params.user_email
+            customer_name: customerName, // Get it directly from the form
+            email: params.email
         };
 
         console.log('Received pump data:', storedPumpData);
@@ -192,20 +193,32 @@ async function callAPI() {
 // Function to handle PDF generation
 async function handleGetQuotePDF() {
     try {
-        // Show generating message
-        const resultContent = document.getElementById('result-content');
-        if (resultContent) {
-            resultContent.innerHTML += '<p style="color: #007bff;">Generating PDF...</p>';
+        if (!storedPumpData) {
+            alert('Please find a pump first before generating a quote PDF.');
+            return;
         }
 
-        // Generate PDF
+        // Get customer name directly from the form again to ensure we have it
+        const customerName = document.getElementById('customer_name').value;
+        if (!customerName) {
+            alert('Customer name is required.');
+            return;
+        }
+
+        // Show generating message
+        const resultContent = document.getElementById('result-content');
+
+        // Generate PDF with customer name
         const response = await fetch('http://localhost:5000/generate_quote_pdf', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                pump_data: storedPumpData
+                pump_data: {
+                    ...storedPumpData,
+                    customer_name: customerName // Ensure customer name is included
+                }
             })
         });
 
@@ -215,8 +228,8 @@ async function handleGetQuotePDF() {
             // Trigger download
             window.location.href = `http://localhost:5000${data.pdf_url}`;
             
-            // Show success message
-            alert(`Quote ${data.quote_number} has been generated and sent successfully.`);
+            // Show success message with customer name
+            alert(`Quote ${data.quote_number} for ${customerName} has been generated successfully.`);
         } else {
             throw new Error(data.error || 'Failed to generate PDF');
         }
