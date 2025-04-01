@@ -38,12 +38,16 @@ def send_email(to_emails, subject, body, filename):
 
     msg.attach(MIMEText(body, 'plain'))
 
-    # Attach the PDF file
+    # Attach the PDF file with proper content type and filename
     with open(filename, 'rb') as attachment:
-        part = MIMEBase('application', 'octet-stream')
+        part = MIMEBase('application', 'pdf')
         part.set_payload(attachment.read())
         encoders.encode_base64(part)
-        part.add_header('Content-Disposition', f'attachment; filename={filename}')
+        # Add proper Content-Disposition header with filename
+        part.add_header(
+            'Content-Disposition',
+            f'attachment; filename="{os.path.basename(filename)}"'
+        )
         msg.attach(part)
 
     # Send the email using Yahoo Business SMTP server
