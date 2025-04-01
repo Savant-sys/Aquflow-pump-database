@@ -1262,9 +1262,19 @@ def combine_cf_annotations(base, optional_notes):
     return ""
 
 def generate_pdf(pump_data, filename="pump_quote.pdf"):
+    # Get the customer name from pump_data
+    customer_name = pump_data.get("customer_name", "Unknown Customer")
+    
+    # Get the quote number at the start with customer name
+    quote_number, generated_filename = get_next_quote_number(customer_name)
+    
+    # Use the generated filename if no specific filename was provided
+    if filename == "pump_quote.pdf":
+        filename = generated_filename
+    
     doc = SimpleDocTemplate(filename, pagesize=letter)
     elements = []
-
+    
     styles = getSampleStyleSheet()
     title_style = ParagraphStyle(
         name="CenteredTitle",
@@ -1296,7 +1306,6 @@ def generate_pdf(pump_data, filename="pump_quote.pdf"):
 
     # Generate Auto Date & Quote Number
     today = datetime.today()
-    quote_number = f"AQQ{today.strftime('%y%m%d')}__"
     formatted_date = today.strftime('%d-%b-%y')
 
     # Create header elements
@@ -1665,6 +1674,36 @@ def delete_file_after_delay(filename, delay=30):
     thread.daemon = True  # Thread will exit when main program exits
     thread.start()
 
+def get_next_quote_number(customer_name):
+    today = datetime.today()
+    date_prefix = today.strftime('%y%m%d')
+    filename = "quote_counter.txt"
+    
+    try:
+        with open(filename, 'r') as f:
+            last_date, counter = f.read().strip().split(',')
+            if last_date != date_prefix:
+                counter = 1
+            else:
+                counter = int(counter) + 1
+    except FileNotFoundError:
+        counter = 1
+    
+    # Write the updated counter
+    with open(filename, 'w') as f:
+        f.write(f"{date_prefix},{counter}")
+    
+    # Format the quote number
+    quote_number = f"AQQ{date_prefix}{counter:02}"
+    
+    # Clean customer name for filename (remove invalid characters)
+    clean_customer_name = "".join(c for c in customer_name if c.isalnum() or c in (' ', '-', '_')).strip()
+    
+    # Create filename with quote number and customer name
+    pdf_filename = f"{quote_number} - {clean_customer_name}.pdf"
+    
+    return quote_number, pdf_filename
+
 @app.route('/get_pump', methods=['GET'])
 def get_pump():
     try:
@@ -1752,8 +1791,10 @@ def get_pump():
             diaphragm, 
             liquid_end_material, 
             leak_detection, 
-            phase, degassing, 
-            flange, balls_type, 
+            phase, 
+            degassing, 
+            flange, 
+            balls_type, 
             suction_lift, 
             ball_size, 
             suction_flange_size, 
@@ -1770,10 +1811,7 @@ def get_pump():
             relay_option
         )
 
-        # Log the result
-        print("Result:", result)
-
-        # Generate PDF
+        # Add additional parameters needed for PDF generation later
         if "error" not in result:
             result["hz"] = hz
             result["diaphragm"] = diaphragm
@@ -1783,29 +1821,6 @@ def get_pump():
             result["balls_type"] = balls_type
             result["suction_lift"] = suction_lift
             result["ball_size"] = ball_size
-            
-            # Generate unique filename using timestamp
-            timestamp = int(time.time())
-            pdf_filename = f"pump_quote_{timestamp}.pdf" # IMPORTANT: This is where it needs to be changed to the actual filename by the txt file based on the day
-            # CREATE TXT FILE FOR THAT AND MAKE SURE TO UPDATE THE TXT FILE WHEN THE DAY IS OVER
-            # MAKE SURE TO UPDATE THE TXT FILE WHEN THE BUTTON "GET THE PDF" IS CLICKED
-            # Generate the PDF
-            pdf_filename = generate_pdf(result, pdf_filename)
-            result["pdf_url"] = f"/download_pdf/{pdf_filename}"
-
-            # if user_email:  # Only send if email is provided
-            #     email_subject = "Your Pump Quote"
-            #     email_body = "Please find attached the pump quote."
-            #     to_emails = [user_email, "quotes@acuflow.com"]
-            #     if send_email(to_emails, email_subject, email_body, pdf_filename):
-            #         result["email_status"] = "Email sent successfully"
-            #     else:
-            #         result["email_status"] = "Failed to send email"
-            # Schedule the PDF for deletion after 10 seconds
-            delete_file_after_delay(pdf_filename)
-
-            # Send email if provided
-            
 
         return jsonify(result)
 
@@ -1837,6 +1852,33 @@ def test_db():
         return jsonify({"status": "success", "message": "Database connection successful!"})
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
+
+@app.route('/generate_quote_pdf', methods=['POST'])
+def generate_quote_pdf():
+    try:
+        data = request.get_json()
+        pump_data = data.get('pump_data')
+        customer_name = data.get('customer_name', 'Unknown Customer')
+
+        if not pump_data:
+            return jsonify({"error": "No pump data provided"}), 400
+
+        # Generate quote number and filename with customer name
+        quote_number, pdf_filename = get_next_quote_number(customer_name)
+
+        # Generate the PDF with the new filename
+        generate_pdf(pump_data, pdf_filename)
+
+        return jsonify({
+            "success": True,
+            "quote_number": quote_number,
+            "pdf_url": f"/download_pdf/{pdf_filename}",
+            "message": "PDF generated successfully"
+        })
+
+    except Exception as e:
+        print(f"Error generating PDF: {str(e)}")
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=5000, debug=True)

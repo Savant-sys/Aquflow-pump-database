@@ -494,10 +494,10 @@
 
         <div class="results-section">
             <h2 class="section-header">Results</h2>
-            <div id="result">
+            <div id="result" style="display: none;">
                 <div id="result-content"></div>
                 <div id="download-section">
-                    <button id="get-quote-button" onclick="getQuotePDF()">
+                    <button id="getQuotePDF" class="button" type="button" style="display: none;">
                         Get Quote PDF
                     </button>
                     <div id="email-status"></div>
@@ -505,7 +505,7 @@
             </div>
         </div>
     </div>
-    <script src="call_api.js"></script>
+    <script src="call_api.js?v=1"></script>
 </body>
 
 </html>
