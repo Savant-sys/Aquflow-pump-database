@@ -111,6 +111,28 @@ async function callAPI() {
     // Add this inside your callAPI function at the start
     console.log('callAPI function called');
 
+    // Reset PDF button state
+    if (pdfButton) {
+        pdfButton.style.display = 'none';
+        pdfButton.disabled = false;
+        pdfButton.innerHTML = 'Get Quote PDF';
+    }
+
+    // Clear any existing success message container
+    const existingContainer = document.getElementById('quote-success-container');
+    if (existingContainer) {
+        existingContainer.remove();
+    }
+
+    // Clear any existing timer
+    if (pdfDownloadButtonTimer) {
+        clearTimeout(pdfDownloadButtonTimer);
+        pdfDownloadButtonTimer = null;
+    }
+
+    // Reset PDF URL
+    pdfUrl = null;
+
     // Validate form
     if (!form.checkValidity()) {
         alert('Please fill in all required fields before finding a pump.');
@@ -120,11 +142,6 @@ async function callAPI() {
     // Show loading message
     result.style.display = 'block';
     resultContent.innerHTML = '<p style="text-align: center; padding: 20px;">Finding the best pump for your requirements...</p>';
-
-    // Hide PDF button while loading
-    if (pdfButton) {
-        pdfButton.style.display = 'none';
-    }
 
     try {
         // Collect form data
