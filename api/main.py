@@ -1350,12 +1350,12 @@ def generate_pdf(pump_data, filename="pump_quote.pdf"):
             ("GRID", (0, 0), (-1, -1), 1, colors.black)
         ]))
 
-        # Create header table with modified layout
+        # Create header table with adjusted layout
         header_table = Table([
             [logo, Paragraph(address, normal_style), quote_form_text],
-            [None, None, None],  # Empty row for spacing
-            [customer_table, None, quote_date_table]
-        ], colWidths=[100, 250, 160], rowHeights=[45, 10, 30])  # Adjusted heights
+            [None, None, quote_date_table],  # Moved quote_date_table up, removed empty spacing row
+            [customer_table, None, None]      # Customer table in last row
+        ], colWidths=[100, 250, 160], rowHeights=[40, 20, 30])  # Adjusted heights
 
         header_table.setStyle(TableStyle([
             ("VALIGN", (0, 0), (-1, -1), "TOP"),
