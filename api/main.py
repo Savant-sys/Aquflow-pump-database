@@ -1299,7 +1299,7 @@ def generate_pdf(pump_data, filename="pump_quote.pdf"):
     quote_number = f"AQQ{today.strftime('%y%m%d')}__"
     formatted_date = today.strftime('%d-%b-%y')
 
-    # Create a more compact header table
+    # Create header elements
     logo_path = "logo.png"
     address = """<b><font size="9">Acuflow-Div. of Precision</font></b><br/>
     <b><font size="9">Flow Technologies Inc.</font></b><br/>
@@ -1307,65 +1307,70 @@ def generate_pdf(pump_data, filename="pump_quote.pdf"):
     Irvine, CA 92614<br/>
     Ph: (949) 757-1753</font>"""
 
-    # Create a 2x1 table for Customer information (more compact)
-    customer_name = pump_data.get("customer_name", "N/A")
-    customer_table = Table([
-        ["Customer"],  
-        [customer_name]  
-    ], colWidths=[120], rowHeights=[12, 12])  # Smaller row heights
-
-    # Style the Customer table
-    customer_table.setStyle(TableStyle([
-        ("BACKGROUND", (0, 0), (-1, 0), colors.grey),
-        ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
-        ("ALIGN", (0, 0), (-1, -1), "CENTER"),
-        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
-        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-        ("FONTSIZE", (0, 0), (-1, -1), 8),  # Smaller font size
-        ("BOTTOMPADDING", (0, 0), (-1, 0), 2),
-        ("GRID", (0, 0), (-1, -1), 1, colors.black)
-    ]))
-
-    # Create compact Quote # and Date table
-    quote_date_table = Table([
-        ["Quote #", "Date"],
-        [quote_number, formatted_date]
-    ], colWidths=[80, 80], rowHeights=[12, 12])  # Smaller dimensions
-
-    quote_date_table.setStyle(TableStyle([
-        ("BACKGROUND", (0, 0), (-1, 0), colors.grey),
-        ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
-        ("ALIGN", (0, 0), (-1, -1), "CENTER"),
-        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
-        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-        ("FONTSIZE", (0, 0), (-1, -1), 8),
-        ("BOTTOMPADDING", (0, 0), (-1, 0), 2),
-        ("GRID", (0, 0), (-1, -1), 1, colors.black)
-    ]))
-
     if os.path.exists(logo_path):
-        logo = Image(logo_path, width=80, height=40)  # Smaller logo
+        logo = Image(logo_path, width=80, height=40)
 
-        # Create a header table with 3 columns (logo, address, quote info)
+        # Add Quote Form ID at top right
+        quote_form_text = Paragraph("<font size='7'>Quote Form 2311</font>", normal_style)
+
+        # Create customer table with minimal spacing
+        customer_name = pump_data.get("customer_name", "N/A")
+        customer_table = Table([
+            ["Customer"],
+            [customer_name]
+        ], colWidths=[215], rowHeights=[15, 15])
+
+        # Style the customer table
+        customer_table.setStyle(TableStyle([
+            ("BACKGROUND", (0, 0), (-1, 0), colors.grey),
+            ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
+            ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+            ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+            ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+            ("FONTSIZE", (0, 0), (-1, -1), 8),
+            ("BOTTOMPADDING", (0, 0), (-1, 0), 1),
+            ("TOPPADDING", (0, 1), (-1, 1), 2),
+            ("GRID", (0, 0), (-1, -1), 1, colors.black)
+        ]))
+
+        # Create Quote # and Date table
+        quote_date_table = Table([
+            ["Quote #", "Date"],
+            [quote_number, formatted_date]
+        ], colWidths=[80, 80], rowHeights=[15, 15])
+
+        quote_date_table.setStyle(TableStyle([
+            ("BACKGROUND", (0, 0), (-1, 0), colors.grey),
+            ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
+            ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+            ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+            ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+            ("FONTSIZE", (0, 0), (-1, -1), 8),
+            ("BOTTOMPADDING", (0, 0), (-1, 0), 1),
+            ("GRID", (0, 0), (-1, -1), 1, colors.black)
+        ]))
+
+        # Create header table with modified layout
         header_table = Table([
-            [logo, Paragraph(address, normal_style), None],
+            [logo, Paragraph(address, normal_style), quote_form_text],
+            [None, None, None],  # Empty row for spacing
             [customer_table, None, quote_date_table]
-        ], colWidths=[100, 250, 160], rowHeights=[40, 24])  # Compact layout
+        ], colWidths=[100, 250, 160], rowHeights=[45, 10, 30])  # Adjusted heights
 
         header_table.setStyle(TableStyle([
             ("VALIGN", (0, 0), (-1, -1), "TOP"),
             ("ALIGN", (0, 0), (0, 0), "LEFT"),
             ("ALIGN", (1, 0), (1, 0), "LEFT"),
             ("ALIGN", (2, 0), (2, 0), "RIGHT"),
-            ("SPAN", (1, 0), (1, 1)),  # Address spans both rows
-            ("SPAN", (0, 0), (0, 1)),  # Logo spans both rows
-            ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
+            ("SPAN", (1, 0), (1, 1)),  # Span address across two rows
             ("LEFTPADDING", (0, 0), (-1, -1), 0),
             ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+            ("TOPPADDING", (0, 0), (-1, -1), 0),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
         ]))
 
         elements.append(header_table)
-        elements.append(Spacer(1, 10))  # Minimal space after header
+        elements.append(Spacer(1, 5))
 
     # Pump Model Name
     pump_model = pump_data.get("model", "N/A")
@@ -1644,7 +1649,7 @@ def get_lead_time(series):
     else:
         return "N/A"
 
-def delete_file_after_delay(filename, delay=10):
+def delete_file_after_delay(filename, delay=30):
     """Delete the specified file after a delay in seconds."""
     def delete_file():
         time.sleep(delay)
