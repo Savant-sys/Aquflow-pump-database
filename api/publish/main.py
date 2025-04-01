@@ -1904,6 +1904,15 @@ def get_pump():
             result["balls_type"] = balls_type
             result["suction_lift"] = suction_lift
             result["ball_size"] = ball_size
+            
+            # Add a flag to indicate this is a fresh search
+            result["is_new_search"] = True
+            
+            # Reset PDF and email related states
+            result["pdf_generated"] = False
+            result["email_sent"] = False
+            result["quote_number"] = None
+            result["pdf_url"] = None
 
         return jsonify(result)
 
