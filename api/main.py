@@ -26,8 +26,8 @@ SMTP_PORT = 465
 EMAIL_ADDRESS = 'quotes@acuflow.com'
 
 # Add these at the top of the file with other global variables
-PDF_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'pdfs')
-os.makedirs(PDF_DIR, exist_ok=True)
+# PDF_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'pdfs')
+# os.makedirs(PDF_DIR, exist_ok=True)
 
 def send_email(to_emails, subject, body, filename):
     msg = MIMEMultipart()
@@ -1659,7 +1659,7 @@ def get_lead_time(series):
     else:
         return "N/A"
 
-def delete_file_after_delay(filename, delay=3600):
+def delete_file_after_delay(filename, delay=5):
     """Delete the file after specified delay"""
     def delete_file():
         try:
@@ -1841,11 +1841,10 @@ def get_pump():
 @app.route('/download_pdf/<filename>', methods=['GET'])
 def download_pdf(filename):
     try:
-        pdf_path = os.path.join(PDF_DIR, filename)
-        if os.path.exists(pdf_path):
+        if os.path.exists(filename):
             # Set headers to force download
             return send_file(
-                pdf_path,
+                filename,
                 as_attachment=True,
                 download_name=filename,
                 mimetype='application/pdf'
@@ -1886,21 +1885,17 @@ def generate_quote_pdf():
         # Generate quote number and filename
         quote_number, pdf_filename = get_next_quote_number(pump_data.get('customer_name', 'Unknown Customer'))
         
-        # Create PDF directory if it doesn't exist
-        os.makedirs(PDF_DIR, exist_ok=True)
-        
         # Generate the PDF
-        pdf_path = os.path.join(PDF_DIR, pdf_filename)
-        print(f"Generating PDF at: {pdf_path}")
+        print(f"Generating PDF: {pdf_filename}")
         
         try:
-            generate_pdf(pump_data, pdf_path, quote_number)
+            generate_pdf(pump_data, pdf_filename, quote_number)
         except Exception as e:
             print(f"Error generating PDF: {str(e)}")
             return jsonify({"error": f"Failed to generate PDF: {str(e)}"}), 500
 
         # Verify PDF was created
-        if not os.path.exists(pdf_path):
+        if not os.path.exists(pdf_filename):
             return jsonify({"error": "PDF file was not created"}), 500
 
         # Prepare email content
@@ -1944,19 +1939,19 @@ The quote has been sent to the customer's email address.
         def send_emails_background():
             try:
                 # Send to customer
-                customer_success = send_email([user_email], customer_email_subject, customer_email_body, pdf_path)
+                customer_success = send_email([user_email], customer_email_subject, customer_email_body, pdf_filename)
                 if not customer_success:
                     print(f"Failed to send email to customer: {user_email}")
 
                 # Send to internal team
-                internal_success = send_email(['quotes@acuflow.com'], internal_email_subject, internal_email_body, pdf_path)
+                internal_success = send_email(['quotes@acuflow.com'], internal_email_subject, internal_email_body, pdf_filename)
                 if not internal_success:
                     print("Failed to send email to internal team")
             except Exception as e:
                 print(f"Error sending emails: {str(e)}")
             finally:
                 # Schedule file deletion after 1 hour
-                delete_file_after_delay(pdf_path, delay=3600)
+                delete_file_after_delay(pdf_filename, delay=5)
 
         # Start email sending in background thread
         email_thread = threading.Thread(target=send_emails_background)
