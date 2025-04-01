@@ -24,7 +24,10 @@ from email import encoders
 SMTP_SERVER = 'smtp.bizmail.yahoo.com'
 SMTP_PORT = 465
 EMAIL_ADDRESS = 'quotes@acuflow.com'
-EMAIL_PASSWORD = 'xfvdcfnkfriprpol'
+
+# Add these at the top of the file with other global variables
+PDF_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'pdfs')
+os.makedirs(PDF_DIR, exist_ok=True)
 
 def send_email(to_emails, subject, body, filename):
     msg = MIMEMultipart()
@@ -1838,8 +1841,15 @@ def get_pump():
 @app.route('/download_pdf/<filename>', methods=['GET'])
 def download_pdf(filename):
     try:
-        if os.path.exists(filename):
-            return send_file(filename, as_attachment=True)
+        pdf_path = os.path.join(PDF_DIR, filename)
+        if os.path.exists(pdf_path):
+            # Set headers to force download
+            return send_file(
+                pdf_path,
+                as_attachment=True,
+                download_name=filename,
+                mimetype='application/pdf'
+            )
         else:
             return jsonify({
                 "error": "PDF has expired. Please generate a new quote."
@@ -1865,29 +1875,104 @@ def generate_quote_pdf():
     try:
         data = request.get_json()
         pump_data = data.get('pump_data')
-        customer_name = pump_data.get('customer_name', 'Unknown Customer')
+        user_email = data.get('user_email')
 
         if not pump_data:
             return jsonify({"error": "No pump data provided"}), 400
 
-        # Generate quote number and filename with customer name once
-        quote_number, pdf_filename = get_next_quote_number(customer_name)
+        if not user_email:
+            return jsonify({"error": "No email provided"}), 400
 
-        # Pass the quote number to generate_pdf
-        generate_pdf(pump_data, pdf_filename, quote_number)
+        # Generate quote number and filename
+        quote_number, pdf_filename = get_next_quote_number(pump_data.get('customer_name', 'Unknown Customer'))
+        
+        # Create PDF directory if it doesn't exist
+        os.makedirs(PDF_DIR, exist_ok=True)
+        
+        # Generate the PDF
+        pdf_path = os.path.join(PDF_DIR, pdf_filename)
+        print(f"Generating PDF at: {pdf_path}")
+        
+        try:
+            generate_pdf(pump_data, pdf_path, quote_number)
+        except Exception as e:
+            print(f"Error generating PDF: {str(e)}")
+            return jsonify({"error": f"Failed to generate PDF: {str(e)}"}), 500
 
-        # Schedule file deletion after 1 minute
-        delete_file_after_delay(pdf_filename, delay=60)
+        # Verify PDF was created
+        if not os.path.exists(pdf_path):
+            return jsonify({"error": "PDF file was not created"}), 500
 
+        # Prepare email content
+        customer_email_subject = f"Your Acuflow Pump Quote - {quote_number}"
+        customer_email_body = f"""
+Dear {pump_data.get('customer_name', 'Valued Customer')},
+
+Thank you for your interest in Acuflow pumps. Please find attached your detailed quote for the following pump:
+
+Model: {pump_data.get('model', 'N/A')}
+Series: {pump_data.get('series', 'N/A')}
+Total Price: {pump_data.get('final_total_price', 'N/A')}
+
+Quote Number: {quote_number}
+Date: {datetime.today().strftime('%d-%b-%y')}
+
+If you have any questions or need further assistance, please don't hesitate to contact us.
+
+Best regards,
+Acuflow Team
+"""
+
+        internal_email_subject = f"New Pump Quote Generated - {quote_number}"
+        internal_email_body = f"""
+A new quote has been generated:
+
+Customer: {pump_data.get('customer_name', 'Unknown')}
+Email: {user_email}
+Quote Number: {quote_number}
+Date: {datetime.today().strftime('%d-%b-%y')}
+
+Pump Details:
+Model: {pump_data.get('model', 'N/A')}
+Series: {pump_data.get('series', 'N/A')}
+Total Price: {pump_data.get('final_total_price', 'N/A')}
+
+The quote has been sent to the customer's email address.
+"""
+
+        # Send emails in the background
+        def send_emails_background():
+            try:
+                # Send to customer
+                customer_success = send_email([user_email], customer_email_subject, customer_email_body, pdf_path)
+                if not customer_success:
+                    print(f"Failed to send email to customer: {user_email}")
+
+                # Send to internal team
+                internal_success = send_email(['quotes@acuflow.com'], internal_email_subject, internal_email_body, pdf_path)
+                if not internal_success:
+                    print("Failed to send email to internal team")
+            except Exception as e:
+                print(f"Error sending emails: {str(e)}")
+            finally:
+                # Schedule file deletion after 1 hour
+                delete_file_after_delay(pdf_path, delay=3600)
+
+        # Start email sending in background thread
+        email_thread = threading.Thread(target=send_emails_background)
+        email_thread.start()
+
+        # Return the download URL and trigger immediate download
         return jsonify({
             "success": True,
             "quote_number": quote_number,
             "pdf_url": f"/download_pdf/{pdf_filename}",
-            "message": "PDF generated successfully"
+            "message": "PDF generated successfully. Emails will be sent in the background.",
+            "download_filename": pdf_filename  # Add this to help frontend with download
         })
 
     except Exception as e:
-        print(f"Error generating PDF: {str(e)}")
+        print(f"Error in generate_quote_pdf: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':

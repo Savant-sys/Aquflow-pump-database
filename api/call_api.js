@@ -1,9 +1,13 @@
 // Add this at the very top of your file
 console.log('call_api.js loaded');
 
+// Add API base URL constant
+const API_BASE_URL = 'http://localhost:5000';
+
 // Add this at the top of your file with other global variables
 let pdfUrl = null;
 let pdfDownloadButtonTimer = null;
+let hasGeneratedPDF = false;
 
 // Function to update ball size options
 function updateBallSizeOptions() {
@@ -111,12 +115,13 @@ async function callAPI() {
     // Add this inside your callAPI function at the start
     console.log('callAPI function called');
 
-    // Reset PDF button state
+    // Reset PDF button state and hasGeneratedPDF flag
     if (pdfButton) {
         pdfButton.style.display = 'none';
         pdfButton.disabled = false;
         pdfButton.innerHTML = 'Get Quote PDF';
     }
+    hasGeneratedPDF = false; // Reset the PDF generation state
 
     // Clear any existing success message container
     const existingContainer = document.getElementById('quote-success-container');
@@ -213,68 +218,74 @@ async function callAPI() {
 
 // Function to handle PDF generation
 async function handleGetQuotePDF() {
-    try {
-        if (!storedPumpData) {
-            alert('Please find a pump first before generating a quote PDF.');
-            return;
-        }
-
-        const customerName = document.getElementById('customer_name').value;
-        if (!customerName) {
-            alert('Customer name is required.');
-            return;
-        }
-
-        // Disable the Get Quote PDF button and update text
-        const getQuoteButton = document.getElementById('getQuotePDF');
-        if (getQuoteButton) {
-            getQuoteButton.disabled = true;
-            getQuoteButton.innerHTML = 'Generating and Sending Quote...';
-        }
-
-        // Generate PDF with customer name
-        const response = await fetch('http://localhost:5000/generate_quote_pdf', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                pump_data: {
-                    ...storedPumpData,
-                    customer_name: customerName
-                }
-            })
-        });
-
-        const data = await response.json();
-        
-        if (data.success && data.pdf_url) {
-            // Store the PDF URL
-            pdfUrl = `http://localhost:5000${data.pdf_url}`;
-            
-            // Trigger automatic download
-            window.location.href = pdfUrl;
-            
-            // Hide the Get Quote PDF button
-            if (getQuoteButton) {
-                getQuoteButton.style.display = 'none';
+    if (!hasGeneratedPDF) {
+        try {
+            // Get the customer's email from the input field
+            const userEmail = document.getElementById('user_email').value;
+            if (!userEmail) {
+                alert('Please enter your email address to receive the quote.');
+                return;
             }
 
-            // Create success message and backup download button
-            createSuccessMessageAndBackupButton(data.quote_number, customerName);
+            // Validate email format
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(userEmail)) {
+                alert('Please enter a valid email address.');
+                return;
+            }
 
-        } else {
-            throw new Error(data.error || 'Failed to generate PDF');
-        }
-    } catch (error) {
-        console.error('Error generating PDF:', error);
-        alert('Error generating PDF. Please try again.');
-        
-        // Re-enable the Get Quote PDF button on error
-        const getQuoteButton = document.getElementById('getQuotePDF');
-        if (getQuoteButton) {
-            getQuoteButton.disabled = false;
-            getQuoteButton.innerHTML = 'Get Quote PDF';
+            // Get the stored pump data
+            if (!storedPumpData) {
+                alert('Please search for a pump first before generating a quote PDF.');
+                return;
+            }
+
+            // Add the user's email to the pump data
+            storedPumpData.user_email = userEmail;
+
+            // Disable the button while processing
+            const pdfButton = document.getElementById('getQuotePDF');
+            pdfButton.disabled = true;
+            pdfButton.textContent = 'Generating PDF...';
+
+            // Generate PDF and send emails
+            const response = await fetch(`${API_BASE_URL}/generate_quote_pdf`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    pump_data: storedPumpData,
+                    user_email: userEmail
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error(`Error generating PDF: ${await response.text()}`);
+            }
+
+            const data = await response.json();
+            
+            // Store the PDF URL for later use
+            pdfUrl = `${API_BASE_URL}${data.pdf_url}`;
+            
+            // Create success message with backup download button
+            createSuccessMessageAndBackupButton(data.quote_number);
+
+            // Reset the button
+            pdfButton.disabled = false;
+            pdfButton.textContent = 'Get Quote PDF';
+
+            hasGeneratedPDF = true;
+
+        } catch (error) {
+            console.error('Error generating PDF:', error);
+            alert('Error generating PDF. Please try again.');
+            
+            // Reset the button
+            const pdfButton = document.getElementById('getQuotePDF');
+            pdfButton.disabled = false;
+            pdfButton.textContent = 'Get Quote PDF';
         }
     }
 }
@@ -286,7 +297,7 @@ function openSupportChat() {
 }
 
 // Update the success message HTML in createSuccessMessageAndBackupButton function
-function createSuccessMessageAndBackupButton(quoteNumber, customerName) {
+function createSuccessMessageAndBackupButton(quoteNumber) {
     // Clear any existing timer
     if (pdfDownloadButtonTimer) {
         clearTimeout(pdfDownloadButtonTimer);
@@ -338,7 +349,7 @@ function createSuccessMessageAndBackupButton(quoteNumber, customerName) {
     if (backupDownloadButton) {
         backupDownloadButton.addEventListener('click', () => {
             if (pdfUrl) {
-                window.location.href = pdfUrl;
+                window.open(pdfUrl, '_blank');
             }
         });
     }
