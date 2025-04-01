@@ -218,75 +218,81 @@ async function callAPI() {
 
 // Function to handle PDF generation
 async function handleGetQuotePDF() {
-    if (!hasGeneratedPDF) {
-        try {
-            // Get the customer's email from the input field
-            const userEmail = document.getElementById('user_email').value;
-            if (!userEmail) {
-                alert('Please enter your email address to receive the quote.');
-                return;
-            }
-
-            // Validate email format
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (!emailRegex.test(userEmail)) {
-                alert('Please enter a valid email address.');
-                return;
-            }
-
-            // Get the stored pump data
-            if (!storedPumpData) {
-                alert('Please search for a pump first before generating a quote PDF.');
-                return;
-            }
-
-            // Add the user's email to the pump data
-            storedPumpData.user_email = userEmail;
-
-            // Disable the button while processing
-            const pdfButton = document.getElementById('getQuotePDF');
-            pdfButton.disabled = true;
-            pdfButton.textContent = 'Generating PDF...';
-
-            // Generate PDF and send emails
-            const response = await fetch(`${API_BASE_URL}/generate_quote_pdf`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    pump_data: storedPumpData,
-                    user_email: userEmail
-                })
-            });
-
-            if (!response.ok) {
-                throw new Error(`Error generating PDF: ${await response.text()}`);
-            }
-
-            const data = await response.json();
-            
-            // Store the PDF URL for later use
-            pdfUrl = `${API_BASE_URL}${data.pdf_url}`;
-            
-            // Create success message with backup download button
-            createSuccessMessageAndBackupButton(data.quote_number);
-
-            // Reset the button
-            pdfButton.disabled = false;
-            pdfButton.textContent = 'Get Quote PDF';
-
-            hasGeneratedPDF = true;
-
-        } catch (error) {
-            console.error('Error generating PDF:', error);
-            alert('Error generating PDF. Please try again.');
-            
-            // Reset the button
-            const pdfButton = document.getElementById('getQuotePDF');
-            pdfButton.disabled = false;
-            pdfButton.textContent = 'Get Quote PDF';
+    try {
+        // Check if PDF has already been generated
+        if (hasGeneratedPDF) {
+            alert('You have already generated a PDF for this quote. Please perform a new search to generate another quote.');
+            return;
         }
+
+        // Get the customer's email from the input field
+        const userEmail = document.getElementById('user_email').value;
+        if (!userEmail) {
+            alert('Please enter your email address to receive the quote.');
+            return;
+        }
+
+        // Validate email format
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(userEmail)) {
+            alert('Please enter a valid email address.');
+            return;
+        }
+
+        // Get the stored pump data
+        if (!storedPumpData) {
+            alert('Please search for a pump first before generating a quote PDF.');
+            return;
+        }
+
+        // Add the user's email to the pump data
+        storedPumpData.user_email = userEmail;
+
+        // Disable the button while processing
+        const pdfButton = document.getElementById('getQuotePDF');
+        pdfButton.disabled = true;
+        pdfButton.textContent = 'Generating PDF...';
+
+        // Generate PDF and send emails
+        const response = await fetch(`${API_BASE_URL}/generate_quote_pdf`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                pump_data: storedPumpData,
+                user_email: userEmail
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error(`Error generating PDF: ${await response.text()}`);
+        }
+
+        const data = await response.json();
+        
+        // Set hasGeneratedPDF to true after successful generation
+        hasGeneratedPDF = true;
+        
+        // Set the PDF URL for download
+        pdfUrl = `${API_BASE_URL}/download_pdf/${data.pdf_url}`;
+        
+        // Create success message with backup download button
+        createSuccessMessageAndBackupButton(data.quote_number);
+
+        // Hide the PDF button after successful generation
+        if (pdfButton) {
+            pdfButton.style.display = 'none';
+        }
+
+    } catch (error) {
+        console.error('Error generating PDF:', error);
+        alert('Error generating PDF. Please try again.');
+        
+        // Reset the button
+        const pdfButton = document.getElementById('getQuotePDF');
+        pdfButton.disabled = false;
+        pdfButton.textContent = 'Get Quote PDF';
     }
 }
 
@@ -298,11 +304,6 @@ function openSupportChat() {
 
 // Update the success message HTML in createSuccessMessageAndBackupButton function
 function createSuccessMessageAndBackupButton(quoteNumber) {
-    // Clear any existing timer
-    if (pdfDownloadButtonTimer) {
-        clearTimeout(pdfDownloadButtonTimer);
-    }
-
     // Create or get the container
     let container = document.getElementById('quote-success-container');
     if (!container) {
@@ -349,25 +350,12 @@ function createSuccessMessageAndBackupButton(quoteNumber) {
     if (backupDownloadButton) {
         backupDownloadButton.addEventListener('click', () => {
             if (pdfUrl) {
-                window.open(pdfUrl, '_blank');
+                window.location.href = pdfUrl;
+            } else {
+                alert('PDF URL not available. Please try generating the PDF again.');
             }
         });
     }
-
-    // Set timer to remove the container after 1 hour
-    pdfDownloadButtonTimer = setTimeout(() => {
-        if (container) {
-            container.remove();
-            // Show the Get Quote PDF button again
-            const getQuoteButton = document.getElementById('getQuotePDF');
-            if (getQuoteButton) {
-                getQuoteButton.style.display = 'block';
-                getQuoteButton.disabled = false;
-                getQuoteButton.innerHTML = 'Get Quote PDF';
-            }
-        }
-        pdfUrl = null;
-    }, 3600000); // 1 hour in milliseconds
 }
 
 // Add event listeners when the document is loaded
