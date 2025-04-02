@@ -838,8 +838,22 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
         best_pump["motor_type"] = motor_type
         best_pump["motor_power"] = motor_power
         best_pump["use_hp"] = use_hp
-        best_pump["Liq_Inlet"] = pump["Liq_Inlet"]
-        best_pump["Liq_Outlet"] = pump["Liq_Outlet"]
+
+        # Get Liq_Inlet and Liq_Outlet from the database using OG_Model
+        conn = mysql.connector.connect(**db_config)
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("SELECT Liq_Inlet, Liq_Outlet FROM pumps WHERE Model = %s", (best_pump["OG_Model"],))
+        pump_data = cursor.fetchone()
+        cursor.close()
+        conn.close()
+        
+        if pump_data:
+            best_pump["Liq_Inlet"] = pump_data["Liq_Inlet"]
+            best_pump["Liq_Outlet"] = pump_data["Liq_Outlet"]
+        else:
+            best_pump["Liq_Inlet"] = "N/A"
+            best_pump["Liq_Outlet"] = "N/A"
+
         best_pump["suction_flange_size"] = suction_flange_size
         best_pump["discharge_flange_size"] = discharge_flange_size
         best_pump["food_graded_oil"] = food_graded_oil
