@@ -1,12 +1,13 @@
 // Add this at the very top of your file
 console.log('call_api.js loaded');
 
+// Add API base URL constant
+const API_BASE_URL = 'https://quote-api-server-95d1a0cadf67.herokuapp.com';
+
 // Add this at the top of your file with other global variables
 let pdfUrl = null;
 let pdfDownloadButtonTimer = null;
-
-// Replace all instances of 'http://localhost:5000' with the Heroku URL
-const API_BASE_URL = 'https://quote-api-server-95d1a0cadf67.herokuapp.com';
+let hasGeneratedPDF = false;
 
 // Function to update ball size options
 function updateBallSizeOptions() {
@@ -114,6 +115,29 @@ async function callAPI() {
     // Add this inside your callAPI function at the start
     console.log('callAPI function called');
 
+    // Reset PDF button state and hasGeneratedPDF flag
+    if (pdfButton) {
+        pdfButton.style.display = 'none';
+        pdfButton.disabled = false;
+        pdfButton.innerHTML = 'Get Quote PDF';
+    }
+    hasGeneratedPDF = false; // Reset the PDF generation state
+
+    // Clear any existing success message container
+    const existingContainer = document.getElementById('quote-success-container');
+    if (existingContainer) {
+        existingContainer.remove();
+    }
+
+    // Clear any existing timer
+    if (pdfDownloadButtonTimer) {
+        clearTimeout(pdfDownloadButtonTimer);
+        pdfDownloadButtonTimer = null;
+    }
+
+    // Reset PDF URL
+    pdfUrl = null;
+
     // Validate form
     if (!form.checkValidity()) {
         alert('Please fill in all required fields before finding a pump.');
@@ -123,11 +147,6 @@ async function callAPI() {
     // Show loading message
     result.style.display = 'block';
     resultContent.innerHTML = '<p style="text-align: center; padding: 20px;">Finding the best pump for your requirements...</p>';
-
-    // Hide PDF button while loading
-    if (pdfButton) {
-        pdfButton.style.display = 'none';
-    }
 
     try {
         // Collect form data
@@ -142,10 +161,10 @@ async function callAPI() {
             .map(key => `${encodeURIComponent(key)}=${encodeURIComponent(params[key])}`)
             .join('&');
 
-        console.log('Sending request to:', `${API_BASE_URL}/get_pump?${queryString}`);
+        console.log('Sending request to:', `https://quote-api-server-95d1a0cadf67.herokuapp.com/get_pump?${queryString}`);
 
         // Make API call
-        const response = await fetch(`${API_BASE_URL}/get_pump?${queryString}`);
+        const response = await fetch(`https://quote-api-server-95d1a0cadf67.herokuapp.com/get_pump?${queryString}`);
         const data = await response.json();
 
         if (data.error) {
@@ -200,68 +219,83 @@ async function callAPI() {
 // Function to handle PDF generation
 async function handleGetQuotePDF() {
     try {
+        // Check if PDF has already been generated
+        if (hasGeneratedPDF) {
+            alert('You have already generated a PDF for this quote. Please perform a new search to generate another quote.');
+            return;
+        }
+
+        // Get the customer's email from the input field
+        const userEmail = document.getElementById('user_email').value;
+        if (!userEmail) {
+            alert('Please enter your email address to receive the quote.');
+            return;
+        }
+
+        // Validate email format
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(userEmail)) {
+            alert('Please enter a valid email address.');
+            return;
+        }
+
+        // Get the stored pump data
         if (!storedPumpData) {
-            alert('Please find a pump first before generating a quote PDF.');
+            alert('Please search for a pump first before generating a quote PDF.');
             return;
         }
 
-        const customerName = document.getElementById('customer_name').value;
-        if (!customerName) {
-            alert('Customer name is required.');
-            return;
-        }
+        // Add the user's email to the pump data
+        storedPumpData.user_email = userEmail;
 
-        // Disable the Get Quote PDF button and update text
-        const getQuoteButton = document.getElementById('getQuotePDF');
-        if (getQuoteButton) {
-            getQuoteButton.disabled = true;
-            getQuoteButton.innerHTML = 'Generating and Sending Quote...';
-        }
+        // Disable the button while processing
+        const pdfButton = document.getElementById('getQuotePDF');
+        pdfButton.disabled = true;
+        pdfButton.textContent = 'Generating PDF...';
 
-        // Generate PDF with customer name
+        // Generate PDF and send emails
         const response = await fetch(`${API_BASE_URL}/generate_quote_pdf`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                pump_data: {
-                    ...storedPumpData,
-                    customer_name: customerName
-                }
+                pump_data: storedPumpData,
+                user_email: userEmail
             })
         });
 
+        if (!response.ok) {
+            throw new Error(`Error generating PDF: ${await response.text()}`);
+        }
+
         const data = await response.json();
         
-        if (data.success && data.pdf_url) {
-            // Store the PDF URL - update to use Heroku URL
-            pdfUrl = `${API_BASE_URL}${data.pdf_url}`;
-            
-            // Trigger automatic download
-            window.location.href = pdfUrl;
-            
-            // Hide the Get Quote PDF button
-            if (getQuoteButton) {
-                getQuoteButton.style.display = 'none';
-            }
+        // Set hasGeneratedPDF to true after successful generation
+        hasGeneratedPDF = true;
+        
+        // Set the PDF URL for download - fix the URL construction
+        pdfUrl = `${API_BASE_URL}${data.pdf_url}`;  // data.pdf_url already includes /download_pdf/
+        
+        // Trigger immediate download
+        window.location.href = pdfUrl;
+        
+        // Create success message with backup download button
+        createSuccessMessageAndBackupButton(data.quote_number);
 
-            // Create success message and backup download button
-            createSuccessMessageAndBackupButton(data.quote_number, customerName);
-
-        } else {
-            throw new Error(data.error || 'Failed to generate PDF');
+        // Hide the PDF button after successful generation
+        if (pdfButton) {
+            pdfButton.style.display = 'none';
         }
+
     } catch (error) {
         console.error('Error generating PDF:', error);
         alert('Error generating PDF. Please try again.');
         
-        // Re-enable the Get Quote PDF button on error
-        const getQuoteButton = document.getElementById('getQuotePDF');
-        if (getQuoteButton) {
-            getQuoteButton.disabled = false;
-            getQuoteButton.innerHTML = 'Get Quote PDF';
-        }
+        // Reset the button
+        const pdfButton = document.getElementById('getQuotePDF');
+        pdfButton.disabled = false;
+        pdfButton.textContent = 'Get Quote PDF';
     }
 }
 
@@ -272,12 +306,7 @@ function openSupportChat() {
 }
 
 // Update the success message HTML in createSuccessMessageAndBackupButton function
-function createSuccessMessageAndBackupButton(quoteNumber, customerName) {
-    // Clear any existing timer
-    if (pdfDownloadButtonTimer) {
-        clearTimeout(pdfDownloadButtonTimer);
-    }
-
+function createSuccessMessageAndBackupButton(quoteNumber) {
     // Create or get the container
     let container = document.getElementById('quote-success-container');
     if (!container) {
@@ -310,7 +339,7 @@ function createSuccessMessageAndBackupButton(quoteNumber, customerName) {
                     <a href="tel:+19497571753" style="color: #007bff; text-decoration: none;">📞 (949) 757-1753</a>
                 </p>
                 <p style="margin: 5px;">
-                    <a href="mailto:sales@aquflow.com" style="color: #007bff; text-decoration: none;">✉️ sales@aquflow.com</a>
+                    <a href="mailto:sales@acuflow.com" style="color: #007bff; text-decoration: none;">✉️ sales@aquflow.com</a>
                 </p>
                 <p style="margin: 5px;">
                     <a href="https://www.acuflow.com/contact-acuflow/" target="_blank" style="color: #007bff; text-decoration: none;">💬 Contact Our Team</a>
@@ -325,24 +354,11 @@ function createSuccessMessageAndBackupButton(quoteNumber, customerName) {
         backupDownloadButton.addEventListener('click', () => {
             if (pdfUrl) {
                 window.location.href = pdfUrl;
+            } else {
+                alert('PDF URL not available. Please try generating the PDF again.');
             }
         });
     }
-
-    // Set timer to remove the container after 1 hour
-    pdfDownloadButtonTimer = setTimeout(() => {
-        if (container) {
-            container.remove();
-            // Show the Get Quote PDF button again
-            const getQuoteButton = document.getElementById('getQuotePDF');
-            if (getQuoteButton) {
-                getQuoteButton.style.display = 'block';
-                getQuoteButton.disabled = false;
-                getQuoteButton.innerHTML = 'Get Quote PDF';
-            }
-        }
-        pdfUrl = null;
-    }, 3600000); // 1 hour in milliseconds
 }
 
 // Add event listeners when the document is loaded
@@ -408,8 +424,8 @@ document.addEventListener('DOMContentLoaded', function() {
 function generateOptionalAccessoriesSection(data) {
     // Create array of accessory HTML strings
     const accessories = [
-        data.leak_detection && data.leak_detection !== 'No' ? 
-            `<p>Leak Detection System: ${data.leak_detection} ${data.relay_option === 'Yes' ? 'with Relay' : 'without Relay'} ($${data.leak_detection_price || 0})</p>` 
+        data.spare_parts_kit === 'Yes' ? 
+            `<p>Spare Parts Kit ($${data.spare_parts_kit_price || 0})</p>` 
             : '',
         data.degassing === 'Yes' ? 
             `<p>Degassing Valve ($${data.degassing_price || 0})</p>` 
@@ -428,6 +444,15 @@ function generateOptionalAccessoriesSection(data) {
             : '',
         data.pressure_gauge === 'Yes' ? 
             `<p>Pressure Gauge ($${data.pressure_gauge_price || 0})</p>` 
+            : '',
+        data.ecca === 'Yes' ? 
+            `<p>ECCA ($${data.ecca_price || 0})</p>` 
+            : '',
+        data.vfd === 'Yes' ? 
+            `<p>VFD ($${data.vfd_price || 0})</p>` 
+            : '',
+        data.leak_detection && data.leak_detection !== 'No' ? 
+            `<p>Leak Detection System: ${data.leak_detection} ${data.relay_option === 'Yes' ? 'with Relay' : 'without Relay'} ($${data.leak_detection_price || 0})</p>` 
             : ''
     ].filter(item => item !== ''); // Remove empty strings
 
