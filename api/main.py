@@ -1957,8 +1957,8 @@ The quote has been sent to the customer's email address.
             except Exception as e:
                 print(f"Error sending emails: {str(e)}")
             finally:
-                # Schedule file deletion after 1 hour
-                delete_file_after_delay(pdf_filename, delay=5)
+                # Schedule file deletion after 1 hour (30 seconds for testing)
+                delete_file_after_delay(pdf_filename, delay=30)
 
         # Start email sending in background thread
         email_thread = threading.Thread(target=send_emails_background)

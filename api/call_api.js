@@ -424,8 +424,8 @@ document.addEventListener('DOMContentLoaded', function() {
 function generateOptionalAccessoriesSection(data) {
     // Create array of accessory HTML strings
     const accessories = [
-        data.leak_detection && data.leak_detection !== 'No' ? 
-            `<p>Leak Detection System: ${data.leak_detection} ${data.relay_option === 'Yes' ? 'with Relay' : 'without Relay'} ($${data.leak_detection_price || 0})</p>` 
+        data.spare_parts_kit === 'Yes' ? 
+            `<p>Spare Parts Kit ($${data.spare_parts_kit_price || 0})</p>` 
             : '',
         data.degassing === 'Yes' ? 
             `<p>Degassing Valve ($${data.degassing_price || 0})</p>` 
@@ -444,6 +444,15 @@ function generateOptionalAccessoriesSection(data) {
             : '',
         data.pressure_gauge === 'Yes' ? 
             `<p>Pressure Gauge ($${data.pressure_gauge_price || 0})</p>` 
+            : '',
+        data.ecca === 'Yes' ? 
+            `<p>ECCA ($${data.ecca_price || 0})</p>` 
+            : '',
+        data.vfd === 'Yes' ? 
+            `<p>VFD ($${data.vfd_price || 0})</p>` 
+            : '',
+        data.leak_detection && data.leak_detection !== 'No' ? 
+            `<p>Leak Detection System: ${data.leak_detection} ${data.relay_option === 'Yes' ? 'with Relay' : 'without Relay'} ($${data.leak_detection_price || 0})</p>` 
             : ''
     ].filter(item => item !== ''); // Remove empty strings
 
