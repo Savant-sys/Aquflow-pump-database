@@ -1,11 +1,13 @@
-body {
+/* Remove or modify any global "body" styling, or rename it so it doesn't affect the entire site */
+#pump-tool {
+    /* If you want the pump tool area to have these styles, apply them to #pump-tool instead of body */
     margin: 0;
     padding: 20px;
     font-family: Arial, sans-serif;
     background-color: #f5f5f5;
 }
 
-.container {
+#pump-tool .container {
     display: grid;
     grid-template-columns: 45% 55%;
     gap: 20px;
@@ -14,7 +16,7 @@ body {
     min-height: 100vh;
 }
 
-.form-section {
+#pump-tool .form-section {
     background-color: white;
     padding: 20px;
     border-radius: 8px;
@@ -25,7 +27,7 @@ body {
     max-height: 90vh;
 }
 
-.results-section {
+#pump-tool .results-section {
     background-color: white;
     padding: 20px;
     border-radius: 8px;
@@ -35,18 +37,19 @@ body {
     position: relative;
 }
 
-.form-group {
+#pump-tool .form-group {
     margin-bottom: 15px;
 }
 
-label {
+#pump-tool label {
     display: block;
     margin-bottom: 5px;
     font-weight: bold;
     color: #333;
 }
 
-select, input {
+#pump-tool select, 
+#pump-tool input {
     width: 100%;
     padding: 8px;
     border: 1px solid #ddd;
@@ -54,7 +57,7 @@ select, input {
     box-sizing: border-box;
 }
 
-button {
+#pump-tool button {
     background-color: #003A63;
     color: white;
     padding: 12px 20px;
@@ -66,32 +69,32 @@ button {
     transition: background-color 0.3s;
 }
 
-#get-quote-button {
+#pump-tool #get-quote-button {
     background-color: #007bff;
 }
 
-button:hover {
+#pump-tool button:hover {
     background-color: #003A63;
 }
 
-#get-quote-button:hover {
+#pump-tool #get-quote-button:hover {
     background-color: #0056b3;
 }
 
-button:disabled {
+#pump-tool button:disabled {
     background-color: #cccccc;
     cursor: not-allowed;
 }
 
-#result {
+#pump-tool #result {
     display: none;
 }
 
-.result-content {
+#pump-tool .result-content {
     margin-top: 20px;
 }
 
-.flange-size-options {
+#pump-tool .flange-size-options {
     display: none;
     margin-top: 10px;
     padding: 10px;
@@ -99,7 +102,7 @@ button:disabled {
     border-radius: 4px;
 }
 
-#relay-option-group {
+#pump-tool #relay-option-group {
     display: none;
     margin-top: 10px;
     padding: 10px;
@@ -107,39 +110,40 @@ button:disabled {
     border-radius: 4px;
 }
 
+/* Media Queries */
 @media (max-width: 768px) {
-    .container {
+    #pump-tool .container {
         grid-template-columns: 1fr;
     }
     
-    .form-section {
+    #pump-tool .form-section {
         position: static;
     }
 }
 
 /* Scrollbar styling */
-.form-section {
+#pump-tool .form-section {
     max-height: 90vh;
     overflow-y: auto;
     scrollbar-width: thin;
     scrollbar-color: #888 #f1f1f1;
 }
 
-.form-section::-webkit-scrollbar {
+#pump-tool .form-section::-webkit-scrollbar {
     width: 6px;
 }
 
-.form-section::-webkit-scrollbar-track {
+#pump-tool .form-section::-webkit-scrollbar-track {
     background: #f1f1f1;
 }
 
-.form-section::-webkit-scrollbar-thumb {
+#pump-tool .form-section::-webkit-scrollbar-thumb {
     background: #888;
     border-radius: 3px;
 }
 
 /* Success message styling */
-.success-message {
+#pump-tool .success-message {
     color: #003A63;
     background-color: #d4edda;
     border: 1px solid #c3e6cb;
@@ -149,14 +153,14 @@ button:disabled {
 }
 
 /* Section headers */
-.section-header {
+#pump-tool .section-header {
     color: #003A63;
     border-bottom: 2px solid #003A63;
     padding-bottom: 5px;
     margin: 20px 0 15px 0;
 }
 
-.button-container {
+#pump-tool .button-container {
     position: sticky;
     bottom: 0;
     background-color: white;
@@ -165,26 +169,26 @@ button:disabled {
     border-top: 1px solid #eee;
 }
 
-#pumpForm {
+#pump-tool #pumpForm {
     overflow-y: auto;
     padding-bottom: 80px; /* Space for the button */
 }
 
-.form-grid {
+#pump-tool .form-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr); /* Creates 2 equal columns */
     gap: 15px;
     margin-bottom: 20px;
 }
 
-.form-category {
+#pump-tool .form-category {
     margin-bottom: 25px;
     padding: 15px;
     background-color: #f8f9fa;
     border-radius: 8px;
 }
 
-.category-header {
+#pump-tool .category-header {
     color: #003A63;
     margin-bottom: 15px;
     padding-bottom: 5px;
@@ -192,20 +196,20 @@ button:disabled {
 }
 
 /* Handle full-width elements */
-.form-grid .full-width {
+#pump-tool .form-grid .full-width {
     grid-column: 1 / -1;
 }
 
 /* Responsive design for mobile */
 @media (max-width: 768px) {
-    .form-grid {
+    #pump-tool .form-grid {
         grid-template-columns: 1fr; /* Single column on mobile */
     }
 }
 
 /* Adjust input and select styles */
-.form-grid input,
-.form-grid select {
+#pump-tool .form-grid input,
+#pump-tool .form-grid select {
     width: 100%;
     padding: 8px;
     border: 1px solid #ddd;
@@ -214,6 +218,6 @@ button:disabled {
 }
 
 /* Add spacing between form categories */
-.form-category + .form-category {
+#pump-tool .form-category + .form-category {
     margin-top: 20px;
 }
