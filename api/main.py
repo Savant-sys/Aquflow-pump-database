@@ -1755,6 +1755,12 @@ def get_pump():
         vfd = request.args.get('vfd', type=str)
         relay_option = request.args.get('relay_option', type=str)
         
+        # Validate PSI input
+        if psi is not None and psi >= 3000:
+            return jsonify({
+                "error": "PSI must be less than 3000 PSI"
+            }), 400
+
         # Log the parsed parameters
         print("Parsed Parameters:", {
             "customer_name" : customer_name,
@@ -1955,8 +1961,8 @@ The quote has been sent to the customer's email address.
             except Exception as e:
                 print(f"Error sending emails: {str(e)}")
             finally:
-                # Schedule file deletion after 1 hour
-                delete_file_after_delay(pdf_filename, delay=5)
+                # Schedule file deletion after 1 hour (30 seconds for testing)
+                delete_file_after_delay(pdf_filename, delay=30)
 
         # Start email sending in background thread
         email_thread = threading.Thread(target=send_emails_background)
