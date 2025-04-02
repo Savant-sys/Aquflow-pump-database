@@ -339,7 +339,7 @@ function createSuccessMessageAndBackupButton(quoteNumber) {
                     <a href="tel:+19497571753" style="color: #007bff; text-decoration: none;">📞 (949) 757-1753</a>
                 </p>
                 <p style="margin: 5px;">
-                    <a href="mailto:sales@aquflow.com" style="color: #007bff; text-decoration: none;">✉️ sales@aquflow.com</a>
+                    <a href="mailto:sales@acuflow.com" style="color: #007bff; text-decoration: none;">✉️ sales@acuflow.com</a>
                 </p>
                 <p style="margin: 5px;">
                     <a href="https://www.acuflow.com/contact-acuflow/" target="_blank" style="color: #007bff; text-decoration: none;">💬 Contact Our Team</a>
