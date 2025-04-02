@@ -1751,6 +1751,12 @@ def get_pump():
         vfd = request.args.get('vfd', type=str)
         relay_option = request.args.get('relay_option', type=str)
         
+        # Validate PSI input
+        if psi is not None and psi >= 3000:
+            return jsonify({
+                "error": "PSI must be less than 3000 PSI"
+            }), 400
+
         # Log the parsed parameters
         print("Parsed Parameters:", {
             "customer_name" : customer_name,
