@@ -1022,7 +1022,7 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
 
         # Final total price formatting
         if isinstance(best_pump["base_price"], (int, float)) and isinstance(optional_accessories_total_price, (int, float)):
-            final_price = f"${best_pump["base_price"] + optional_accessories_total_price}"
+            final_price = best_pump["base_price"] + optional_accessories_total_price
             if all_cf_notes:
                 best_pump["final_total_price"] = f"${final_price} + {' + '.join(all_cf_notes)}"
             else:
@@ -1030,7 +1030,7 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
         else:
             price_str = f"{best_pump['base_price']}" if isinstance(best_pump["base_price"], str) else f"${best_pump['base_price']}"
             if all_cf_notes:
-                best_pump["final_total_price"] = f"${price_str} + {' + '.join(all_cf_notes)}"
+                best_pump["final_total_price"] = f"{price_str} + {' + '.join(all_cf_notes)}"
             else:
                 best_pump["final_total_price"] = f"${price_str}"
 
@@ -1270,10 +1270,19 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
             if isinstance(best_pump.get(accessory), (int, float)) and best_pump[accessory] != 0:
                 best_pump[accessory] = int(math.ceil(best_pump[accessory]))
 
-        # Format final total price
+        # Format final total price with all accessories
         if isinstance(best_pump["base_price"], (int, float)) and isinstance(optional_accessories_total_price, (int, float)):
             final_total = int(math.ceil(best_pump["base_price"] + optional_accessories_total_price))
-            best_pump["final_total_price"] = f"${final_total}"
+            if all_cf_notes:
+                best_pump["final_total_price"] = f"${final_total} + {' + '.join(all_cf_notes)}"
+            else:
+                best_pump["final_total_price"] = f"${final_total}"
+        else:
+            price_str = f"{best_pump['base_price']}" if isinstance(best_pump["base_price"], str) else f"${best_pump['base_price']}"
+            if all_cf_notes:
+                best_pump["final_total_price"] = f"{price_str} + {' + '.join(all_cf_notes)}"
+            else:
+                best_pump["final_total_price"] = f"${price_str}"
 
         return best_pump
     else:
@@ -1581,7 +1590,7 @@ def generate_pdf(pump_data, filename="pump_quote.pdf", quote_number=None):
         table_data.append([str(idx), name, description, qty, price_display])
 
     # Add total row
-    table_data.append(["", "", "", "Total:", f"${total_price}"])
+    table_data.append(["", "", "", "Total:", pump_data.get("final_total_price", "N/A")])
 
     # Create the table with adjusted column widths
     accessories_table = Table(
@@ -1593,28 +1602,19 @@ def generate_pdf(pump_data, filename="pump_quote.pdf", quote_number=None):
     # Update table style for the new format
     accessories_table.setStyle(TableStyle([
         ("BACKGROUND", (0, 0), (-1, 0), colors.lightgrey),
-        ("BACKGROUND", (0, -1), (-1, -1), colors.lightgrey),  # Total row background
         ("TEXTCOLOR", (0, 0), (-1, 0), colors.black),
-        ("TEXTCOLOR", (0, -1), (-1, -1), colors.black),  # Total row text color
-        ("ALIGN", (0, 0), (-1, -1), "CENTER"),  # Center all columns
-        ("ALIGN", (1, 0), (-1, -1), "LEFT"),    # Left align item and description
-        ("ALIGN", (3, 0), (-1, -1), "CENTER"),  # Center align Qty column
-        ("ALIGN", (4, 0), (-1, -1), "CENTER"),  # Center align Net Price column
-        ("ALIGN", (3, -1), (-1, -1), "CENTER"),  # Center align total row
+        ("ALIGN", (0, 0), (-1, -1), "CENTER"),
         ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
         ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-        ("FONTNAME", (0, -1), (-1, -1), "Helvetica-Bold"),  # Total row bold
         ("FONTSIZE", (0, 0), (-1, -1), 8),
         ("BOTTOMPADDING", (0, 0), (-1, 0), 2),
         ("TOPPADDING", (0, 1), (-1, -1), 4),
         ("BOTTOMPADDING", (0, 1), (-1, -1), 4),
         ("GRID", (0, 0), (-1, -1), 0.5, colors.black),
-        ("WORDWRAP", (0, 0), (-1, -1), True),
-        ("LEFTPADDING", (0, 0), (-1, -1), 2),  # Add some padding on the left
-        ("RIGHTPADDING", (0, 0), (-1, -1), 2)  # Add some padding on the right
+        ("WORDWRAP", (0, 0), (-1, -1), True)
     ]))
     elements.append(accessories_table)
-    elements.append(Spacer(1, 12))
+    elements.append(Spacer(1, 10))  # Add space after the table
 
     # Notes Section
     elements.append(Paragraph("<b>Notes:</b>", heading_style))
