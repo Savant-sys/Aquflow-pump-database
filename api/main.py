@@ -891,8 +891,11 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
 
         selected_pr_price = None
         if pr_data:
-            connection_size = pr_data.get("Connection_Size")
-            port = pr_data.get("Port")
+            connection_size = pr_data.get("Connection_Size", "N/A")
+            # Default to "3-Port" if Port is NULL or not specified
+            port_value = pr_data.get("Port")
+            # Ensure we handle both None and empty string cases
+            port_prefix = "3-Port" if port_value is None or port_value == "" else f"{port_value}-Port"
 
             if psi <= 150:
                 selected_pr_price = pr_data.get("Pressure_Relief_Valve_150")
@@ -901,12 +904,12 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
 
             if selected_pr_price in [None, 0, "0", "C/F"]:
                 best_pump["pressure_relief_valve_price"] = "C/F"
-                message = f"{port} Pressure Relief Valve in {liquid_end_material} with {connection_size}. Max pressure is {psi} PSI."
+                message = f"{port_prefix} Pressure Relief Valve in {liquid_end_material} with {connection_size}. Max. Pressure is {int(psi)} PSI."
                 if pressure_relief_valve == "Yes":
                     optional_accessories_notes.append("C/F (Pressure Relief Valve)")
             else:
                 best_pump["pressure_relief_valve_price"] = math.ceil(float(selected_pr_price))
-                message = f"{port} Pressure Relief Valve in {liquid_end_material} with {connection_size}. Max pressure is {psi} PSI."
+                message = f"{port_prefix} Pressure Relief Valve in {liquid_end_material} with {connection_size}. Max. Pressure is {int(psi)} PSI."
                 if pressure_relief_valve == "Yes":
                     optional_accessories_total_price += best_pump["pressure_relief_valve_price"]
             
@@ -926,7 +929,7 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
             best_pump["pressure_relief_valve_message"] = message
         else:
             best_pump["pressure_relief_valve_price"] = "C/F"
-            message = f"Pressure Relief Valve in {liquid_end_material}. Max pressure is {psi} PSI."
+            message = f"3-Port Pressure Relief Valve in {liquid_end_material}. Max. Pressure is {int(psi)} PSI."
             best_pump["pressure_relief_valve_message"] = message
             if pressure_relief_valve == "Yes":
                 optional_accessories_notes.append("C/F (Pressure Relief Valve)")
