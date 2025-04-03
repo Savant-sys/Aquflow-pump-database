@@ -1191,9 +1191,12 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
                 if isinstance(best_pump["total_price"], str):
                     best_pump["total_price"] = f"{best_pump['total_price']} + C/F (Back Pressure Valve)"
                 else:
-                    best_pump["total_price"] = f"{best_pump['total_price']} + C/F (Back Pressure Valve)"
+                    best_pump["total_price"] = f"{str(best_pump['total_price'])} + C/F (Back Pressure Valve)"
             elif isinstance(best_pump["back_pressure_valve_price"], (int, float)):
-                best_pump["total_price"] += best_pump["back_pressure_valve_price"]
+                if isinstance(best_pump["total_price"], str):
+                    best_pump["total_price"] = f"{best_pump['total_price']} + ${best_pump['back_pressure_valve_price']}"
+                else:
+                    best_pump["total_price"] = f"{str(best_pump['total_price'])} + ${best_pump['back_pressure_valve_price']}"
 
         # Add Pressure Relief Valve price to total_price
         if pressure_relief_valve == "Yes":
@@ -1201,24 +1204,39 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
                 if isinstance(best_pump["total_price"], str):
                     best_pump["total_price"] = f"{best_pump['total_price']} + C/F (Pressure Relief Valve)"
                 else:
-                    best_pump["total_price"] = f"{best_pump['total_price']} + C/F (Pressure Relief Valve)"
+                    best_pump["total_price"] = f"{str(best_pump['total_price'])} + C/F (Pressure Relief Valve)"
             elif isinstance(best_pump["pressure_relief_valve_price"], (int, float)):
-                best_pump["total_price"] += best_pump["pressure_relief_valve_price"]
+                if isinstance(best_pump["total_price"], str):
+                    best_pump["total_price"] = f"{best_pump['total_price']} + ${best_pump['pressure_relief_valve_price']}"
+                else:
+                    best_pump["total_price"] = f"{str(best_pump['total_price'])} + ${best_pump['pressure_relief_valve_price']}"
 
         # Add Calibration Column price to total_price
         if calibration_column == "Yes":
-            best_pump["total_price"] += best_pump["calibration_column_price"]
+            if best_pump["calibration_column_price"] == "C/F":
+                if isinstance(best_pump["total_price"], str):
+                    best_pump["total_price"] = f"{best_pump['total_price']} + C/F (Calibration Column)"
+                else:
+                    best_pump["total_price"] = f"{str(best_pump['total_price'])} + C/F (Calibration Column)"
+            elif isinstance(best_pump["calibration_column_price"], (int, float)):
+                if isinstance(best_pump["total_price"], str):
+                    best_pump["total_price"] = f"{best_pump['total_price']} + ${best_pump['calibration_column_price']}"
+                else:
+                    best_pump["total_price"] = f"{str(best_pump['total_price'])} + ${best_pump['calibration_column_price']}"
         best_pump["calibration_column"] = calibration_column
 
         # Add Pulsation Dampener price to total_price
         if pulsation_dampener == "Yes":
             if best_pump["pulsation_dampener_price"] == "C/F":
-                best_pump["total_price"] = str(best_pump["total_price"]) + " + C/F (Pulsation Dampener)"
-            elif isinstance(best_pump["pulsation_dampener_price"], (int, float)):
-                if isinstance(best_pump["total_price"], (int, float)):
-                    best_pump["total_price"] += best_pump["pulsation_dampener_price"]
+                if isinstance(best_pump["total_price"], str):
+                    best_pump["total_price"] = f"{best_pump['total_price']} + C/F (Pulsation Dampener)"
                 else:
-                    best_pump["total_price"] = str(best_pump["total_price"]) + f" + ${best_pump['pulsation_dampener_price']}"
+                    best_pump["total_price"] = f"{str(best_pump['total_price'])} + C/F (Pulsation Dampener)"
+            elif isinstance(best_pump["pulsation_dampener_price"], (int, float)):
+                if isinstance(best_pump["total_price"], str):
+                    best_pump["total_price"] = f"{best_pump['total_price']} + ${best_pump['pulsation_dampener_price']}"
+                else:
+                    best_pump["total_price"] = f"{str(best_pump['total_price'])} + ${best_pump['pulsation_dampener_price']}"
 
         best_pump["back_pressure_valve"] = back_pressure_valve
         best_pump["pressure_relief_valve"] = pressure_relief_valve
@@ -1229,12 +1247,12 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
                 if isinstance(best_pump["total_price"], str):
                     best_pump["total_price"] = f"{best_pump['total_price']} + C/F (Pressure Gauge)"
                 else:
-                    best_pump["total_price"] = f"{best_pump['total_price']} + C/F (Pressure Gauge)"
+                    best_pump["total_price"] = f"{str(best_pump['total_price'])} + C/F (Pressure Gauge)"
             elif isinstance(best_pump["pressure_gauge_price"], (int, float)):
                 if isinstance(best_pump["total_price"], str):
                     best_pump["total_price"] = f"{best_pump['total_price']} + ${best_pump['pressure_gauge_price']}"
                 else:
-                    best_pump["total_price"] += best_pump["pressure_gauge_price"]
+                    best_pump["total_price"] = f"{str(best_pump['total_price'])} + ${best_pump['pressure_gauge_price']}"
 
         best_pump["pressure_gauge"] = pressure_gauge
 
