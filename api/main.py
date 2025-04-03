@@ -1410,6 +1410,8 @@ def generate_pdf(pump_data, filename="pump_quote.pdf", quote_number=None):
 
     # Pump Model Name
     pump_model = pump_data.get("model", "N/A")
+    # space between header and description
+    elements.append(Spacer(1, 35))
 
     # Dynamic Description
     dynamic_description = []
