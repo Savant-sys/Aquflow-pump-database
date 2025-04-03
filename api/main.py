@@ -985,7 +985,6 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
                     best_pump["total_price"] = f"{best_pump['total_price']} + ${ecca_price}"
                 else:
                     best_pump["total_price"] += ecca_price
-                print(f"Adding ECCA price: ${ecca_price}")
 
         # Handle VFD price
         if vfd == "Yes":
@@ -997,7 +996,6 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
                     best_pump["total_price"] = f"{best_pump['total_price']} + ${vfd_price}"
                 else:
                     best_pump["total_price"] += vfd_price
-                print(f"Adding VFD price: ${vfd_price}")
 
         # Update the final total price
         if isinstance(best_pump["base_price"], (int, float)):
@@ -1623,7 +1621,7 @@ def generate_pdf(pump_data, filename="pump_quote.pdf", quote_number=None):
         # Set quantity based on customer selections
         if name == pump_data.get("model", "N/A"):  # Base pump
             qty = "1"
-        elif name == "Spare Parts Kit":
+        elif name == pump_data.get("Spare_Parts_Kit_Model", "Spare Parts Kit"):
             qty = "1" if pump_data.get("spare_parts_kit") == "Yes" else "0"
         elif name == "Back Pressure Valve":
             qty = "1" if pump_data.get("back_pressure_valve") == "Yes" else "0"
