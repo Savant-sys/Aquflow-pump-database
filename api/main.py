@@ -1021,22 +1021,28 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
             if "Flange Adaptor" in best_pump["total_price"]:
                 base_annotations.append("C/F (Flange Adaptor)")
 
-        # Combine all C/F notes
-        all_cf_notes = base_annotations + optional_accessories_notes
-
         # Final total price formatting
+        has_cf = False
+        if isinstance(best_pump["total_price"], str) and "C/F" in best_pump["total_price"]:
+            has_cf = True
+        if any("C/F" in note for note in optional_accessories_notes):
+            has_cf = True
+
         if isinstance(best_pump["base_price"], (int, float)) and isinstance(optional_accessories_total_price, (int, float)):
             final_price = best_pump["base_price"] + optional_accessories_total_price
-            if all_cf_notes:
-                best_pump["final_total_price"] = f"${final_price} + {' + '.join(all_cf_notes)}"
+            if has_cf:
+                best_pump["final_total_price"] = f"${final_price} + C/F"
             else:
                 best_pump["final_total_price"] = f"${final_price}"
         else:
             price_str = f"{best_pump['base_price']}" if isinstance(best_pump["base_price"], str) else f"${best_pump['base_price']}"
-            if all_cf_notes:
-                best_pump["final_total_price"] = f"{price_str} + {' + '.join(all_cf_notes)}"
+            if has_cf:
+                best_pump["final_total_price"] = f"{price_str} + C/F"
             else:
                 best_pump["final_total_price"] = f"${price_str}"
+
+        # Keep the detailed C/F notes for the accessories list
+        all_cf_notes = base_annotations + optional_accessories_notes
 
         # Final Total Price (Base + Optional Accessories)
         if isinstance(best_pump["base_price"], (int, float)) and isinstance(best_pump["optional_accessories_total_price"], (int, float)):
@@ -1045,10 +1051,21 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
             # Handle C/F notes
             price_str = f"${best_pump['base_price']}" if isinstance(best_pump["base_price"], (int, float)) else str(best_pump["base_price"])
             cf_notes = [note for note in best_pump["optional_accessories_notes"] if "C/F" in note]
-            if cf_notes:
+            
+            # Check for specific Motor and HP C/F combinations
+            has_motor_cf = any("C/F (Motor)" in note for note in cf_notes)
+            has_hp_cf = any("C/F (HP)" in note for note in cf_notes)
+            
+            if has_motor_cf and has_hp_cf:
+                best_pump["final_total_price"] = f"{price_str} + C/F (Motor + HP)"
+            elif has_motor_cf:
+                best_pump["final_total_price"] = f"{price_str} + C/F (Motor)"
+            elif has_hp_cf:
+                best_pump["final_total_price"] = f"{price_str} + C/F (HP)"
+            elif cf_notes:
                 best_pump["final_total_price"] = f"{price_str} + {' + '.join(cf_notes)}"
             else:
-                best_pump["final_total_price"] = f"${price_str}"
+                best_pump["final_total_price"] = f"{price_str}"
 
         # Later, when updating the total price with spare parts kit:
         if spare_parts_kit == "Yes":
@@ -1585,7 +1602,21 @@ def generate_pdf(pump_data, filename="pump_quote.pdf", quote_number=None):
             price_display = f"${int(math.ceil(price))}"  # Convert to int to remove decimal
             total_price += int(math.ceil(price))
         else:
-            price_display = "C/F" if price in [None, 0, "0", "C/F"] else f"${price}"
+            # Check for specific Motor and HP C/F combinations in the first row
+            if idx == 1:  # First row (base pump)
+                has_motor_cf = "C/F (Motor)" in str(pump_data.get("total_price", ""))
+                has_hp_cf = "C/F (HP)" in str(pump_data.get("total_price", ""))
+                
+                if has_motor_cf and has_hp_cf:
+                    price_display = "C/F (Motor + HP)"
+                elif has_motor_cf:
+                    price_display = "C/F (Motor)"
+                elif has_hp_cf:
+                    price_display = "C/F (HP)"
+                else:
+                    price_display = "C/F" if price in [None, 0, "0", "C/F"] else f"${price}"
+            else:
+                price_display = "C/F" if price in [None, 0, "0", "C/F"] else f"${price}"
         
         description = accessory_descriptions.get(name, "")
         
@@ -1620,7 +1651,36 @@ def generate_pdf(pump_data, filename="pump_quote.pdf", quote_number=None):
         table_data.append([str(idx), name, description, qty, price_display])
 
     # Add total row
-    table_data.append(["", "", "", "Total:", pump_data.get("final_total_price", "N/A")])
+    final_price = pump_data.get("final_total_price", "N/A")
+    # Check if there are any C/F cases
+    has_cf = False
+    if isinstance(pump_data.get("total_price"), str) and "C/F" in pump_data["total_price"]:
+        has_cf = True
+    if any("C/F" in note for note in pump_data.get("optional_accessories_notes", [])):
+        has_cf = True
+    
+    # Simplify the final price display if there are C/F cases
+    if has_cf and isinstance(final_price, str):
+        # Extract the numeric part before any C/F notes
+        base_price = final_price.split(" + ")[0]
+        # Ensure base_price starts with $
+        if not base_price.startswith("$"):
+            base_price = f"${base_price}"
+        
+        # Check for specific Motor and HP C/F combinations
+        has_motor_cf = "C/F (Motor)" in final_price
+        has_hp_cf = "C/F (HP)" in final_price
+        
+        if has_motor_cf and has_hp_cf:
+            final_price = f"{base_price} + C/F (Motor + HP)"
+        elif has_motor_cf:
+            final_price = f"{base_price} + C/F (Motor)"
+        elif has_hp_cf:
+            final_price = f"{base_price} + C/F (HP)"
+        else:
+            final_price = f"{base_price} + C/F"
+    
+    table_data.append(["", "", "", "Total:", final_price])
 
     # Create the table with adjusted column widths
     accessories_table = Table(
