@@ -1648,6 +1648,7 @@ def generate_pdf(pump_data, filename="pump_quote.pdf", quote_number=None):
         else:
             qty = "0"
         
+        # Always add the row to the table
         table_data.append([str(idx), name, description, qty, price_display])
 
     # Add total row
