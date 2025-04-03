@@ -695,16 +695,19 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
         total_price += diaphragm_price
 
         # Add HP adder price if it's not "C/F"
-        if use_hp and pump["High_Pressure_Adder_Price"] is not None and pump["High_Pressure_Adder_Price"] != "C/F":
-            total_price += float(pump["High_Pressure_Adder_Price"])
-        elif use_hp and pump["High_Pressure_Adder_Price"] == "C/F":
-            annotations.append("C/F (HP)")
+        if use_hp:
+            if pump["High_Pressure_Adder_Price"] is not None and pump["High_Pressure_Adder_Price"] != "C/F":
+                total_price += float(pump["High_Pressure_Adder_Price"])
+            else:
+                annotations.append("C/F (HP)")
 
         # Add ball size price if applicable
-        total_price += ball_size_price
+        if isinstance(total_price, (int, float)):
+            total_price += ball_size_price
 
         # Add Food Graded Oil price if applicable
-        total_price += food_graded_oil_price
+        if isinstance(total_price, (int, float)):
+            total_price += food_graded_oil_price
 
         # Round up the total price to the nearest whole number
         if isinstance(total_price, (int, float)):
@@ -714,11 +717,10 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
 
         # Add annotations for "C/F" cases
         if annotations:
-            total_price_rounded = f"{total_price_rounded} + {' + '.join(annotations)}"
-
-        # print("PUMPS")
-        # print(final_model)
-        # print(total_price_rounded)
+            if isinstance(total_price_rounded, (int, float)):
+                total_price_rounded = f"{total_price_rounded} + {' + '.join(annotations)}"
+            else:
+                total_price_rounded = f"{total_price_rounded} + {' + '.join(annotations)}"
 
         filtered_pumps.append({
             "model": final_model,
@@ -738,6 +740,7 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
             "leak_detection_price": leak_detection_price,
             "flange_price": flange_price,
             "total_price": total_price_rounded,
+            "base_price": total_price_rounded,  # Use the same value as total_price
             "phase": phase,
             "ball_size_price": ball_size_price,
             "ball_size_display": ball_size_display,
@@ -829,7 +832,8 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
         if isinstance(best_pump["total_price"], (int, float)):
             best_pump["base_price"] = best_pump["total_price"]
         else:
-            best_pump["base_price"] = "C/F"
+            # If total_price is a string with C/F notes, use it directly
+            best_pump["base_price"] = best_pump["total_price"]
 
         # --- Spare Parts Kit (first optional accessory) ---
         if spare_parts_kit == "Yes":
