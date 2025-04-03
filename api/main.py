@@ -1557,6 +1557,7 @@ def generate_pdf(pump_data, filename="pump_quote.pdf", quote_number=None):
     }
 
     all_accessories = [
+        (pump_data.get("model", "N/A"), pump_data.get("base_price", 0)),  # Base pump
         (pump_data.get("Spare_Parts_Kit_Model", "Spare Parts Kit"), pump_data.get("spare_parts_kit_price_value", 0)),
         ("Back Pressure Valve", pump_data.get("back_pressure_valve_price", 0)),
         ("Pressure Relief Valve", pump_data.get("pressure_relief_valve_price", 0)),
@@ -1570,29 +1571,35 @@ def generate_pdf(pump_data, filename="pump_quote.pdf", quote_number=None):
         ("Vacuum Leak Detection", pump_data.get("Vacuum_Leak_Detection_Price_Adder"))
     ]
 
-    accessories_table_data = [["Accessory", "Description", "Price"]]
-    for name, price in all_accessories:
+    # Create the new table format
+    table_data = [["No.", "Item", "Description", "Qty", "Net Price ea."]]
+    
+    for idx, (name, price) in enumerate(all_accessories, 1):
         # Round up the price and remove decimal .0
         if isinstance(price, (int, float)) and price not in [0, None]:
             price_display = f"${int(math.ceil(price))}"  # Convert to int to remove decimal
         else:
             price_display = "C/F" if price in [None, 0, "0", "C/F"] else f"${price}"
+        
         description = accessory_descriptions.get(name, "")
-        num_lines = len(description.split('\n')) if description else 1
-        row_height = max(20, num_lines * 12)
-        accessories_table_data.append([name, description, price_display])
+        # Set quantity to 1 for base pump, 0 for others (will be updated later)
+        qty = "1" if idx == 1 else "0"
+        
+        table_data.append([str(idx), name, description, qty, price_display])
 
+    # Create the table with adjusted column widths
     accessories_table = Table(
-        accessories_table_data,
-        colWidths=[100, 300, 80],
-        rowHeights=[20] + [None] * (len(accessories_table_data) - 1)  # Auto-height for content rows
+        table_data,
+        colWidths=[30, 100, 250, 40, 80],  # Adjusted widths for new columns
+        rowHeights=[20] + [None] * (len(table_data) - 1)  # Auto-height for content rows
     )
     
-    # Update table style to handle multiline content better
+    # Update table style for the new format
     accessories_table.setStyle(TableStyle([
         ("BACKGROUND", (0, 0), (-1, 0), colors.lightgrey),
         ("TEXTCOLOR", (0, 0), (-1, 0), colors.black),
-        ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+        ("ALIGN", (0, 0), (-1, -1), "CENTER"),  # Center all columns
+        ("ALIGN", (1, 0), (-1, -1), "LEFT"),    # Left align item and description
         ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
         ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
         ("FONTSIZE", (0, 0), (-1, -1), 8),
