@@ -740,7 +740,7 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
             "leak_detection_price": leak_detection_price,
             "flange_price": flange_price,
             "total_price": total_price_rounded,
-            "base_price": total_price_rounded,  # Use the same value as total_price
+            "base_price": total_price_rounded,
             "phase": phase,
             "ball_size_price": ball_size_price,
             "ball_size_display": ball_size_display,
