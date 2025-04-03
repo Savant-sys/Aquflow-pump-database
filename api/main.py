@@ -870,16 +870,16 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
 
         if selected_bp_price in [None, 0, "0", "C/F"]:
             best_pump["back_pressure_valve_price"] = "C/F"
-            best_pump["back_pressure_valve_message"] = "C/F (Back Pressure Valve)"
+            message = f"Back Pressure Valve in {liquid_end_material} with {connection_size if connection_size != 'N/A' else 'N/A'}. Max. Pressure is {psi} PSI."
             if back_pressure_valve == "Yes":
                 optional_accessories_notes.append("C/F (Back Pressure Valve)")
         else:
             best_pump["back_pressure_valve_price"] = math.ceil(float(selected_bp_price))
-            best_pump["back_pressure_valve_message"] = (
-                f"Back Pressure Valve in {liquid_end_material} with {connection_size if connection_size != 'N/A' else 'N/A'}. Max Pressure is {psi} PSI."
-            )
+            message = f"Back Pressure Valve in {liquid_end_material} with {connection_size if connection_size != 'N/A' else 'N/A'}. Max. Pressure is {psi} PSI."
             if back_pressure_valve == "Yes":
                 optional_accessories_total_price += best_pump["back_pressure_valve_price"]
+        
+        best_pump["back_pressure_valve_message"] = message
 
         # --- Pressure Relief Valve ---
         conn = mysql.connector.connect(**db_config)
