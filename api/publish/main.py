@@ -477,6 +477,9 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
     # Ensure Food_Graded_Oil is provided and is either "Yes" or "No"
     if food_graded_oil not in ["Yes", "No"]:
         return {"error": "Food Graded Oil is required and must be either 'Yes' or 'No'."}
+    
+    # Initialize optional_accessories_notes
+    optional_accessories_notes = []
 
     # Connect to MySQL database
     conn = mysql.connector.connect(**db_config)
@@ -705,7 +708,8 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
             total_price += 450
 
         # Add ball size price if applicable
-        total_price += ball_size_price
+        if isinstance(total_price, (int, float)):
+            total_price += ball_size_price
 
         # Round up the total price
         if isinstance(total_price, (int, float)):
@@ -730,16 +734,18 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
         total_price += diaphragm_price
 
         # Add HP adder price if it's not "C/F"
-        if use_hp and pump["High_Pressure_Adder_Price"] is not None and pump["High_Pressure_Adder_Price"] != "C/F":
-            total_price += float(pump["High_Pressure_Adder_Price"])
-        elif use_hp and pump["High_Pressure_Adder_Price"] == "C/F":
-            annotations.append("C/F (HP)")
+        if use_hp:
+            if pump["High_Pressure_Adder_Price"] is not None and pump["High_Pressure_Adder_Price"] != "C/F":
+                total_price += float(pump["High_Pressure_Adder_Price"])
+            else:
+                annotations.append("C/F (HP)")
 
         # Add ball size price if applicable
         total_price += ball_size_price
 
         # Add Food Graded Oil price if applicable
-        total_price += food_graded_oil_price
+        if isinstance(total_price, (int, float)):
+            total_price += food_graded_oil_price
 
         # Round up the total price to the nearest whole number
         if isinstance(total_price, (int, float)):
@@ -749,11 +755,10 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
 
         # Add annotations for "C/F" cases
         if annotations:
-            total_price_rounded = f"{total_price_rounded} + {' + '.join(annotations)}"
-
-        # print("PUMPS")
-        # print(final_model)
-        # print(total_price_rounded)
+            if isinstance(total_price_rounded, (int, float)):
+                total_price_rounded = f"{total_price_rounded} + {' + '.join(annotations)}"
+            else:
+                total_price_rounded = f"{total_price_rounded} + {' + '.join(annotations)}"
 
         filtered_pumps.append({
             "model": final_model,
@@ -773,6 +778,7 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
             "leak_detection_price": leak_detection_price,
             "flange_price": flange_price,
             "total_price": total_price_rounded,
+            "base_price": total_price_rounded,
             "phase": phase,
             "ball_size_price": ball_size_price,
             "ball_size_display": ball_size_display,
@@ -798,7 +804,8 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
             "relay_price": 889 if leak_detection == "Conductive" and relay_option == "Yes" else 0,
             "leak_detection": leak_detection,  # Add this line to include the leak detection type
             "leak_detection_price": leak_detection_price,  # Make sure this is set
-            "relay_option": relay_option if leak_detection == "Conductive" else "No",  # Add relay option info
+            "relay_option": relay_option if leak_detection == "Conductive" else "No",
+            "optional_accessories_notes": optional_accessories_notes,
         })
 
     if filtered_pumps:
@@ -863,7 +870,8 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
         if isinstance(best_pump["total_price"], (int, float)):
             best_pump["base_price"] = best_pump["total_price"]
         else:
-            best_pump["base_price"] = "C/F"
+            # If total_price is a string with C/F notes, use it directly
+            best_pump["base_price"] = best_pump["total_price"]
 
         # --- Spare Parts Kit (first optional accessory) ---
         if spare_parts_kit == "Yes":
