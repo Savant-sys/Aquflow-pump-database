@@ -1584,8 +1584,34 @@ def generate_pdf(pump_data, filename="pump_quote.pdf", quote_number=None):
             price_display = "C/F" if price in [None, 0, "0", "C/F"] else f"${price}"
         
         description = accessory_descriptions.get(name, "")
-        # Set quantity to 1 for base pump, 0 for others (will be updated later)
-        qty = "1" if idx == 1 else "0"
+        
+        # Set quantity based on customer selections
+        if name == pump_data.get("model", "N/A"):  # Base pump
+            qty = "1"
+        elif name == "Spare Parts Kit":
+            qty = "1" if pump_data.get("spare_parts_kit") == "Yes" else "0"
+        elif name == "Back Pressure Valve":
+            qty = "1" if pump_data.get("back_pressure_valve") == "Yes" else "0"
+        elif name == "Pressure Relief Valve":
+            qty = "1" if pump_data.get("pressure_relief_valve") == "Yes" else "0"
+        elif name == "Pulsation Dampener":
+            qty = "1" if pump_data.get("pulsation_dampener") == "Yes" else "0"
+        elif name == "Calibration Column":
+            qty = "1" if pump_data.get("calibration_column") == "Yes" else "0"
+        elif name == "Pressure Gauge":
+            qty = "1" if pump_data.get("pressure_gauge") == "Yes" else "0"
+        elif name == "ECCA":
+            qty = "1" if pump_data.get("ecca") == "Yes" else "0"
+        elif name == "VFD":
+            qty = "1" if pump_data.get("vfd") == "Yes" else "0"
+        elif name == "Conductive Leak Detection":
+            qty = "1" if pump_data.get("leak_detection") == "Conductive" else "0"
+        elif name == "Relay":
+            qty = "1" if pump_data.get("relay_option") == "Yes" and pump_data.get("leak_detection") == "Conductive" else "0"
+        elif name == "Vacuum Leak Detection":
+            qty = "1" if pump_data.get("leak_detection") == "Vacuum" else "0"
+        else:
+            qty = "0"
         
         table_data.append([str(idx), name, description, qty, price_display])
 
