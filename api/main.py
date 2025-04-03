@@ -1407,12 +1407,9 @@ def generate_pdf(pump_data, filename="pump_quote.pdf", quote_number=None):
         ]))
 
         elements.append(header_table)
-        elements.append(Spacer(1, 5))
 
     # Pump Model Name
     pump_model = pump_data.get("model", "N/A")
-    elements.append(Paragraph(f"<b>Pump Model:</b> {pump_model}", title_style))
-
     # Description Section
     elements.append(Paragraph("<b>Description:</b>", heading_style))
 
@@ -1543,6 +1540,7 @@ def generate_pdf(pump_data, filename="pump_quote.pdf", quote_number=None):
     )
 
     accessory_descriptions = {
+        pump_data.get("model", "N/A"): f"Base Pump Model: {pump_data.get('model', 'N/A')}",
         pump_data.get("Spare_Parts_Kit_Model", "Spare Parts Kit"): spare_parts_info,
         "Back Pressure Valve": back_pressure_desc,
         "Pressure Relief Valve": pressure_relief_desc,
@@ -1574,10 +1572,12 @@ def generate_pdf(pump_data, filename="pump_quote.pdf", quote_number=None):
     # Create the new table format
     table_data = [["No.", "Item", "Description", "Qty", "Net Price ea."]]
     
+    total_price = 0
     for idx, (name, price) in enumerate(all_accessories, 1):
         # Round up the price and remove decimal .0
         if isinstance(price, (int, float)) and price not in [0, None]:
             price_display = f"${int(math.ceil(price))}"  # Convert to int to remove decimal
+            total_price += int(math.ceil(price))
         else:
             price_display = "C/F" if price in [None, 0, "0", "C/F"] else f"${price}"
         
@@ -1586,6 +1586,9 @@ def generate_pdf(pump_data, filename="pump_quote.pdf", quote_number=None):
         qty = "1" if idx == 1 else "0"
         
         table_data.append([str(idx), name, description, qty, price_display])
+
+    # Add total row
+    table_data.append(["", "", "", "Total:", f"${total_price}"])
 
     # Create the table with adjusted column widths
     accessories_table = Table(
@@ -1597,11 +1600,15 @@ def generate_pdf(pump_data, filename="pump_quote.pdf", quote_number=None):
     # Update table style for the new format
     accessories_table.setStyle(TableStyle([
         ("BACKGROUND", (0, 0), (-1, 0), colors.lightgrey),
+        ("BACKGROUND", (0, -1), (-1, -1), colors.lightgrey),  # Total row background
         ("TEXTCOLOR", (0, 0), (-1, 0), colors.black),
+        ("TEXTCOLOR", (0, -1), (-1, -1), colors.black),  # Total row text color
         ("ALIGN", (0, 0), (-1, -1), "CENTER"),  # Center all columns
         ("ALIGN", (1, 0), (-1, -1), "LEFT"),    # Left align item and description
+        ("ALIGN", (3, -1), (-1, -1), "RIGHT"),  # Right align total row
         ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
         ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+        ("FONTNAME", (0, -1), (-1, -1), "Helvetica-Bold"),  # Total row bold
         ("FONTSIZE", (0, 0), (-1, -1), 8),
         ("BOTTOMPADDING", (0, 0), (-1, 0), 2),
         ("TOPPADDING", (0, 1), (-1, -1), 4),
@@ -1612,68 +1619,23 @@ def generate_pdf(pump_data, filename="pump_quote.pdf", quote_number=None):
     elements.append(accessories_table)
     elements.append(Spacer(1, 12))
 
-    # Price Summary
-    base_price = pump_data.get("base_price", "N/A")
-    optional_price = pump_data.get("optional_accessories_total_price", 0)
-    optional_notes = pump_data.get("optional_accessories_notes", [])
-    final_price = pump_data.get("final_total_price", "N/A")
+    # Notes Section
+    elements.append(Paragraph("<b>Notes:</b>", heading_style))
+    elements.append(Paragraph(pump_data.get("notes", ""), normal_style))
 
-    base_display = f"${int(base_price)}" if isinstance(base_price, (int, float)) else base_price
-    base_notes = []
-
-    if isinstance(pump_data.get("total_price"), str) and "C/F" in pump_data["total_price"]:
-        if "Motor" in pump_data["total_price"]:
-            base_notes.append("C/F (Motor)")
-        if "Flange" in pump_data["total_price"]:
-            base_notes.append("C/F (Flange)")
-        if "HP" in pump_data["total_price"]:
-            base_notes.append("C/F (HP)")
-        if "Suction Lift" in pump_data["total_price"]:
-            base_notes.append("C/F (Suction Lift)")
-        if "Flange Adaptor" in pump_data["total_price"]:
-            base_notes.append("C/F (Flange Adaptor)")
-
-    if base_notes:
-        base_display += " + " + " + ".join(base_notes)
-
-    optional_display = f"${int(optional_price)}" if isinstance(optional_price, (int, float)) else "N/A"
-    optional_cf_notes = [note for note in optional_notes if "C/F" in note]
-    optional_cf_combined = ""
-    if optional_cf_notes:
-        optional_cf_combined = f" + C/F ({' + '.join(note.replace('C/F (', '').replace(')', '') for note in optional_cf_notes)})"
-    optional_display += optional_cf_combined
-
-    price_table_data = [
-        ["Base Pump Price", base_display],
-        ["Optional Accessories", optional_display],
-        ["Final Total Price", final_price]
-    ]
-
-    price_table = Table(price_table_data, colWidths=[150, 150])
-    price_table.setStyle(TableStyle([
-        ("BACKGROUND", (0, 0), (-1, 0), colors.lightgrey),
-        ("TEXTCOLOR", (0, 0), (-1, 0), colors.black),
-        ("ALIGN", (0, 0), (-1, -1), "CENTER"),
-        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-        ("BOTTOMPADDING", (0, 0), (-1, 0), 8),
-        ("GRID", (0, 0), (-1, -1), 1, colors.black)
-    ]))
-    elements.append(price_table)
-    elements.append(Spacer(1, 10))
-
-    # Footer Notes
-    elements.append(Paragraph("<b>Notes:</b>", footer_style))
-    footer_notes = [
+    # Add standard notes
+    standard_notes = [
         "1. Your above pricing are Net prices based on Ex work Irvine, CA. Prices valid 30 days from quote date.",
         "2. If you decided to add ECCA or Leak detection system, the pump model number will change.",
         f"3. Estimated lead time is {get_lead_time(pump_data.get('series', 'N/A'))} ARO, based on current inventory and scheduling.",
         "4. There will be price adder for Material Certificates, certificate of origin and Performance test.",
         "5. Anything not clearly stated in the quote above is deemed as not included in pricing, regardless of RFQ or Specs."
     ]
-    footer_text = "<br/>".join(footer_notes)
-    elements.append(Paragraph(footer_text, footer_style))
+    for note in standard_notes:
+        elements.append(Paragraph(note, normal_style))
+        elements.append(Spacer(1, 2))
 
-    # Generate PDF
+    # Build the PDF
     doc.build(elements)
     print(f"✅ PDF saved as {filename}")
     return filename
