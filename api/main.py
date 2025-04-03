@@ -1410,8 +1410,6 @@ def generate_pdf(pump_data, filename="pump_quote.pdf", quote_number=None):
 
     # Pump Model Name
     pump_model = pump_data.get("model", "N/A")
-    # Description Section
-    elements.append(Paragraph("<b>Description:</b>", heading_style))
 
     # Dynamic Description
     dynamic_description = []
@@ -1600,7 +1598,7 @@ def generate_pdf(pump_data, filename="pump_quote.pdf", quote_number=None):
         ("ALIGN", (1, 0), (-1, -1), "LEFT"),    # Left align item and description
         ("ALIGN", (3, 0), (-1, -1), "CENTER"),  # Center align Qty column
         ("ALIGN", (4, 0), (-1, -1), "CENTER"),  # Center align Net Price column
-        ("ALIGN", (3, -1), (-1, -1), "RIGHT"),  # Right align total row
+        ("ALIGN", (3, -1), (-1, -1), "CENTER"),  # Center align total row
         ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
         ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
         ("FONTNAME", (0, -1), (-1, -1), "Helvetica-Bold"),  # Total row bold
