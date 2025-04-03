@@ -1586,7 +1586,7 @@ def generate_pdf(pump_data, filename="pump_quote.pdf", quote_number=None):
     # Create the table with adjusted column widths
     accessories_table = Table(
         table_data,
-        colWidths=[30, 100, 250, 40, 80],  # Adjusted widths for new columns
+        colWidths=[20, 120, 280, 25, 80],  # Increased widths for all columns
         rowHeights=[20] + [None] * (len(table_data) - 1)  # Auto-height for content rows
     )
     
@@ -1598,6 +1598,8 @@ def generate_pdf(pump_data, filename="pump_quote.pdf", quote_number=None):
         ("TEXTCOLOR", (0, -1), (-1, -1), colors.black),  # Total row text color
         ("ALIGN", (0, 0), (-1, -1), "CENTER"),  # Center all columns
         ("ALIGN", (1, 0), (-1, -1), "LEFT"),    # Left align item and description
+        ("ALIGN", (3, 0), (-1, -1), "CENTER"),  # Center align Qty column
+        ("ALIGN", (4, 0), (-1, -1), "CENTER"),  # Center align Net Price column
         ("ALIGN", (3, -1), (-1, -1), "RIGHT"),  # Right align total row
         ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
         ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
@@ -1607,7 +1609,9 @@ def generate_pdf(pump_data, filename="pump_quote.pdf", quote_number=None):
         ("TOPPADDING", (0, 1), (-1, -1), 4),
         ("BOTTOMPADDING", (0, 1), (-1, -1), 4),
         ("GRID", (0, 0), (-1, -1), 0.5, colors.black),
-        ("WORDWRAP", (0, 0), (-1, -1), True)
+        ("WORDWRAP", (0, 0), (-1, -1), True),
+        ("LEFTPADDING", (0, 0), (-1, -1), 2),  # Add some padding on the left
+        ("RIGHTPADDING", (0, 0), (-1, -1), 2)  # Add some padding on the right
     ]))
     elements.append(accessories_table)
     elements.append(Spacer(1, 12))
