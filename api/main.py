@@ -901,32 +901,33 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
 
             if selected_pr_price in [None, 0, "0", "C/F"]:
                 best_pump["pressure_relief_valve_price"] = "C/F"
-                best_pump["pressure_relief_valve_message"] = "C/F (Pressure Relief Valve)"
+                message = f"{port} Pressure Relief Valve in {liquid_end_material} with {connection_size}. Max pressure is {psi} PSI."
                 if pressure_relief_valve == "Yes":
                     optional_accessories_notes.append("C/F (Pressure Relief Valve)")
             else:
                 best_pump["pressure_relief_valve_price"] = math.ceil(float(selected_pr_price))
                 message = f"{port} Pressure Relief Valve in {liquid_end_material} with {connection_size}. Max pressure is {psi} PSI."
-                
-                # Split the message into two lines if it's too long
-                if len(message) > 90:  # Changed from 60 to 90
-                    mid_point = len(message) // 2
-                    # Look for the nearest space or period before the midpoint
-                    split_chars = [' ', '.']
-                    split_point = -1
-                    for char in split_chars:
-                        pos = message.rfind(char, 0, mid_point)
-                        if pos > split_point:
-                            split_point = pos
-                    if split_point > 0:
-                        message = message[:split_point] + '\n' + message[split_point:].lstrip()
-                
-                best_pump["pressure_relief_valve_message"] = message
                 if pressure_relief_valve == "Yes":
                     optional_accessories_total_price += best_pump["pressure_relief_valve_price"]
+            
+            # Split the message into two lines if it's too long
+            if len(message) > 90:  # Changed from 60 to 90
+                mid_point = len(message) // 2
+                # Look for the nearest space or period before the midpoint
+                split_chars = [' ', '.']
+                split_point = -1
+                for char in split_chars:
+                    pos = message.rfind(char, 0, mid_point)
+                    if pos > split_point:
+                        split_point = pos
+                if split_point > 0:
+                    message = message[:split_point] + '\n' + message[split_point:].lstrip()
+            
+            best_pump["pressure_relief_valve_message"] = message
         else:
             best_pump["pressure_relief_valve_price"] = "C/F"
-            best_pump["pressure_relief_valve_message"] = "C/F (Pressure Relief Valve)"
+            message = f"Pressure Relief Valve in {liquid_end_material}. Max pressure is {psi} PSI."
+            best_pump["pressure_relief_valve_message"] = message
             if pressure_relief_valve == "Yes":
                 optional_accessories_notes.append("C/F (Pressure Relief Valve)")
 
