@@ -1476,13 +1476,6 @@ def generate_pdf(pump_data, filename="pump_quote.pdf", quote_number=None):
     if additional_features:
         description += " The pump also includes the following features: " + ", ".join(additional_features) + "."
 
-    # Add the combined description to the PDF
-    elements.append(Paragraph(description, normal_style))
-    elements.append(Spacer(1, 8))
-
-    # Optional Accessories Table
-    elements.append(Paragraph("<b>All Optional Accessories:</b>", heading_style))
-    elements.append(Spacer(1, 4))
 
     # Define descriptions for each accessory
     liquid_end_material = pump_data.get("liquid_end_material", "N/A")
@@ -1540,7 +1533,7 @@ def generate_pdf(pump_data, filename="pump_quote.pdf", quote_number=None):
     )
 
     accessory_descriptions = {
-        pump_data.get("model", "N/A"): f"Base Pump Model: {pump_data.get('model', 'N/A')}",
+        pump_data.get("model", "N/A"): Paragraph(description, normal_style),
         pump_data.get("Spare_Parts_Kit_Model", "Spare Parts Kit"): spare_parts_info,
         "Back Pressure Valve": back_pressure_desc,
         "Pressure Relief Valve": pressure_relief_desc,
