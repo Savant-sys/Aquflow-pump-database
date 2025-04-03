@@ -752,7 +752,7 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
             "customer_name": customer_name,
             "Spare_Parts_Kit_Model": pump.get("Spare_Parts_Kit_Model", "Spare Parts Kit"),
             "spare_parts_kit_price_value": spare_parts_kit_price_value,
-            "spare_parts_kit_info": spare_parts_kit_info,
+            "spare_parts_kit_info": "Spare Part Kit for the above pump, consist of " + spare_parts_kit_info,
             "calibration_column_price_value": calibration_column_price_value,
             "calibration_column_info": calibration_column_info,
             "pressure_gauge_price_value": pressure_gauge_price_value,
