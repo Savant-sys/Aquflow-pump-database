@@ -440,6 +440,9 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
     if food_graded_oil not in ["Yes", "No"]:
         return {"error": "Food Graded Oil is required and must be either 'Yes' or 'No'."}
 
+    # Initialize optional_accessories_notes
+    optional_accessories_notes = []
+
     # Connect to MySQL database
     conn = mysql.connector.connect(**db_config)
     cursor = conn.cursor(dictionary=True)
@@ -761,6 +764,7 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
             "leak_detection": leak_detection,  # Add this line to include the leak detection type
             "leak_detection_price": leak_detection_price,  # Make sure this is set
             "relay_option": relay_option if leak_detection == "Conductive" else "No",  # Add relay option info
+            "optional_accessories_notes": optional_accessories_notes,  # Add the notes array
         })
 
     if filtered_pumps:
