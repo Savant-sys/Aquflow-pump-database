@@ -10,6 +10,7 @@ from datetime import datetime
 import os
 import threading
 import time
+import requests
 
 app = Flask(__name__)
 CORS(app)  # Allows frontend access to API
@@ -1675,29 +1676,6 @@ def generate_pdf(pump_data, filename="pump_quote.pdf", quote_number=None):
         has_cf = True
     if any("C/F" in note for note in pump_data.get("optional_accessories_notes", [])):
         has_cf = True
-    
-    # Simplify the final price display if there are C/F cases
-    if has_cf and isinstance(final_price, str):
-        # Extract the numeric part before any C/F notes
-        base_price = final_price.split(" + ")[0]
-        # Ensure base_price starts with $
-        if not base_price.startswith("$"):
-            base_price = f"${base_price}"
-        
-        # Check for specific Motor and HP C/F combinations
-        has_motor_cf = "C/F (Motor)" in final_price
-        has_hp_cf = "C/F (HP)" in final_price
-        
-        if has_motor_cf and has_hp_cf:
-            final_price = f"{base_price} + C/F (Motor + HP)"
-        elif has_motor_cf:
-            final_price = f"{base_price} + C/F (Motor)"
-        elif has_hp_cf:
-            final_price = f"{base_price} + C/F (HP)"
-        else:
-            final_price = f"{base_price} + C/F"
-    
-    table_data.append(["", "", "", "Total:", final_price])
 
     # Create the table with adjusted column widths
     accessories_table = Table(

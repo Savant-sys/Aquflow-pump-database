@@ -195,11 +195,6 @@ async function callAPI() {
                 <p><strong>Base Price:</strong> $${data.base_price || 0}</p>
                 
                 ${generateOptionalAccessoriesSection(data)}
-                
-                <!-- Total Price Section -->
-                <div style="margin-top: 20px; padding-top: 10px; border-top: 2px solid #eee;">
-                    <h4 style="color: #003A63;">FINAL PRICE: $${data.total_price || data.base_price || 0}</h4>
-                </div>
             </div>
         `;
 
