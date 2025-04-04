@@ -1425,7 +1425,7 @@ def generate_pdf(pump_data, filename="pump_quote.pdf", quote_number=None):
         customer_table = Table([
             ["Customer"],
             [customer_name]
-        ], colWidths=[215], rowHeights=[15, 15])
+        ], colWidths=[200], rowHeights=[15, 15])
 
         # Style the customer table
         customer_table.setStyle(TableStyle([
@@ -1463,7 +1463,7 @@ def generate_pdf(pump_data, filename="pump_quote.pdf", quote_number=None):
             [None, None, None, quote_date_table],
             [None, None, None, None],
             [customer_table, None, None, None]
-        ], colWidths=[120, 30, 210, 150], rowHeights=[40, 20, 15, 30]) 
+        ], colWidths=[120, 30, 210, 150], rowHeights=[40, 20, 15, 10]) 
 
         header_table.setStyle(TableStyle([
             ("VALIGN", (0, 0), (-1, -1), "TOP"),
