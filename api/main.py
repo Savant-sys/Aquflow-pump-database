@@ -765,19 +765,42 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
             "vfd_price": int(math.ceil(float(pump.get("VFD_Price", 0)))) if pump.get("VFD_Price") not in [None, 0, "0"] else 0,
             "relay_option": relay_option if leak_detection == "Conductive" else "N/A",
             "relay_price": 889 if leak_detection == "Conductive" and relay_option == "Yes" else 0,
-            "leak_detection": leak_detection,  # Add this line to include the leak detection type
-            "leak_detection_price": leak_detection_price,  # Make sure this is set
-            "relay_option": relay_option if leak_detection == "Conductive" else "No",  # Add relay option info
-            "optional_accessories_notes": optional_accessories_notes,  # Add the notes array
+            "leak_detection": leak_detection,
+            "leak_detection_price": leak_detection_price,
+            "relay_option": relay_option if leak_detection == "Conductive" else "No",
+            "optional_accessories_notes": optional_accessories_notes,
         })
 
     if filtered_pumps:
-        filtered_pumps.sort(key=lambda x: (
-            float('inf') if isinstance(x["total_price"], str) else x["total_price"],
-            x["gph"],
-            x["max_spm"],
-            x["psi"]
-        ))
+        # Filter out pumps with more than 2x the requested GPH
+        if gph is not None:
+            input_gph = float(gph)
+            filtered_pumps = [pump for pump in filtered_pumps if pump["gph"] <= input_gph * 2]
+        elif lph is not None:
+            input_lph = float(lph)
+            filtered_pumps = [pump for pump in filtered_pumps if pump["lph"] <= input_lph * 2]
+        
+        # If no pumps left after filtering, restore the original list
+        if not filtered_pumps:
+            filtered_pumps = [pump for pump in pumps if (gph is not None and pump["gph"] >= float(gph)) or 
+                             (lph is not None and pump["lph"] >= float(lph))]
+        
+        # First sort by absolute difference between pump GPH and requested GPH
+        # This ensures the pump with closest GPH to input is prioritized
+        if gph is not None:
+            input_gph = float(gph)
+            # Sort first by lowest price, then by closest GPH to requested value
+            filtered_pumps.sort(key=lambda x: (
+                float('inf') if isinstance(x["total_price"], str) else x["total_price"],
+                abs(x["gph"] - input_gph)  # Sort by closest match to requested GPH
+            ))
+        elif lph is not None:
+            input_lph = float(lph)
+            # Sort first by lowest price, then by closest LPH to requested value
+            filtered_pumps.sort(key=lambda x: (
+                float('inf') if isinstance(x["total_price"], str) else x["total_price"],
+                abs(x["lph"] - input_lph)  # Sort by closest match to requested LPH
+            ))
 
         best_pump = filtered_pumps[0]
         
