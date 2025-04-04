@@ -1642,12 +1642,13 @@ def generate_pdf(pump_data, filename="pump_quote.pdf", quote_number=None):
     for idx, (name, price) in enumerate(all_accessories, 1):
         # Round up the price and remove decimal .0
         if isinstance(price, (int, float)) and price not in [0, None]:
-            # Format price with $ sign
+            # Format price with $ sign and comma separators
+            rounded_price = int(math.ceil(price))
             if idx == 1:  # First row (base pump) - keep normal format for table processing
-                price_display = f"${int(math.ceil(price))}"
+                price_display = f"${rounded_price:,}"
             else:
-                price_display = f"${int(math.ceil(price))}"
-            total_price += int(math.ceil(price))
+                price_display = f"${rounded_price:,}"
+            total_price += rounded_price
         else:
             # Check for specific Motor and HP C/F combinations in the first row
             if idx == 1:  # First row (base pump)
