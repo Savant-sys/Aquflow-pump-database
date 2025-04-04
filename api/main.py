@@ -1461,8 +1461,9 @@ def generate_pdf(pump_data, filename="pump_quote.pdf", quote_number=None):
         header_table = Table([
             [logo, "", Paragraph(address, normal_style), quote_form_text],
             [None, None, None, quote_date_table],  # Moved quote_date_table up, added empty spacing column
+            [None, None, None, None],  # Adding a spacer row between logo and customer table
             [customer_table, None, None, None]      # Customer table in last row
-        ], colWidths=[120, 30, 210, 150], rowHeights=[40, 20, 30]) 
+        ], colWidths=[120, 30, 210, 150], rowHeights=[40, 20, 15, 30]) 
 
         header_table.setStyle(TableStyle([
             ("VALIGN", (0, 0), (-1, -1), "TOP"),
@@ -1475,6 +1476,7 @@ def generate_pdf(pump_data, filename="pump_quote.pdf", quote_number=None):
             ("RIGHTPADDING", (0, 0), (-1, -1), 0),
             ("TOPPADDING", (0, 0), (-1, -1), 0),
             ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
+            ("TOPPADDING", (0, 3), (-1, 3), 5),  # Add padding to the top of the customer table row
         ]))
 
         elements.append(header_table)
