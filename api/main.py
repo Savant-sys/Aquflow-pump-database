@@ -919,7 +919,7 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
             # Default to "3-Port" if Port is NULL or not specified
             port_value = pr_data.get("Port")
             # Ensure we handle both None and empty string cases
-            port_prefix = "3-Port" if port_value is None or port_value == "" else f"{port_value}-Port"
+            port_prefix = "3-Port" if port_value is None or port_value == "" else f"{port_value}"
 
             if psi <= 150:
                 selected_pr_price = pr_data.get("Pressure_Relief_Valve_150")
@@ -1415,7 +1415,7 @@ def generate_pdf(pump_data, filename="pump_quote.pdf", quote_number=None):
     Ph: (949) 757-1753</font>"""
 
     if os.path.exists(logo_path):
-        logo = Image(logo_path, width=80, height=40)
+        logo = Image(logo_path, width=120, height=60)
 
         # Add Quote Form ID at top right
         quote_form_text = Paragraph("<font size='7'>Quote Form 2311</font>", normal_style)
@@ -1459,17 +1459,18 @@ def generate_pdf(pump_data, filename="pump_quote.pdf", quote_number=None):
 
         # Create header table with adjusted layout
         header_table = Table([
-            [logo, Paragraph(address, normal_style), quote_form_text],
-            [None, None, quote_date_table],  # Moved quote_date_table up, removed empty spacing row
-            [customer_table, None, None]      # Customer table in last row
-        ], colWidths=[100, 250, 160], rowHeights=[40, 20, 30])  # Adjusted heights
+            [logo, "", Paragraph(address, normal_style), quote_form_text],
+            [None, None, None, quote_date_table],  # Moved quote_date_table up, added empty spacing column
+            [customer_table, None, None, None]      # Customer table in last row
+        ], colWidths=[120, 30, 210, 150], rowHeights=[40, 20, 30]) 
 
         header_table.setStyle(TableStyle([
             ("VALIGN", (0, 0), (-1, -1), "TOP"),
             ("ALIGN", (0, 0), (0, 0), "LEFT"),
-            ("ALIGN", (1, 0), (1, 0), "LEFT"),
-            ("ALIGN", (2, 0), (2, 0), "RIGHT"),
-            ("SPAN", (1, 0), (1, 1)),  # Span address across two rows
+            ("SPAN", (1, 0), (1, 1)),  # Span the spacer column
+            ("ALIGN", (2, 0), (2, 0), "RIGHT"),  # RIGHT align the address text
+            ("ALIGN", (3, 0), (3, 0), "RIGHT"),
+            ("SPAN", (2, 0), (2, 1)),
             ("LEFTPADDING", (0, 0), (-1, -1), 0),
             ("RIGHTPADDING", (0, 0), (-1, -1), 0),
             ("TOPPADDING", (0, 0), (-1, -1), 0),
@@ -1639,7 +1640,11 @@ def generate_pdf(pump_data, filename="pump_quote.pdf", quote_number=None):
     for idx, (name, price) in enumerate(all_accessories, 1):
         # Round up the price and remove decimal .0
         if isinstance(price, (int, float)) and price not in [0, None]:
-            price_display = f"${int(math.ceil(price))}"  # Convert to int to remove decimal
+            # Format price with $ sign
+            if idx == 1:  # First row (base pump) - keep normal format for table processing
+                price_display = f"${int(math.ceil(price))}"
+            else:
+                price_display = f"${int(math.ceil(price))}"
             total_price += int(math.ceil(price))
         else:
             # Check for specific Motor and HP C/F combinations in the first row
@@ -1719,7 +1724,8 @@ def generate_pdf(pump_data, filename="pump_quote.pdf", quote_number=None):
         ("TOPPADDING", (0, 1), (-1, -1), 4),
         ("BOTTOMPADDING", (0, 1), (-1, -1), 4),
         ("GRID", (0, 0), (-1, -1), 0.5, colors.black),
-        ("WORDWRAP", (0, 0), (-1, -1), True)
+        ("WORDWRAP", (0, 0), (-1, -1), True),
+        ("TEXTCOLOR", (4, 1), (4, 1), colors.blue)
     ]))
     elements.append(accessories_table)
     elements.append(Spacer(1, 10))  # Add space after the table
