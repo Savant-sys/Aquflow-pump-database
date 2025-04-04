@@ -1460,23 +1460,23 @@ def generate_pdf(pump_data, filename="pump_quote.pdf", quote_number=None):
         # Create header table with adjusted layout
         header_table = Table([
             [logo, "", Paragraph(address, normal_style), quote_form_text],
-            [None, None, None, quote_date_table],  # Moved quote_date_table up, added empty spacing column
-            [None, None, None, None],  # Adding a spacer row between logo and customer table
-            [customer_table, None, None, None]      # Customer table in last row
+            [None, None, None, quote_date_table],
+            [None, None, None, None],
+            [customer_table, None, None, None]
         ], colWidths=[120, 30, 210, 150], rowHeights=[40, 20, 15, 30]) 
 
         header_table.setStyle(TableStyle([
             ("VALIGN", (0, 0), (-1, -1), "TOP"),
             ("ALIGN", (0, 0), (0, 0), "LEFT"),
-            ("SPAN", (1, 0), (1, 1)),  # Span the spacer column
-            ("ALIGN", (2, 0), (2, 0), "RIGHT"),  # RIGHT align the address text
+            ("SPAN", (1, 0), (1, 1)),
+            ("ALIGN", (2, 0), (2, 0), "RIGHT"),
             ("ALIGN", (3, 0), (3, 0), "RIGHT"),
             ("SPAN", (2, 0), (2, 1)),
             ("LEFTPADDING", (0, 0), (-1, -1), 0),
             ("RIGHTPADDING", (0, 0), (-1, -1), 0),
             ("TOPPADDING", (0, 0), (-1, -1), 0),
             ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
-            ("TOPPADDING", (0, 3), (-1, 3), 5),  # Add padding to the top of the customer table row
+            ("TOPPADDING", (0, 3), (-1, 3), 5),
         ]))
 
         elements.append(header_table)
