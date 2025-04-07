@@ -2051,7 +2051,6 @@ Thank you for your interest in Acuflow pumps. Please find attached your detailed
 
 Model: {pump_data.get('model', 'N/A')}
 Series: {pump_data.get('series', 'N/A')}
-Total Price: {pump_data.get('final_total_price', 'N/A')}
 
 Quote Number: {quote_number}
 Date: {datetime.today().strftime('%d-%b-%y')}
@@ -2074,7 +2073,6 @@ Date: {datetime.today().strftime('%d-%b-%y')}
 Pump Details:
 Model: {pump_data.get('model', 'N/A')}
 Series: {pump_data.get('series', 'N/A')}
-Total Price: {pump_data.get('final_total_price', 'N/A')}
 
 The quote has been sent to the customer's email address.
 """
