@@ -192,7 +192,7 @@ async function callAPI() {
                     `${data.motor_type || ''} ${data.motor_power || ''} HP, ${data.phase || ''}` 
                     : 'Without Motor'}</p>
                 <p><strong>Series:</strong> ${data.series || ''}</p>
-                <p><strong>Base Price:</strong> $${formatNumberWithCommas(data.base_price || 0)}</p>
+                <p><strong>List Price:</strong> $${formatNumberWithCommas(data.base_price || 0)}</p>
                 
                 ${generateOptionalAccessoriesSection(data)}
             </div>
