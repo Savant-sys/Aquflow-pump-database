@@ -71,7 +71,7 @@ db_config = {
     "host": "localhost",
     "user": "root",
     "password": "1234",
-    "database": "Local_Pump_Info"
+    "database": "local_pump_info"
 }
 
 def get_flange_size_id(psi):
@@ -1635,43 +1635,71 @@ def generate_pdf(pump_data, filename="pump_quote.pdf", quote_number=None):
         ("Vacuum Leak Detection", pump_data.get("Vacuum_Leak_Detection_Price_Adder"))
     ]
 
-    # Create the new table format
-    table_data = [["No.", "Item", "Description", "Qty", "Net Price ea."]]
+    # Create the first table for pump model
+    pump_table_data = [["No.", "Item", "Description", "Qty", "List Price ea."]]
     
-    total_price = 0
-    for idx, (name, price) in enumerate(all_accessories, 1):
-        # Round up the price and remove decimal .0
-        if isinstance(price, (int, float)) and price not in [0, None]:
-            # Format price with $ sign and comma separators
-            rounded_price = int(math.ceil(price))
-            if idx == 1:  # First row (base pump) - keep normal format for table processing
-                price_display = f"${rounded_price:,}"
-            else:
-                price_display = f"${rounded_price:,}"
-            total_price += rounded_price
+    # Add pump model row
+    pump_name = pump_data.get("model", "N/A")
+    pump_price = pump_data.get("base_price", 0)
+    pump_description = accessory_descriptions.get(pump_name, "")
+    
+    if isinstance(pump_price, (int, float)) and pump_price not in [0, None]:
+        price_display = f"${int(math.ceil(pump_price)):,}"
+    else:
+        has_motor_cf = "C/F (Motor)" in str(pump_data.get("total_price", ""))
+        has_hp_cf = "C/F (HP)" in str(pump_data.get("total_price", ""))
+        
+        if has_motor_cf and has_hp_cf:
+            price_display = "C/F (Motor + HP)"
+        elif has_motor_cf:
+            price_display = "C/F (Motor)"
+        elif has_hp_cf:
+            price_display = "C/F (HP)"
         else:
-            # Check for specific Motor and HP C/F combinations in the first row
-            if idx == 1:  # First row (base pump)
-                has_motor_cf = "C/F (Motor)" in str(pump_data.get("total_price", ""))
-                has_hp_cf = "C/F (HP)" in str(pump_data.get("total_price", ""))
-                
-                if has_motor_cf and has_hp_cf:
-                    price_display = "C/F (Motor + HP)"
-                elif has_motor_cf:
-                    price_display = "C/F (Motor)"
-                elif has_hp_cf:
-                    price_display = "C/F (HP)"
-                else:
-                    price_display = "C/F" if price in [None, 0, "0", "C/F"] else f"${price}"
-            else:
-                price_display = "C/F" if price in [None, 0, "0", "C/F"] else f"${price}"
+            price_display = "C/F" if pump_price in [None, 0, "0", "C/F"] else f"${pump_price}"
+    
+    pump_table_data.append(["1", pump_name, pump_description, "1", price_display])
+
+    # Create the pump table
+    pump_table = Table(
+        pump_table_data,
+        colWidths=[20, 105, 280, 25, 80],
+        rowHeights=[20] + [None] * (len(pump_table_data) - 1)
+    )
+    
+    # Style for pump table
+    pump_table.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, 0), colors.lightgrey),
+        ("TEXTCOLOR", (0, 0), (-1, 0), colors.black),
+        ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+        ("FONTSIZE", (0, 0), (-1, -1), 8),
+        ("BOTTOMPADDING", (0, 0), (-1, 0), 2),
+        ("TOPPADDING", (0, 1), (-1, -1), 4),
+        ("BOTTOMPADDING", (0, 1), (-1, -1), 4),
+        ("GRID", (0, 0), (-1, -1), 0.5, colors.black),
+        ("WORDWRAP", (0, 0), (-1, -1), True),
+        ("TEXTCOLOR", (4, 1), (4, 1), colors.blue)
+    ]))
+    
+    elements.append(pump_table)
+    elements.append(Spacer(1, 20))  # Add space between tables
+
+    # Create the second table for optional accessories
+    accessories_table_data = [["No.", "Item", "Description", "Qty", "Net Price ea."]]
+    
+    # Add optional accessories rows
+    for idx, (name, price) in enumerate(all_accessories[1:], 1):  # Skip the first item (pump model)
+        if isinstance(price, (int, float)) and price not in [0, None]:
+            price_display = f"${int(math.ceil(price)):,}"
+        else:
+            price_display = "C/F" if price in [None, 0, "0", "C/F"] else f"${price}"
         
         description = accessory_descriptions.get(name, "")
         
         # Set quantity based on customer selections
-        if name == pump_data.get("model", "N/A"):  # Base pump
-            qty = "1"
-        elif name == pump_data.get("Spare_Parts_Kit_Model", "Spare Parts Kit"):
+        if name == pump_data.get("Spare_Parts_Kit_Model", "Spare Parts Kit"):
             qty = "1" if pump_data.get("spare_parts_kit") == "Yes" else "0"
         elif name == "Back Pressure Valve":
             qty = "1" if pump_data.get("back_pressure_valve") == "Yes" else "0"
@@ -1696,26 +1724,16 @@ def generate_pdf(pump_data, filename="pump_quote.pdf", quote_number=None):
         else:
             qty = "0"
         
-        # Always add the row to the table
-        table_data.append([str(idx), name, description, qty, price_display])
+        accessories_table_data.append([str(idx), name, description, qty, price_display])
 
-    # Add total row
-    final_price = pump_data.get("final_total_price", "N/A")
-    # Check if there are any C/F cases
-    has_cf = False
-    if isinstance(pump_data.get("total_price"), str) and "C/F" in pump_data["total_price"]:
-        has_cf = True
-    if any("C/F" in note for note in pump_data.get("optional_accessories_notes", [])):
-        has_cf = True
-
-    # Create the table with adjusted column widths
+    # Create the accessories table
     accessories_table = Table(
-        table_data,
-        colWidths=[20, 120, 280, 25, 80],  # Increased widths for all columns
-        rowHeights=[20] + [None] * (len(table_data) - 1)  # Auto-height for content rows
+        accessories_table_data,
+        colWidths=[20, 105, 280, 25, 80],
+        rowHeights=[20] + [None] * (len(accessories_table_data) - 1)
     )
     
-    # Update table style for the new format
+    # Style for accessories table
     accessories_table.setStyle(TableStyle([
         ("BACKGROUND", (0, 0), (-1, 0), colors.lightgrey),
         ("TEXTCOLOR", (0, 0), (-1, 0), colors.black),
@@ -1728,14 +1746,24 @@ def generate_pdf(pump_data, filename="pump_quote.pdf", quote_number=None):
         ("BOTTOMPADDING", (0, 1), (-1, -1), 4),
         ("GRID", (0, 0), (-1, -1), 0.5, colors.black),
         ("WORDWRAP", (0, 0), (-1, -1), True),
-        ("TEXTCOLOR", (4, 1), (4, 1), colors.blue)
+        ("TEXTCOLOR", (4, 1), (4, 1), colors.black)
     ]))
+    
     elements.append(accessories_table)
-    elements.append(Spacer(1, 10))  # Add space after the table
+    # elements.append(Spacer(1, 10))  # Add space after the table
 
     # Notes Section
     elements.append(Paragraph("<b>Notes:</b>", heading_style))
     elements.append(Paragraph(pump_data.get("notes", ""), normal_style))
+
+    # Add standard notes with reduced spacing
+    notes_style = ParagraphStyle(
+        'NotesStyle',
+        parent=normal_style,
+        spaceAfter=6,
+        spaceBefore=0,
+        leading=10
+    )
 
     # Add standard notes
     standard_notes = [
@@ -1745,9 +1773,9 @@ def generate_pdf(pump_data, filename="pump_quote.pdf", quote_number=None):
         "4. There will be price adder for Material Certificates, certificate of origin and Performance test.",
         "5. Anything not clearly stated in the quote above is deemed as not included in pricing, regardless of RFQ or Specs."
     ]
+
     for note in standard_notes:
-        elements.append(Paragraph(note, normal_style))
-        elements.append(Spacer(1, 2))
+        elements.append(Paragraph(note, notes_style))
 
     # Build the PDF
     doc.build(elements)
@@ -2067,7 +2095,7 @@ The quote has been sent to the customer's email address.
                 print(f"Error sending emails: {str(e)}")
             finally:
                 # Schedule file deletion after 1 hour (30 seconds for testing)
-                delete_file_after_delay(pdf_filename, delay=30)
+                delete_file_after_delay(pdf_filename, delay=2)
 
         # Start email sending in background thread
         email_thread = threading.Thread(target=send_emails_background)
