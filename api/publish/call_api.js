@@ -192,14 +192,9 @@ async function callAPI() {
                     `${data.motor_type || ''} ${data.motor_power || ''} HP, ${data.phase || ''}` 
                     : 'Without Motor'}</p>
                 <p><strong>Series:</strong> ${data.series || ''}</p>
-                <p><strong>Base Price:</strong> $${data.base_price || 0}</p>
+                <p><strong>Base Price:</strong> $${formatNumberWithCommas(data.base_price || 0)}</p>
                 
                 ${generateOptionalAccessoriesSection(data)}
-                
-                <!-- Total Price Section -->
-                <div style="margin-top: 20px; padding-top: 10px; border-top: 2px solid #eee;">
-                    <h4 style="color: #003A63;">FINAL PRICE: $${data.total_price || data.base_price || 0}</h4>
-                </div>
             </div>
         `;
 
@@ -339,7 +334,7 @@ function createSuccessMessageAndBackupButton(quoteNumber) {
                     <a href="tel:+19497571753" style="color: #007bff; text-decoration: none;">📞 (949) 757-1753</a>
                 </p>
                 <p style="margin: 5px;">
-                    <a href="mailto:sales@acuflow.com" style="color: #007bff; text-decoration: none;">✉️ sales@aquflow.com</a>
+                    <a href="mailto:sales@acuflow.com" style="color: #007bff; text-decoration: none;">✉️ sales@acuflow.com</a>
                 </p>
                 <p style="margin: 5px;">
                     <a href="https://www.acuflow.com/contact-acuflow/" target="_blank" style="color: #007bff; text-decoration: none;">💬 Contact Our Team</a>
@@ -420,39 +415,52 @@ document.addEventListener('DOMContentLoaded', function() {
     toggleMotorOptions();
 });
 
+// Add this function near other helper functions
+function formatNumberWithCommas(number) {
+    // Handle case when number is a string
+    if (typeof number === 'string') {
+        number = parseFloat(number);
+    }
+    // Only format if it's actually a number
+    if (!isNaN(number)) {
+        return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    }
+    return number;
+}
+
 // Add this function to generate the optional accessories section
 function generateOptionalAccessoriesSection(data) {
     // Create array of accessory HTML strings
     const accessories = [
         data.spare_parts_kit === 'Yes' ? 
-            `<p>Spare Parts Kit ($${data.spare_parts_kit_price || 0})</p>` 
+            `<p>Spare Parts Kit ${data.spare_parts_kit_price === "C/F" ? "C/F" : `$${formatNumberWithCommas(data.spare_parts_kit_price || 0)}`}</p>` 
             : '',
         data.degassing === 'Yes' ? 
-            `<p>Degassing Valve ($${data.degassing_price || 0})</p>` 
+            `<p>Degassing Valve ${data.degassing_price === "C/F" ? "C/F" : `$${formatNumberWithCommas(data.degassing_price || 0)}`}</p>` 
             : '',
         data.back_pressure_valve === 'Yes' ? 
-            `<p>Back Pressure Valve ($${data.back_pressure_valve_price || 0})</p>` 
+            `<p>Back Pressure Valve ${data.back_pressure_valve_price === "C/F" ? "C/F" : `$${formatNumberWithCommas(data.back_pressure_valve_price || 0)}`}</p>` 
             : '',
         data.pressure_relief_valve === 'Yes' ? 
-            `<p>Pressure Relief Valve ($${data.pressure_relief_valve_price || 0})</p>` 
+            `<p>Pressure Relief Valve ${data.pressure_relief_valve_price === "C/F" ? "C/F" : `$${formatNumberWithCommas(data.pressure_relief_valve_price || 0)}`}</p>` 
             : '',
         data.pulsation_dampener === 'Yes' ? 
-            `<p>Pulsation Dampener ($${data.pulsation_dampener_price || 0})</p>` 
+            `<p>Pulsation Dampener ${data.pulsation_dampener_price === "C/F" ? "C/F" : `$${formatNumberWithCommas(data.pulsation_dampener_price || 0)}`}</p>` 
             : '',
         data.calibration_column === 'Yes' ? 
-            `<p>Calibration Column ($${data.calibration_column_price || 0})</p>` 
+            `<p>Calibration Column ${data.calibration_column_price === "C/F" ? "C/F" : `$${formatNumberWithCommas(data.calibration_column_price || 0)}`}</p>` 
             : '',
         data.pressure_gauge === 'Yes' ? 
-            `<p>Pressure Gauge ($${data.pressure_gauge_price || 0})</p>` 
+            `<p>Pressure Gauge ${data.pressure_gauge_price === "C/F" ? "C/F" : `$${formatNumberWithCommas(data.pressure_gauge_price || 0)}`}</p>` 
             : '',
         data.ecca === 'Yes' ? 
-            `<p>ECCA ($${data.ecca_price || 0})</p>` 
+            `<p>ECCA ${data.ecca_price === "C/F" ? "C/F" : `$${formatNumberWithCommas(data.ecca_price || 0)}`}</p>` 
             : '',
         data.vfd === 'Yes' ? 
-            `<p>VFD ($${data.vfd_price || 0})</p>` 
+            `<p>VFD ${data.vfd_price === "C/F" ? "C/F" : `$${formatNumberWithCommas(data.vfd_price || 0)}`}</p>` 
             : '',
         data.leak_detection && data.leak_detection !== 'No' ? 
-            `<p>Leak Detection System: ${data.leak_detection} ${data.relay_option === 'Yes' ? 'with Relay' : 'without Relay'} ($${data.leak_detection_price || 0})</p>` 
+            `<p>Leak Detection System: ${data.leak_detection} ${data.relay_option === 'Yes' ? 'with Relay' : 'without Relay'} ${data.leak_detection_price === "C/F" ? "C/F" : `$${formatNumberWithCommas(data.leak_detection_price || 0)}`}</p>` 
             : ''
     ].filter(item => item !== ''); // Remove empty strings
 
