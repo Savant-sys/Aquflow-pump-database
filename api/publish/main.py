@@ -477,7 +477,7 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
     # Ensure Food_Graded_Oil is provided and is either "Yes" or "No"
     if food_graded_oil not in ["Yes", "No"]:
         return {"error": "Food Graded Oil is required and must be either 'Yes' or 'No'."}
-    
+
     # Initialize optional_accessories_notes
     optional_accessories_notes = []
 
@@ -708,8 +708,7 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
             total_price += 450
 
         # Add ball size price if applicable
-        if isinstance(total_price, (int, float)):
-            total_price += ball_size_price
+        total_price += ball_size_price
 
         # Round up the total price
         if isinstance(total_price, (int, float)):
@@ -741,7 +740,8 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
                 annotations.append("C/F (HP)")
 
         # Add ball size price if applicable
-        total_price += ball_size_price
+        if isinstance(total_price, (int, float)):
+            total_price += ball_size_price
 
         # Add Food Graded Oil price if applicable
         if isinstance(total_price, (int, float)):
@@ -790,7 +790,7 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
             "customer_name": customer_name,
             "Spare_Parts_Kit_Model": pump.get("Spare_Parts_Kit_Model", "Spare Parts Kit"),
             "spare_parts_kit_price_value": spare_parts_kit_price_value,
-            "spare_parts_kit_info": spare_parts_kit_info,
+            "spare_parts_kit_info": "Spare Part Kit for the above pump, consist of " + spare_parts_kit_info,
             "calibration_column_price_value": calibration_column_price_value,
             "calibration_column_info": calibration_column_info,
             "pressure_gauge_price_value": pressure_gauge_price_value,
@@ -802,19 +802,42 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
             "vfd_price": int(math.ceil(float(pump.get("VFD_Price", 0)))) if pump.get("VFD_Price") not in [None, 0, "0"] else 0,
             "relay_option": relay_option if leak_detection == "Conductive" else "N/A",
             "relay_price": 889 if leak_detection == "Conductive" and relay_option == "Yes" else 0,
-            "leak_detection": leak_detection,  # Add this line to include the leak detection type
-            "leak_detection_price": leak_detection_price,  # Make sure this is set
+            "leak_detection": leak_detection,
+            "leak_detection_price": leak_detection_price,
             "relay_option": relay_option if leak_detection == "Conductive" else "No",
             "optional_accessories_notes": optional_accessories_notes,
         })
 
     if filtered_pumps:
-        filtered_pumps.sort(key=lambda x: (
-            float('inf') if isinstance(x["total_price"], str) else x["total_price"],
-            x["gph"],
-            x["max_spm"],
-            x["psi"]
-        ))
+        # Filter out pumps with more than 2x the requested GPH
+        if gph is not None:
+            input_gph = float(gph)
+            filtered_pumps = [pump for pump in filtered_pumps if pump["gph"] <= input_gph * 2]
+        elif lph is not None:
+            input_lph = float(lph)
+            filtered_pumps = [pump for pump in filtered_pumps if pump["lph"] <= input_lph * 2]
+        
+        # If no pumps left after filtering, restore the original list
+        if not filtered_pumps:
+            filtered_pumps = [pump for pump in pumps if (gph is not None and pump["gph"] >= float(gph)) or 
+                             (lph is not None and pump["lph"] >= float(lph))]
+        
+        # First sort by absolute difference between pump GPH and requested GPH
+        # This ensures the pump with closest GPH to input is prioritized
+        if gph is not None:
+            input_gph = float(gph)
+            # Sort first by lowest price, then by closest GPH to requested value
+            filtered_pumps.sort(key=lambda x: (
+                float('inf') if isinstance(x["total_price"], str) else x["total_price"],
+                abs(x["gph"] - input_gph)  # Sort by closest match to requested GPH
+            ))
+        elif lph is not None:
+            input_lph = float(lph)
+            # Sort first by lowest price, then by closest LPH to requested value
+            filtered_pumps.sort(key=lambda x: (
+                float('inf') if isinstance(x["total_price"], str) else x["total_price"],
+                abs(x["lph"] - input_lph)  # Sort by closest match to requested LPH
+            ))
 
         best_pump = filtered_pumps[0]
         
@@ -845,7 +868,7 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
         best_pump["motor_type"] = motor_type
         best_pump["motor_power"] = motor_power
         best_pump["use_hp"] = use_hp
-
+        
         # Get Liq_Inlet and Liq_Outlet from the database using OG_Model
         conn = mysql.connector.connect(**db_config)
         cursor = conn.cursor(dictionary=True)
@@ -908,16 +931,16 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
 
         if selected_bp_price in [None, 0, "0", "C/F"]:
             best_pump["back_pressure_valve_price"] = "C/F"
-            best_pump["back_pressure_valve_message"] = "C/F (Back Pressure Valve)"
+            message = f"Back Pressure Valve in {liquid_end_material} with {connection_size if connection_size != 'N/A' else 'N/A'}. Max. Pressure is {psi} PSI."
             if back_pressure_valve == "Yes":
                 optional_accessories_notes.append("C/F (Back Pressure Valve)")
         else:
             best_pump["back_pressure_valve_price"] = math.ceil(float(selected_bp_price))
-            best_pump["back_pressure_valve_message"] = (
-                f"Back Pressure Valve in {liquid_end_material} with {connection_size if connection_size != 'N/A' else 'N/A'}. Max Pressure is {psi} PSI."
-            )
+            message = f"Back Pressure Valve in {liquid_end_material} with {connection_size if connection_size != 'N/A' else 'N/A'}. Max. Pressure is {psi} PSI."
             if back_pressure_valve == "Yes":
                 optional_accessories_total_price += best_pump["back_pressure_valve_price"]
+        
+        best_pump["back_pressure_valve_message"] = message
 
         # --- Pressure Relief Valve ---
         conn = mysql.connector.connect(**db_config)
@@ -929,8 +952,11 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
 
         selected_pr_price = None
         if pr_data:
-            connection_size = pr_data.get("Connection_Size")
-            port = pr_data.get("Port")
+            connection_size = pr_data.get("Connection_Size", "N/A")
+            # Default to "3-Port" if Port is NULL or not specified
+            port_value = pr_data.get("Port")
+            # Ensure we handle both None and empty string cases
+            port_prefix = "3-Port" if port_value is None or port_value == "" else f"{port_value}"
 
             if psi <= 150:
                 selected_pr_price = pr_data.get("Pressure_Relief_Valve_150")
@@ -939,32 +965,33 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
 
             if selected_pr_price in [None, 0, "0", "C/F"]:
                 best_pump["pressure_relief_valve_price"] = "C/F"
-                best_pump["pressure_relief_valve_message"] = "C/F (Pressure Relief Valve)"
+                message = f"{port_prefix} Pressure Relief Valve in {liquid_end_material} with {connection_size}. Max. Pressure is {int(psi)} PSI."
                 if pressure_relief_valve == "Yes":
                     optional_accessories_notes.append("C/F (Pressure Relief Valve)")
             else:
                 best_pump["pressure_relief_valve_price"] = math.ceil(float(selected_pr_price))
-                message = f"{port} Pressure Relief Valve in {liquid_end_material} with {connection_size}. Max pressure is {psi} PSI."
-                
-                # Split the message into two lines if it's too long
-                if len(message) > 90:  # Changed from 60 to 90
-                    mid_point = len(message) // 2
-                    # Look for the nearest space or period before the midpoint
-                    split_chars = [' ', '.']
-                    split_point = -1
-                    for char in split_chars:
-                        pos = message.rfind(char, 0, mid_point)
-                        if pos > split_point:
-                            split_point = pos
-                    if split_point > 0:
-                        message = message[:split_point] + '\n' + message[split_point:].lstrip()
-                
-                best_pump["pressure_relief_valve_message"] = message
+                message = f"{port_prefix} Pressure Relief Valve in {liquid_end_material} with {connection_size}. Max. Pressure is {int(psi)} PSI."
                 if pressure_relief_valve == "Yes":
                     optional_accessories_total_price += best_pump["pressure_relief_valve_price"]
+            
+            # Split the message into two lines if it's too long
+            if len(message) > 90:  # Changed from 60 to 90
+                mid_point = len(message) // 2
+                # Look for the nearest space or period before the midpoint
+                split_chars = [' ', '.']
+                split_point = -1
+                for char in split_chars:
+                    pos = message.rfind(char, 0, mid_point)
+                    if pos > split_point:
+                        split_point = pos
+                if split_point > 0:
+                    message = message[:split_point] + '\n' + message[split_point:].lstrip()
+            
+            best_pump["pressure_relief_valve_message"] = message
         else:
             best_pump["pressure_relief_valve_price"] = "C/F"
-            best_pump["pressure_relief_valve_message"] = "C/F (Pressure Relief Valve)"
+            message = f"3-Port Pressure Relief Valve in {liquid_end_material}. Max. Pressure is {int(psi)} PSI."
+            best_pump["pressure_relief_valve_message"] = message
             if pressure_relief_valve == "Yes":
                 optional_accessories_notes.append("C/F (Pressure Relief Valve)")
 
@@ -1019,7 +1046,6 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
                     best_pump["total_price"] = f"{best_pump['total_price']} + ${ecca_price}"
                 else:
                     best_pump["total_price"] += ecca_price
-                print(f"Adding ECCA price: ${ecca_price}")
 
         # Handle VFD price
         if vfd == "Yes":
@@ -1031,7 +1057,6 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
                     best_pump["total_price"] = f"{best_pump['total_price']} + ${vfd_price}"
                 else:
                     best_pump["total_price"] += vfd_price
-                print(f"Adding VFD price: ${vfd_price}")
 
         # Update the final total price
         if isinstance(best_pump["base_price"], (int, float)):
@@ -1055,22 +1080,28 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
             if "Flange Adaptor" in best_pump["total_price"]:
                 base_annotations.append("C/F (Flange Adaptor)")
 
-        # Combine all C/F notes
-        all_cf_notes = base_annotations + optional_accessories_notes
-
         # Final total price formatting
+        has_cf = False
+        if isinstance(best_pump["total_price"], str) and "C/F" in best_pump["total_price"]:
+            has_cf = True
+        if any("C/F" in note for note in optional_accessories_notes):
+            has_cf = True
+
         if isinstance(best_pump["base_price"], (int, float)) and isinstance(optional_accessories_total_price, (int, float)):
-            final_price = f"${best_pump["base_price"] + optional_accessories_total_price}"
-            if all_cf_notes:
-                best_pump["final_total_price"] = f"${final_price} + {' + '.join(all_cf_notes)}"
+            final_price = best_pump["base_price"] + optional_accessories_total_price
+            if has_cf:
+                best_pump["final_total_price"] = f"${final_price} + C/F"
             else:
                 best_pump["final_total_price"] = f"${final_price}"
         else:
             price_str = f"{best_pump['base_price']}" if isinstance(best_pump["base_price"], str) else f"${best_pump['base_price']}"
-            if all_cf_notes:
-                best_pump["final_total_price"] = f"${price_str} + {' + '.join(all_cf_notes)}"
+            if has_cf:
+                best_pump["final_total_price"] = f"{price_str} + C/F"
             else:
                 best_pump["final_total_price"] = f"${price_str}"
+
+        # Keep the detailed C/F notes for the accessories list
+        all_cf_notes = base_annotations + optional_accessories_notes
 
         # Final Total Price (Base + Optional Accessories)
         if isinstance(best_pump["base_price"], (int, float)) and isinstance(best_pump["optional_accessories_total_price"], (int, float)):
@@ -1079,10 +1110,21 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
             # Handle C/F notes
             price_str = f"${best_pump['base_price']}" if isinstance(best_pump["base_price"], (int, float)) else str(best_pump["base_price"])
             cf_notes = [note for note in best_pump["optional_accessories_notes"] if "C/F" in note]
-            if cf_notes:
+            
+            # Check for specific Motor and HP C/F combinations
+            has_motor_cf = any("C/F (Motor)" in note for note in cf_notes)
+            has_hp_cf = any("C/F (HP)" in note for note in cf_notes)
+            
+            if has_motor_cf and has_hp_cf:
+                best_pump["final_total_price"] = f"{price_str} + C/F (Motor + HP)"
+            elif has_motor_cf:
+                best_pump["final_total_price"] = f"{price_str} + C/F (Motor)"
+            elif has_hp_cf:
+                best_pump["final_total_price"] = f"{price_str} + C/F (HP)"
+            elif cf_notes:
                 best_pump["final_total_price"] = f"{price_str} + {' + '.join(cf_notes)}"
             else:
-                best_pump["final_total_price"] = f"${price_str}"
+                best_pump["final_total_price"] = f"{price_str}"
 
         # Later, when updating the total price with spare parts kit:
         if spare_parts_kit == "Yes":
@@ -1210,9 +1252,12 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
                 if isinstance(best_pump["total_price"], str):
                     best_pump["total_price"] = f"{best_pump['total_price']} + C/F (Back Pressure Valve)"
                 else:
-                    best_pump["total_price"] = f"{best_pump['total_price']} + C/F (Back Pressure Valve)"
+                    best_pump["total_price"] = f"{str(best_pump['total_price'])} + C/F (Back Pressure Valve)"
             elif isinstance(best_pump["back_pressure_valve_price"], (int, float)):
-                best_pump["total_price"] += best_pump["back_pressure_valve_price"]
+                if isinstance(best_pump["total_price"], str):
+                    best_pump["total_price"] = f"{best_pump['total_price']} + ${best_pump['back_pressure_valve_price']}"
+                else:
+                    best_pump["total_price"] = f"{str(best_pump['total_price'])} + ${best_pump['back_pressure_valve_price']}"
 
         # Add Pressure Relief Valve price to total_price
         if pressure_relief_valve == "Yes":
@@ -1220,24 +1265,39 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
                 if isinstance(best_pump["total_price"], str):
                     best_pump["total_price"] = f"{best_pump['total_price']} + C/F (Pressure Relief Valve)"
                 else:
-                    best_pump["total_price"] = f"{best_pump['total_price']} + C/F (Pressure Relief Valve)"
+                    best_pump["total_price"] = f"{str(best_pump['total_price'])} + C/F (Pressure Relief Valve)"
             elif isinstance(best_pump["pressure_relief_valve_price"], (int, float)):
-                best_pump["total_price"] += best_pump["pressure_relief_valve_price"]
+                if isinstance(best_pump["total_price"], str):
+                    best_pump["total_price"] = f"{best_pump['total_price']} + ${best_pump['pressure_relief_valve_price']}"
+                else:
+                    best_pump["total_price"] = f"{str(best_pump['total_price'])} + ${best_pump['pressure_relief_valve_price']}"
 
         # Add Calibration Column price to total_price
         if calibration_column == "Yes":
-            best_pump["total_price"] += best_pump["calibration_column_price"]
+            if best_pump["calibration_column_price"] == "C/F":
+                if isinstance(best_pump["total_price"], str):
+                    best_pump["total_price"] = f"{best_pump['total_price']} + C/F (Calibration Column)"
+                else:
+                    best_pump["total_price"] = f"{str(best_pump['total_price'])} + C/F (Calibration Column)"
+            elif isinstance(best_pump["calibration_column_price"], (int, float)):
+                if isinstance(best_pump["total_price"], str):
+                    best_pump["total_price"] = f"{best_pump['total_price']} + ${best_pump['calibration_column_price']}"
+                else:
+                    best_pump["total_price"] = f"{str(best_pump['total_price'])} + ${best_pump['calibration_column_price']}"
         best_pump["calibration_column"] = calibration_column
 
         # Add Pulsation Dampener price to total_price
         if pulsation_dampener == "Yes":
             if best_pump["pulsation_dampener_price"] == "C/F":
-                best_pump["total_price"] = str(best_pump["total_price"]) + " + C/F (Pulsation Dampener)"
-            elif isinstance(best_pump["pulsation_dampener_price"], (int, float)):
-                if isinstance(best_pump["total_price"], (int, float)):
-                    best_pump["total_price"] += best_pump["pulsation_dampener_price"]
+                if isinstance(best_pump["total_price"], str):
+                    best_pump["total_price"] = f"{best_pump['total_price']} + C/F (Pulsation Dampener)"
                 else:
-                    best_pump["total_price"] = str(best_pump["total_price"]) + f" + ${best_pump['pulsation_dampener_price']}"
+                    best_pump["total_price"] = f"{str(best_pump['total_price'])} + C/F (Pulsation Dampener)"
+            elif isinstance(best_pump["pulsation_dampener_price"], (int, float)):
+                if isinstance(best_pump["total_price"], str):
+                    best_pump["total_price"] = f"{best_pump['total_price']} + ${best_pump['pulsation_dampener_price']}"
+                else:
+                    best_pump["total_price"] = f"{str(best_pump['total_price'])} + ${best_pump['pulsation_dampener_price']}"
 
         best_pump["back_pressure_valve"] = back_pressure_valve
         best_pump["pressure_relief_valve"] = pressure_relief_valve
@@ -1248,12 +1308,12 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
                 if isinstance(best_pump["total_price"], str):
                     best_pump["total_price"] = f"{best_pump['total_price']} + C/F (Pressure Gauge)"
                 else:
-                    best_pump["total_price"] = f"{best_pump['total_price']} + C/F (Pressure Gauge)"
+                    best_pump["total_price"] = f"{str(best_pump['total_price'])} + C/F (Pressure Gauge)"
             elif isinstance(best_pump["pressure_gauge_price"], (int, float)):
                 if isinstance(best_pump["total_price"], str):
                     best_pump["total_price"] = f"{best_pump['total_price']} + ${best_pump['pressure_gauge_price']}"
                 else:
-                    best_pump["total_price"] += best_pump["pressure_gauge_price"]
+                    best_pump["total_price"] = f"{str(best_pump['total_price'])} + ${best_pump['pressure_gauge_price']}"
 
         best_pump["pressure_gauge"] = pressure_gauge
 
@@ -1308,10 +1368,19 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
             if isinstance(best_pump.get(accessory), (int, float)) and best_pump[accessory] != 0:
                 best_pump[accessory] = int(math.ceil(best_pump[accessory]))
 
-        # Format final total price
+        # Format final total price with all accessories
         if isinstance(best_pump["base_price"], (int, float)) and isinstance(optional_accessories_total_price, (int, float)):
             final_total = int(math.ceil(best_pump["base_price"] + optional_accessories_total_price))
-            best_pump["final_total_price"] = f"${final_total}"
+            if all_cf_notes:
+                best_pump["final_total_price"] = f"${final_total} + {' + '.join(all_cf_notes)}"
+            else:
+                best_pump["final_total_price"] = f"${final_total}"
+        else:
+            price_str = f"{best_pump['base_price']}" if isinstance(best_pump["base_price"], str) else f"${best_pump['base_price']}"
+            if all_cf_notes:
+                best_pump["final_total_price"] = f"{price_str} + {' + '.join(all_cf_notes)}"
+            else:
+                best_pump["final_total_price"] = f"${price_str}"
 
         return best_pump
     else:
@@ -1383,7 +1452,7 @@ def generate_pdf(pump_data, filename="pump_quote.pdf", quote_number=None):
     Ph: (949) 757-1753</font>"""
 
     if os.path.exists(logo_path):
-        logo = Image(logo_path, width=80, height=40)
+        logo = Image(logo_path, width=120, height=60)
 
         # Add Quote Form ID at top right
         quote_form_text = Paragraph("<font size='7'>Quote Form 2311</font>", normal_style)
@@ -1393,7 +1462,7 @@ def generate_pdf(pump_data, filename="pump_quote.pdf", quote_number=None):
         customer_table = Table([
             ["Customer"],
             [customer_name]
-        ], colWidths=[215], rowHeights=[15, 15])
+        ], colWidths=[200], rowHeights=[15, 15])
 
         # Style the customer table
         customer_table.setStyle(TableStyle([
@@ -1427,32 +1496,32 @@ def generate_pdf(pump_data, filename="pump_quote.pdf", quote_number=None):
 
         # Create header table with adjusted layout
         header_table = Table([
-            [logo, Paragraph(address, normal_style), quote_form_text],
-            [None, None, quote_date_table],  # Moved quote_date_table up, removed empty spacing row
-            [customer_table, None, None]      # Customer table in last row
-        ], colWidths=[100, 250, 160], rowHeights=[40, 20, 30])  # Adjusted heights
+            [logo, "", Paragraph(address, normal_style), quote_form_text],
+            [None, None, None, quote_date_table],
+            [None, None, None, None],
+            [customer_table, None, None, None]
+        ], colWidths=[120, 30, 210, 150], rowHeights=[40, 20, 15, 10]) 
 
         header_table.setStyle(TableStyle([
             ("VALIGN", (0, 0), (-1, -1), "TOP"),
             ("ALIGN", (0, 0), (0, 0), "LEFT"),
-            ("ALIGN", (1, 0), (1, 0), "LEFT"),
+            ("SPAN", (1, 0), (1, 1)),
             ("ALIGN", (2, 0), (2, 0), "RIGHT"),
-            ("SPAN", (1, 0), (1, 1)),  # Span address across two rows
+            ("ALIGN", (3, 0), (3, 0), "RIGHT"),
+            ("SPAN", (2, 0), (2, 1)),
             ("LEFTPADDING", (0, 0), (-1, -1), 0),
             ("RIGHTPADDING", (0, 0), (-1, -1), 0),
             ("TOPPADDING", (0, 0), (-1, -1), 0),
             ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
+            ("TOPPADDING", (0, 3), (-1, 3), 5),
         ]))
 
         elements.append(header_table)
-        elements.append(Spacer(1, 5))
 
     # Pump Model Name
     pump_model = pump_data.get("model", "N/A")
-    elements.append(Paragraph(f"<b>Pump Model:</b> {pump_model}", title_style))
-
-    # Description Section
-    elements.append(Paragraph("<b>Description:</b>", heading_style))
+    # space between header and description
+    elements.append(Spacer(1, 35))
 
     # Dynamic Description
     dynamic_description = []
@@ -1517,13 +1586,6 @@ def generate_pdf(pump_data, filename="pump_quote.pdf", quote_number=None):
     if additional_features:
         description += " The pump also includes the following features: " + ", ".join(additional_features) + "."
 
-    # Add the combined description to the PDF
-    elements.append(Paragraph(description, normal_style))
-    elements.append(Spacer(1, 8))
-
-    # Optional Accessories Table
-    elements.append(Paragraph("<b>All Optional Accessories:</b>", heading_style))
-    elements.append(Spacer(1, 4))
 
     # Define descriptions for each accessory
     liquid_end_material = pump_data.get("liquid_end_material", "N/A")
@@ -1581,6 +1643,7 @@ def generate_pdf(pump_data, filename="pump_quote.pdf", quote_number=None):
     )
 
     accessory_descriptions = {
+        pump_data.get("model", "N/A"): Paragraph(description, normal_style),
         pump_data.get("Spare_Parts_Kit_Model", "Spare Parts Kit"): spare_parts_info,
         "Back Pressure Valve": back_pressure_desc,
         "Pressure Relief Valve": pressure_relief_desc,
@@ -1595,6 +1658,7 @@ def generate_pdf(pump_data, filename="pump_quote.pdf", quote_number=None):
     }
 
     all_accessories = [
+        (pump_data.get("model", "N/A"), pump_data.get("base_price", 0)),  # Base pump
         (pump_data.get("Spare_Parts_Kit_Model", "Spare Parts Kit"), pump_data.get("spare_parts_kit_price_value", 0)),
         ("Back Pressure Valve", pump_data.get("back_pressure_valve_price", 0)),
         ("Pressure Relief Valve", pump_data.get("pressure_relief_valve_price", 0)),
@@ -1608,25 +1672,87 @@ def generate_pdf(pump_data, filename="pump_quote.pdf", quote_number=None):
         ("Vacuum Leak Detection", pump_data.get("Vacuum_Leak_Detection_Price_Adder"))
     ]
 
-    accessories_table_data = [["Accessory", "Description", "Price"]]
-    for name, price in all_accessories:
+    # Create the new table format
+    table_data = [["No.", "Item", "Description", "Qty", "Net Price ea."]]
+    
+    total_price = 0
+    for idx, (name, price) in enumerate(all_accessories, 1):
         # Round up the price and remove decimal .0
         if isinstance(price, (int, float)) and price not in [0, None]:
-            price_display = f"${int(math.ceil(price))}"  # Convert to int to remove decimal
+            # Format price with $ sign and comma separators
+            rounded_price = int(math.ceil(price))
+            if idx == 1:  # First row (base pump) - keep normal format for table processing
+                price_display = f"${rounded_price:,}"
+            else:
+                price_display = f"${rounded_price:,}"
+            total_price += rounded_price
         else:
-            price_display = "C/F" if price in [None, 0, "0", "C/F"] else f"${price}"
+            # Check for specific Motor and HP C/F combinations in the first row
+            if idx == 1:  # First row (base pump)
+                has_motor_cf = "C/F (Motor)" in str(pump_data.get("total_price", ""))
+                has_hp_cf = "C/F (HP)" in str(pump_data.get("total_price", ""))
+                
+                if has_motor_cf and has_hp_cf:
+                    price_display = "C/F (Motor + HP)"
+                elif has_motor_cf:
+                    price_display = "C/F (Motor)"
+                elif has_hp_cf:
+                    price_display = "C/F (HP)"
+                else:
+                    price_display = "C/F" if price in [None, 0, "0", "C/F"] else f"${price}"
+            else:
+                price_display = "C/F" if price in [None, 0, "0", "C/F"] else f"${price}"
+        
         description = accessory_descriptions.get(name, "")
-        num_lines = len(description.split('\n')) if description else 1
-        row_height = max(20, num_lines * 12)
-        accessories_table_data.append([name, description, price_display])
+        
+        # Set quantity based on customer selections
+        if name == pump_data.get("model", "N/A"):  # Base pump
+            qty = "1"
+        elif name == pump_data.get("Spare_Parts_Kit_Model", "Spare Parts Kit"):
+            qty = "1" if pump_data.get("spare_parts_kit") == "Yes" else "0"
+        elif name == "Back Pressure Valve":
+            qty = "1" if pump_data.get("back_pressure_valve") == "Yes" else "0"
+        elif name == "Pressure Relief Valve":
+            qty = "1" if pump_data.get("pressure_relief_valve") == "Yes" else "0"
+        elif name == "Pulsation Dampener":
+            qty = "1" if pump_data.get("pulsation_dampener") == "Yes" else "0"
+        elif name == "Calibration Column":
+            qty = "1" if pump_data.get("calibration_column") == "Yes" else "0"
+        elif name == "Pressure Gauge":
+            qty = "1" if pump_data.get("pressure_gauge") == "Yes" else "0"
+        elif name == "ECCA":
+            qty = "1" if pump_data.get("ecca") == "Yes" else "0"
+        elif name == "VFD":
+            qty = "1" if pump_data.get("vfd") == "Yes" else "0"
+        elif name == "Conductive Leak Detection":
+            qty = "1" if pump_data.get("leak_detection") == "Conductive" else "0"
+        elif name == "Relay":
+            qty = "1" if pump_data.get("relay_option") == "Yes" and pump_data.get("leak_detection") == "Conductive" else "0"
+        elif name == "Vacuum Leak Detection":
+            qty = "1" if pump_data.get("leak_detection") == "Vacuum" else "0"
+        else:
+            qty = "0"
+        
+        # Always add the row to the table
+        table_data.append([str(idx), name, description, qty, price_display])
 
+    # Add total row
+    final_price = pump_data.get("final_total_price", "N/A")
+    # Check if there are any C/F cases
+    has_cf = False
+    if isinstance(pump_data.get("total_price"), str) and "C/F" in pump_data["total_price"]:
+        has_cf = True
+    if any("C/F" in note for note in pump_data.get("optional_accessories_notes", [])):
+        has_cf = True
+
+    # Create the table with adjusted column widths
     accessories_table = Table(
-        accessories_table_data,
-        colWidths=[100, 300, 80],
-        rowHeights=[20] + [None] * (len(accessories_table_data) - 1)  # Auto-height for content rows
+        table_data,
+        colWidths=[20, 120, 280, 25, 80],  # Increased widths for all columns
+        rowHeights=[20] + [None] * (len(table_data) - 1)  # Auto-height for content rows
     )
     
-    # Update table style to handle multiline content better
+    # Update table style for the new format
     accessories_table.setStyle(TableStyle([
         ("BACKGROUND", (0, 0), (-1, 0), colors.lightgrey),
         ("TEXTCOLOR", (0, 0), (-1, 0), colors.black),
@@ -1638,73 +1764,29 @@ def generate_pdf(pump_data, filename="pump_quote.pdf", quote_number=None):
         ("TOPPADDING", (0, 1), (-1, -1), 4),
         ("BOTTOMPADDING", (0, 1), (-1, -1), 4),
         ("GRID", (0, 0), (-1, -1), 0.5, colors.black),
-        ("WORDWRAP", (0, 0), (-1, -1), True)
+        ("WORDWRAP", (0, 0), (-1, -1), True),
+        ("TEXTCOLOR", (4, 1), (4, 1), colors.blue)
     ]))
     elements.append(accessories_table)
-    elements.append(Spacer(1, 12))
+    elements.append(Spacer(1, 10))  # Add space after the table
 
-    # Price Summary
-    base_price = pump_data.get("base_price", "N/A")
-    optional_price = pump_data.get("optional_accessories_total_price", 0)
-    optional_notes = pump_data.get("optional_accessories_notes", [])
-    final_price = pump_data.get("final_total_price", "N/A")
+    # Notes Section
+    elements.append(Paragraph("<b>Notes:</b>", heading_style))
+    elements.append(Paragraph(pump_data.get("notes", ""), normal_style))
 
-    base_display = f"${int(base_price)}" if isinstance(base_price, (int, float)) else base_price
-    base_notes = []
-
-    if isinstance(pump_data.get("total_price"), str) and "C/F" in pump_data["total_price"]:
-        if "Motor" in pump_data["total_price"]:
-            base_notes.append("C/F (Motor)")
-        if "Flange" in pump_data["total_price"]:
-            base_notes.append("C/F (Flange)")
-        if "HP" in pump_data["total_price"]:
-            base_notes.append("C/F (HP)")
-        if "Suction Lift" in pump_data["total_price"]:
-            base_notes.append("C/F (Suction Lift)")
-        if "Flange Adaptor" in pump_data["total_price"]:
-            base_notes.append("C/F (Flange Adaptor)")
-
-    if base_notes:
-        base_display += " + " + " + ".join(base_notes)
-
-    optional_display = f"${int(optional_price)}" if isinstance(optional_price, (int, float)) else "N/A"
-    optional_cf_notes = [note for note in optional_notes if "C/F" in note]
-    optional_cf_combined = ""
-    if optional_cf_notes:
-        optional_cf_combined = f" + C/F ({' + '.join(note.replace('C/F (', '').replace(')', '') for note in optional_cf_notes)})"
-    optional_display += optional_cf_combined
-
-    price_table_data = [
-        ["Base Pump Price", base_display],
-        ["Optional Accessories", optional_display],
-        ["Final Total Price", final_price]
-    ]
-
-    price_table = Table(price_table_data, colWidths=[150, 150])
-    price_table.setStyle(TableStyle([
-        ("BACKGROUND", (0, 0), (-1, 0), colors.lightgrey),
-        ("TEXTCOLOR", (0, 0), (-1, 0), colors.black),
-        ("ALIGN", (0, 0), (-1, -1), "CENTER"),
-        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-        ("BOTTOMPADDING", (0, 0), (-1, 0), 8),
-        ("GRID", (0, 0), (-1, -1), 1, colors.black)
-    ]))
-    elements.append(price_table)
-    elements.append(Spacer(1, 10))
-
-    # Footer Notes
-    elements.append(Paragraph("<b>Notes:</b>", footer_style))
-    footer_notes = [
+    # Add standard notes
+    standard_notes = [
         "1. Your above pricing are Net prices based on Ex work Irvine, CA. Prices valid 30 days from quote date.",
         "2. If you decided to add ECCA or Leak detection system, the pump model number will change.",
         f"3. Estimated lead time is {get_lead_time(pump_data.get('series', 'N/A'))} ARO, based on current inventory and scheduling.",
         "4. There will be price adder for Material Certificates, certificate of origin and Performance test.",
         "5. Anything not clearly stated in the quote above is deemed as not included in pricing, regardless of RFQ or Specs."
     ]
-    footer_text = "<br/>".join(footer_notes)
-    elements.append(Paragraph(footer_text, footer_style))
+    for note in standard_notes:
+        elements.append(Paragraph(note, normal_style))
+        elements.append(Spacer(1, 2))
 
-    # Generate PDF
+    # Build the PDF
     doc.build(elements)
     print(f"✅ PDF saved as {filename}")
     return filename
