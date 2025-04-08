@@ -572,7 +572,7 @@ function generateOptionalAccessoriesSection(data) {
             `<p>VFD ${data.vfd_price === "C/F" ? "C/F" : `$${formatNumberWithCommas(data.vfd_price || 0)}`}</p>` 
             : '',
         data.leak_detection && data.leak_detection !== 'No' ? 
-            `<p>Leak Detection System: ${data.leak_detection} ${data.relay_option === 'Yes' ? 'with Relay' : 'without Relay'} ${data.leak_detection_price === "C/F" ? "C/F" : `$${formatNumberWithCommas(data.leak_detection_price || 0)}`}</p>` 
+            `<p>Leak Detection System: ${data.leak_detection} ${data.leak_detection === 'Conductive' ? (data.relay_option === 'Yes' ? 'with Relay' : 'without Relay') : ''} ${data.leak_detection_price === "C/F" ? "C/F" : `$${formatNumberWithCommas(data.leak_detection_price || 0)}`}</p>` 
             : ''
     ].filter(item => item !== ''); // Remove empty strings
 
