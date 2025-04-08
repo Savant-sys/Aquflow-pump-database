@@ -1776,9 +1776,9 @@ def generate_pdf(pump_data, filename="pump_quote.pdf", quote_number=None):
     notes_style = ParagraphStyle(
         'NotesStyle',
         parent=normal_style,
-        spaceAfter=6,
+        spaceAfter=2,  # Reduced from 6 to 2
         spaceBefore=0,
-        leading=10
+        leading=8  # Reduced from 10 to 8
     )
 
     # Add standard notes
