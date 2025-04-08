@@ -40,52 +40,48 @@
               <div>
                 <div class="unit-selection">
                   <label for="gph">Flow Rate:</label>
-                  <div class="unit-toggle-container">
-                    <div class="unit-toggle-btn" data-unit="flow">
-                      <div class="unit-option active" data-value="gph">
+                  <div class="unit-options">
+                    <label class="unit-option">
+                      <input type="radio" name="flow_unit" value="gph" checked>
+                      <div class="unit-content">
+                        <span class="bullet">•</span>
                         <span class="unit-text">GPH</span>
-                        <span class="unit-tooltip">Gallons per Hour</span>
                       </div>
-                      <div class="unit-option" data-value="lph">
+                    </label>
+                    <label class="unit-option">
+                      <input type="radio" name="flow_unit" value="lph">
+                      <div class="unit-content">
+                        <span class="bullet">•</span>
                         <span class="unit-text">LPH</span>
-                        <span class="unit-tooltip">Liters per Hour</span>
                       </div>
-                    </div>
+                    </label>
                   </div>
                 </div>
-                <div class="input-container">
-                  <input type="number" id="gph" name="gph" step="any" required 
-                         pattern="[0-9]*[.,]?[0-9]*" 
-                         title="Please enter a valid flow rate">
-                  <span class="unit-display">GPH</span>
-                </div>
+                <input type="number" id="gph" name="gph" step="any" required>
                 <input type="hidden" id="flow_unit" name="flow_unit" value="gph">
-                <div class="input-hint">Enter flow rate between 0.1 and 1000</div>
               </div>
               <div>
                 <div class="unit-selection">
                   <label for="psi">Pressure:</label>
-                  <div class="unit-toggle-container">
-                    <div class="unit-toggle-btn" data-unit="pressure">
-                      <div class="unit-option active" data-value="psi">
+                  <div class="unit-options">
+                    <label class="unit-option">
+                      <input type="radio" name="pressure_unit" value="psi" checked>
+                      <div class="unit-content">
+                        <span class="bullet">•</span>
                         <span class="unit-text">PSI</span>
-                        <span class="unit-tooltip">Pounds per Square Inch</span>
                       </div>
-                      <div class="unit-option" data-value="bar">
+                    </label>
+                    <label class="unit-option">
+                      <input type="radio" name="pressure_unit" value="bar">
+                      <div class="unit-content">
+                        <span class="bullet">•</span>
                         <span class="unit-text">Bar</span>
-                        <span class="unit-tooltip">Bar (Metric Pressure Unit)</span>
                       </div>
-                    </div>
+                    </label>
                   </div>
                 </div>
-                <div class="input-container">
-                  <input type="number" id="psi" name="psi" step="any" required 
-                         pattern="[0-9]*[.,]?[0-9]*" 
-                         title="Please enter a valid pressure value">
-                  <span class="unit-display">PSI</span>
-                </div>
+                <input type="number" id="psi" name="psi" step="any" required>
                 <input type="hidden" id="pressure_unit" name="pressure_unit" value="psi">
-                <div class="input-hint">Enter pressure between 0.1 and 1000</div>
               </div>
               <div>
                 <label for="hz">Hz:</label>
