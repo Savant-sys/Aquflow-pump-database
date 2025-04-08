@@ -110,17 +110,46 @@ document.addEventListener("DOMContentLoaded", () => {
                 option.classList.toggle('active', option.dataset.value === newValue);
             });
 
-            // Convert the value if needed
-            const inputField = document.getElementById(unitType);
-            if (inputField.value) {
-                if (unitType === 'gph') {
-                    inputField.value = newValue === 'gph' ? 
-                        convertLPHtoGPH(parseFloat(inputField.value)) : 
-                        convertGPHtoLPH(parseFloat(inputField.value));
-                } else if (unitType === 'psi') {
-                    inputField.value = newValue === 'psi' ? 
-                        convertBarToPSI(parseFloat(inputField.value)) : 
-                        convertPSItoBar(parseFloat(inputField.value));
+            // Determine the correct input field ID and unit display span
+            const inputFieldId = (unitType === 'flow') ? 'gph' : 'psi';
+            const inputField = document.getElementById(inputFieldId);
+            const parentDiv = button.closest('.form-grid > div'); // Get the parent div in the grid
+            let unitDisplaySpan = null;
+            if (parentDiv) {
+                unitDisplaySpan = parentDiv.querySelector('.input-container .unit-display');
+            }
+
+            // Update the visual unit display next to the input
+            if (unitDisplaySpan) {
+                unitDisplaySpan.textContent = newValue.toUpperCase();
+            }
+
+            // Convert the existing value in the input field
+            if (inputField && inputField.value) {
+                const currentValue = parseFloat(inputField.value);
+                if (!isNaN(currentValue)) { // Check if conversion is possible
+                    let convertedValue;
+                    const previousUnit = Array.from(options).find(opt => !opt.classList.contains('active')).dataset.value;
+
+                    if (unitType === 'flow') {
+                        if (newValue === 'lph') { // Switched GPH -> LPH
+                            convertedValue = convertGPHtoLPH(currentValue);
+                        } else { // Switched LPH -> GPH
+                            convertedValue = convertLPHtoGPH(currentValue);
+                        }
+                    } else if (unitType === 'pressure') {
+                        if (newValue === 'bar') { // Switched PSI -> Bar
+                            convertedValue = convertPSItoBar(currentValue);
+                        } else { // Switched Bar -> PSI
+                            convertedValue = convertBarToPSI(currentValue);
+                        }
+                    }
+
+                    // Update input field with potentially rounded value
+                    if (convertedValue !== undefined) {
+                        // Round to a reasonable number of decimal places (e.g., 3)
+                        inputField.value = parseFloat(convertedValue.toFixed(3));
+                    }
                 }
             }
         });

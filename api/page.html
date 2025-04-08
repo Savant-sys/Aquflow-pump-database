@@ -5,6 +5,8 @@
   <title>Pump Selection Tool</title>
   <!-- Link to your external scoped CSS -->
   <link rel="stylesheet" href="custom-pump-tool.css">
+  <!-- Add Font Awesome for icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 </head>
 <body>
   <!-- Wrap everything in #pump-tool to isolate our styles -->
@@ -12,21 +14,21 @@
     <div class="pump-grid">
       <!-- LEFT COLUMN: Form -->
       <div class="form-section">
-        <h2 class="section-header">Pump Selection Form</h2>
+        <h2 class="section-header"><i class="fas fa-edit"></i> Pump Selection Form</h2>
         <form id="pumpForm">
           <!-- =============================
                Customer Info
           ============================== -->
           <div class="form-category">
-            <h3 class="category-header">Customer Information</h3>
+            <h3 class="category-header"><i class="fas fa-user-tie"></i> Customer Information</h3>
             <div class="form-grid">
               <div>
-                <label for="customer_name">Company Name:</label>
-                <input type="text" id="customer_name" name="customer_name" required>
+                <label for="customer_name"><i class="fas fa-building"></i> Company Name:</label>
+                <input type="text" id="customer_name" name="customer_name" required placeholder="Enter company name">
               </div>
               <div>
-                <label for="user_email">Your Email:</label>
-                <input type="email" id="user_email" name="user_email" required>
+                <label for="user_email"><i class="fas fa-envelope"></i> Your Email:</label>
+                <input type="email" id="user_email" name="user_email" required placeholder="Enter your email address">
               </div>
             </div>
           </div>
@@ -35,63 +37,65 @@
                Pump Specifications
           ============================== -->
           <div class="form-category">
-            <h3 class="category-header">Pump Specifications</h3>
+            <h3 class="category-header"><i class="fas fa-cogs"></i> Pump Specifications</h3>
             <div class="form-grid">
               <div>
                 <div class="unit-selection">
-                  <label for="gph">Flow Rate:</label>
-                  <div class="unit-options">
-                    <label class="unit-option">
-                      <input type="radio" name="flow_unit" value="gph" checked>
-                      <div class="unit-content">
-                        <span class="bullet">•</span>
+                  <label for="gph"><i class="fas fa-water"></i> Flow Rate:</label>
+                  <div class="unit-toggle-container">
+                    <div class="unit-toggle-btn" data-unit="flow">
+                      <div class="unit-option active" data-value="gph">
                         <span class="unit-text">GPH</span>
+                        <span class="unit-tooltip">Gallons per Hour</span>
                       </div>
-                    </label>
-                    <label class="unit-option">
-                      <input type="radio" name="flow_unit" value="lph">
-                      <div class="unit-content">
-                        <span class="bullet">•</span>
+                      <div class="unit-option" data-value="lph">
                         <span class="unit-text">LPH</span>
+                        <span class="unit-tooltip">Liters per Hour</span>
                       </div>
-                    </label>
+                    </div>
                   </div>
                 </div>
-                <input type="number" id="gph" name="gph" step="any" required>
+                <div class="input-container">
+                  <input type="number" id="gph" name="gph" step="any" required 
+                         pattern="[0-9]*[.,]?[0-9]*" 
+                         title="Please enter a valid flow rate" placeholder="e.g., 100">
+                  <span class="unit-display">GPH</span>
+                </div>
                 <input type="hidden" id="flow_unit" name="flow_unit" value="gph">
               </div>
               <div>
                 <div class="unit-selection">
-                  <label for="psi">Pressure:</label>
-                  <div class="unit-options">
-                    <label class="unit-option">
-                      <input type="radio" name="pressure_unit" value="psi" checked>
-                      <div class="unit-content">
-                        <span class="bullet">•</span>
+                  <label for="psi"><i class="fas fa-compress-arrows-alt"></i> Pressure:</label>
+                  <div class="unit-toggle-container">
+                    <div class="unit-toggle-btn" data-unit="pressure">
+                      <div class="unit-option active" data-value="psi">
                         <span class="unit-text">PSI</span>
+                        <span class="unit-tooltip">Pounds per Square Inch</span>
                       </div>
-                    </label>
-                    <label class="unit-option">
-                      <input type="radio" name="pressure_unit" value="bar">
-                      <div class="unit-content">
-                        <span class="bullet">•</span>
+                      <div class="unit-option" data-value="bar">
                         <span class="unit-text">Bar</span>
+                        <span class="unit-tooltip">Bar (Metric Pressure Unit)</span>
                       </div>
-                    </label>
+                    </div>
                   </div>
                 </div>
-                <input type="number" id="psi" name="psi" step="any" required>
+                <div class="input-container">
+                  <input type="number" id="psi" name="psi" step="any" required 
+                         pattern="[0-9]*[.,]?[0-9]*" 
+                         title="Please enter a valid pressure value" placeholder="e.g., 150">
+                  <span class="unit-display">PSI</span>
+                </div>
                 <input type="hidden" id="pressure_unit" name="pressure_unit" value="psi">
               </div>
               <div>
-                <label for="hz">Hz:</label>
+                <label for="hz"><i class="fas fa-wave-square"></i> Hz:</label>
                 <select id="hz" name="hz" required>
                   <option value="60">60</option>
                   <option value="50">50</option>
                 </select>
               </div>
               <div>
-                <label for="simplex_duplex">Simplex/Duplex:</label>
+                <label for="simplex_duplex"><i class="fas fa-clone"></i> Simplex/Duplex:</label>
                 <select id="simplex_duplex" name="simplex_duplex" required>
                   <option value="Simplex">Simplex</option>
                   <option value="Duplex">Duplex</option>
@@ -99,7 +103,7 @@
                 </select>
               </div>
               <div>
-                <label for="spm">Max SPM:</label>
+                <label for="spm"><i class="fas fa-tachometer-alt"></i> Max SPM:</label>
                 <select id="spm" name="spm" required>
                   <option value="191">191</option>
                   <option value="170">170</option>
@@ -113,7 +117,7 @@
                 </select>
               </div>
               <div>
-                <label for="diaphragm">Diaphragm:</label>
+                <label for="diaphragm"><i class="fas fa-dot-circle"></i> Diaphragm:</label>
                 <select id="diaphragm" name="diaphragm" required>
                   <option value="PTFE">PTFE</option>
                   <option value="Viton">Viton</option>
@@ -122,7 +126,7 @@
                 </select>
               </div>
               <div>
-                <label for="liquid_end_material">Liquid End Material:</label>
+                <label for="liquid_end_material"><i class="fas fa-fill-drip"></i> Liquid End Material:</label>
                 <select id="liquid_end_material" name="liquid_end_material" required>
                   <option value="316SS">316SS</option>
                   <option value="Alloy 20">Alloy 20</option>
@@ -132,14 +136,14 @@
                 </select>
               </div>
               <div>
-                <label for="degassing">Degassing:</label>
+                <label for="degassing"><i class="fas fa-wind"></i> Degassing:</label>
                 <select id="degassing" name="degassing" required>
                   <option value="No">No</option>
                   <option value="Yes">Yes</option>
                 </select>
               </div>
               <div>
-                <label for="flange">Flange:</label>
+                <label for="flange"><i class="fas fa-link"></i> Flange:</label>
                 <select id="flange" name="flange" required>
                   <option value="No">No</option>
                   <option value="Yes">Yes</option>
@@ -147,7 +151,7 @@
               </div>
               <!-- Flange Size Options (Initially hidden) -->
               <div class="flange-size-options">
-                <label for="suction_flange_size">Suction Flange Size:</label>
+                <label for="suction_flange_size"><i class="fas fa-arrow-down"></i> Suction Flange Size:</label>
                 <select id="suction_flange_size" name="suction_flange_size">
                   <option value="1/2&quot;">1/2"</option>
                   <option value="3/4&quot;">3/4"</option>
@@ -161,7 +165,7 @@
                 </select>
               </div>
               <div class="flange-size-options">
-                <label for="discharge_flange_size">Discharge Flange Size:</label>
+                <label for="discharge_flange_size"><i class="fas fa-arrow-up"></i> Discharge Flange Size:</label>
                 <select id="discharge_flange_size" name="discharge_flange_size">
                   <option value="1/2&quot;">1/2"</option>
                   <option value="3/4&quot;">3/4"</option>
@@ -175,7 +179,7 @@
                 </select>
               </div>
               <div>
-                <label for="balls_type">Balls Type:</label>
+                <label for="balls_type"><i class="fas fa-bowling-ball"></i> Balls Type:</label>
                 <select id="balls_type" name="balls_type" required>
                   <option value="Std.">Std.</option>
                   <option value="Tungsten">Tungsten</option>
@@ -183,20 +187,20 @@
                 </select>
               </div>
               <div>
-                <label for="suction_lift">Suction Lift:</label>
+                <label for="suction_lift"><i class="fas fa-arrow-circle-up"></i> Suction Lift:</label>
                 <select id="suction_lift" name="suction_lift" required>
                   <option value="No">No</option>
                   <option value="Yes">Yes</option>
                 </select>
               </div>
               <div>
-                <label for="ball_size">Ball Size:</label>
+                <label for="ball_size"><i class="fas fa-ruler-combined"></i> Ball Size:</label>
                 <select id="ball_size" name="ball_size" required>
                   <!-- Options will be dynamically populated here -->
                 </select>
               </div>
               <div>
-                <label for="food_graded_oil">Food Graded Oil:</label>
+                <label for="food_graded_oil"><i class="fas fa-leaf"></i> Food Graded Oil:</label>
                 <select id="food_graded_oil" name="food_graded_oil" required>
                   <option value="No">No</option>
                   <option value="Yes">Yes</option>
@@ -209,97 +213,103 @@
                Motor Specifications
           ============================== -->
           <div class="form-category">
-            <h3 class="category-header">Motor Specifications</h3>
+            <h3 class="category-header"><i class="fas fa-bolt"></i> Motor Specifications</h3>
             <div class="form-grid">
               <div>
-                <label for="want_motor">Want Motor?</label>
+                <label for="want_motor"><i class="fas fa-power-off"></i> Want Motor?</label>
                 <select id="want_motor" name="want_motor" required>
                   <option value="No">No</option>
                   <option value="Yes">Yes</option>
                 </select>
               </div>
               <div class="motor-option" style="display: none;">
-                <label for="motor_type">Motor Type:</label>
+                <label for="motor_type"><i class="fas fa-cogs"></i> Motor Type:</label>
                 <select id="motor_type" name="motor_type">
                   <option value="TEFC">TEFC</option>
                   <option value="XPFC">XPFC</option>
                 </select>
               </div>
               <div class="motor-option" style="display: none;">
-                <label for="motor_power">Motor Power:</label>
+                <label for="motor_power"><i class="fas fa-plug"></i> Motor Power:</label>
                 <select id="motor_power" name="motor_power">
                   <option value="AC">AC</option>
                   <option value="DC">DC</option>
                 </select>
               </div>
               <div class="motor-option" style="display: none;">
-                <label for="phase">Motor Phase:</label>
+                <label for="phase"><i class="fas fa-bolt"></i> Motor Phase:</label>
                 <select id="phase" name="phase">
                   <option value="1 Ph">1 Ph</option>
                   <option value="3 Ph">3 Ph</option>
                 </select>
               </div>
             </div>
-            <h2>Optional Accessories</h2>
+          </div>
+
+          <!-- =============================
+               Optional Accessories
+          ============================== -->
+          <div class="form-category">
+            <h3 class="category-header"><i class="fas fa-plus-circle"></i> Optional Accessories</h3>
             <div class="form-grid">
               <div>
-                <label for="spare_parts_kit">Spare Parts Kit:</label>
+                <label for="spare_parts_kit"><i class="fas fa-tools"></i> Spare Parts Kit:</label>
                 <select id="spare_parts_kit" name="spare_parts_kit" required>
                   <option value="No">No</option>
                   <option value="Yes">Yes</option>
                 </select>
               </div>
               <div>
-                <label for="back_pressure_valve">Back Pressure Valve:</label>
+                <label for="back_pressure_valve"><i class="fas fa-compress-alt"></i> Back Pressure Valve:</label>
                 <select id="back_pressure_valve" name="back_pressure_valve" required>
                   <option value="No">No</option>
                   <option value="Yes">Yes</option>
                 </select>
               </div>
               <div>
-                <label for="pressure_relief_valve">Pressure Relief Valve:</label>
+                <label for="pressure_relief_valve"><i class="fas fa-exclamation-triangle"></i> Pressure Relief Valve:</label>
                 <select id="pressure_relief_valve" name="pressure_relief_valve" required>
                   <option value="No">No</option>
                   <option value="Yes">Yes</option>
                 </select>
               </div>
               <div>
-                <label for="pulsation_dampener">Pulsation Dampener:</label>
+                <label for="pulsation_dampener"><i class="fas fa-tachometer-alt-slow"></i> Pulsation Dampener:</label>
                 <select id="pulsation_dampener" name="pulsation_dampener" required>
                   <option value="No">No</option>
                   <option value="Yes">Yes</option>
                 </select>
               </div>
               <div>
-                <label for="calibration_column">Calibration Column:</label>
+                <label for="calibration_column"><i class="fas fa-vial"></i> Calibration Column:</label>
                 <select id="calibration_column" name="calibration_column" required>
                   <option value="No">No</option>
                   <option value="Yes">Yes</option>
                 </select>
               </div>
               <div>
-                <label for="pressure_gauge">Pressure Gauge:</label>
+                <label for="pressure_gauge"><i class="fas fa-gauge-high"></i> Pressure Gauge:</label>
                 <select id="pressure_gauge" name="pressure_gauge" required>
                   <option value="No">No</option>
                   <option value="Yes">Yes</option>
                 </select>
               </div>
               <div>
-                <label for="ecca">ECCA (Electronic Capacity Control Actuator):</label>
+                <label for="ecca"><i class="fas fa-robot"></i> ECCA:</label>
                 <select id="ecca" name="ecca" required>
                   <option value="No">No</option>
                   <option value="Yes">Yes</option>
                 </select>
               </div>
               <div>
-                <label for="vfd">VFD (Variable Frequency Drive):</label>
+                <label for="vfd"><i class="fas fa-sliders-h"></i> VFD:</label>
                 <select id="vfd" name="vfd" required>
                   <option value="No">No</option>
                   <option value="Yes">Yes</option>
                 </select>
               </div>
               <div>
-                <label for="leak_detection">Leak Detection System:</label>
+                <label for="leak_detection"><i class="fas fa-tint-slash"></i> Leak Detection System:</label>
                 <select id="leak_detection" name="leak_detection" required>
                   <option value="No">No</option>
                   <option value="Conductive">Conductive</option>
@@ -307,7 +317,7 @@
                 </select>
               </div>
               <div class="form-group" id="relay-option-group" style="display: none;">
-                <label for="relay_option">Relay for Conductive Leak Detection System:</label>
+                <label for="relay_option"><i class="fas fa-broadcast-tower"></i> Relay for Conductive Leak Detection:</label>
                 <select class="form-control" id="relay_option" name="relay_option">
                   <option value="No">No</option>
                   <option value="Yes">Yes</option>
@@ -317,18 +327,21 @@
           </div>
         </form>
         <div class="button-container">
-          <button type="submit" form="pumpForm">Find Pump</button>
+          <button type="submit" form="pumpForm"><i class="fas fa-search"></i> Find Pump</button>
         </div>
       </div><!-- .form-section -->
 
       <!-- RIGHT COLUMN: Results -->
       <div class="results-section">
-        <h2 class="section-header">Results</h2>
+        <h2 class="section-header"><i class="fas fa-clipboard-list"></i> Results</h2>
         <div id="result" style="display: none;">
-          <div id="result-content"></div>
-          <div id="download-section">
-            <button id="getQuotePDF" class="button" type="button" style="display: none;">Get Quote PDF</button>
-            <div id="email-status"></div>
+          <div id="result-content">
+             <!-- Result content will be injected here -->
+             <div class="placeholder-text">Please fill out the form and click "Find Pump" to see results.</div>
+          </div>
+          <div id="download-section" style="margin-top: 20px; text-align: center;">
+            <button id="getQuotePDF" class="button" type="button" style="display: none;"><i class="fas fa-file-pdf"></i> Get Quote PDF</button>
+            <div id="email-status" style="margin-top: 10px;"></div>
           </div>
         </div>
       </div><!-- .results-section -->
@@ -336,7 +349,7 @@
   </div><!-- #pump-tool -->
 
   <!-- Optionally link your JS file here if needed, e.g. -->
-  <script src="call_api.js?v=3"></script>
+  <script src="call_api.js?v=1"></script>
 
 </body>
 </html>
