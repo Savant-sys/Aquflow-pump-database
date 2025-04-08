@@ -312,3 +312,101 @@
 .unit-toggle-btn:hover .unit-option:not(.active) {
   background-color: #f0f0f0;
 }
+
+/* Unit Toggle Styles */
+.unit-toggle-container {
+    margin-bottom: 8px;
+}
+
+.unit-toggle-btn {
+    display: inline-flex;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    overflow: hidden;
+    background: #f8f9fa;
+}
+
+.unit-option {
+    padding: 6px 12px;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.2s ease;
+}
+
+.unit-option:not(:last-child) {
+    border-right: 1px solid #ccc;
+}
+
+.unit-option.active {
+    background: #007bff;
+    color: white;
+}
+
+.unit-option:hover {
+    background: #e9ecef;
+}
+
+.unit-option.active:hover {
+    background: #0069d9;
+}
+
+.unit-text {
+    font-weight: 500;
+}
+
+.unit-tooltip {
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #333;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.2s ease;
+}
+
+.unit-option:hover .unit-tooltip {
+    opacity: 1;
+    visibility: visible;
+    bottom: calc(100% + 5px);
+}
+
+/* Input Container Styles */
+.input-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.input-container input {
+    padding-right: 40px;
+    width: 100%;
+}
+
+.unit-display {
+    position: absolute;
+    right: 10px;
+    color: #666;
+    font-size: 14px;
+    pointer-events: none;
+}
+
+.input-hint {
+    font-size: 12px;
+    color: #666;
+    margin-top: 4px;
+}
+
+/* Validation Styles */
+input:invalid {
+    border-color: #dc3545;
+}
+
+input:invalid:focus {
+    box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+}
