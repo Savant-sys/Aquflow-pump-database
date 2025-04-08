@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Pump Selection Tool</title>
+  <!-- Link to your external scoped CSS -->
+  <link rel="stylesheet" href="custom-pump-tool.css">
+</head>
+<body>
+  <!-- Wrap everything in #pump-tool to isolate our styles -->
+  <div id="pump-tool">
+    <div class="pump-grid">
+      <!-- LEFT COLUMN: Form -->
+      <div class="form-section">
+        <h2 class="section-header">Pump Selection Form</h2>
+        <form id="pumpForm">
+          <!-- =============================
+               Customer Info
+          ============================== -->
+          <div class="form-category">
+            <h3 class="category-header">Customer Information</h3>
+            <div class="form-grid">
+              <div>
+                <label for="customer_name">Company Name:</label>
+                <input type="text" id="customer_name" name="customer_name" required>
+              </div>
+              <div>
+                <label for="user_email">Your Email:</label>
+                <input type="email" id="user_email" name="user_email" required>
+              </div>
+            </div>
+          </div>
+
+          <!-- =============================
+               Pump Specifications
+          ============================== -->
+          <div class="form-category">
+            <h3 class="category-header">Pump Specifications</h3>
+            <div class="form-grid">
+              <div>
+                <div class="unit-selection">
+                  <label for="gph">Flow Rate:</label>
+                  <div class="unit-options">
+                    <label class="unit-option">
+                      <input type="radio" name="flow_unit" value="gph" checked>
+                      <div class="unit-content">
+                        <span class="bullet">•</span>
+                        <span class="unit-text">GPH</span>
+                      </div>
+                    </label>
+                    <label class="unit-option">
+                      <input type="radio" name="flow_unit" value="lph">
+                      <div class="unit-content">
+                        <span class="bullet">•</span>
+                        <span class="unit-text">LPH</span>
+                      </div>
+                    </label>
+                  </div>
+                </div>
+                <input type="number" id="gph" name="gph" step="any" required>
+                <input type="hidden" id="flow_unit" name="flow_unit" value="gph">
+              </div>
+              <div>
+                <div class="unit-selection">
+                  <label for="psi">Pressure:</label>
+                  <div class="unit-options">
+                    <label class="unit-option">
+                      <input type="radio" name="pressure_unit" value="psi" checked>
+                      <div class="unit-content">
+                        <span class="bullet">•</span>
+                        <span class="unit-text">PSI</span>
+                      </div>
+                    </label>
+                    <label class="unit-option">
+                      <input type="radio" name="pressure_unit" value="bar">
+                      <div class="unit-content">
+                        <span class="bullet">•</span>
+                        <span class="unit-text">Bar</span>
+                      </div>
+                    </label>
+                  </div>
+                </div>
+                <input type="number" id="psi" name="psi" step="any" required>
+                <input type="hidden" id="pressure_unit" name="pressure_unit" value="psi">
+              </div>
+              <div>
+                <label for="hz">Hz:</label>
+                <select id="hz" name="hz" required>
+                  <option value="60">60</option>
+                  <option value="50">50</option>
+                </select>
+              </div>
+              <div>
+                <label for="simplex_duplex">Simplex/Duplex:</label>
+                <select id="simplex_duplex" name="simplex_duplex" required>
+                  <option value="Simplex">Simplex</option>
+                  <option value="Duplex">Duplex</option>
+                  <option value="Both">Both</option>
+                </select>
+              </div>
+              <div>
+                <label for="spm">Max SPM:</label>
+                <select id="spm" name="spm" required>
+                  <option value="191">191</option>
+                  <option value="170">170</option>
+                  <option value="140">140</option>
+                  <option value="117">117</option>
+                  <option value="97">97</option>
+                  <option value="88">88</option>
+                  <option value="58">58</option>
+                  <option value="44">44</option>
+                  <option value="29">29</option>
+                </select>
+              </div>
+              <div>
+                <label for="diaphragm">Diaphragm:</label>
+                <select id="diaphragm" name="diaphragm" required>
+                  <option value="PTFE">PTFE</option>
+                  <option value="Viton">Viton</option>
+                  <option value="Hypalon">Hypalon</option>
+                  <option value="EPDM">EPDM</option>
+                </select>
+              </div>
+              <div>
+                <label for="liquid_end_material">Liquid End Material:</label>
+                <select id="liquid_end_material" name="liquid_end_material" required>
+                  <option value="316SS">316SS</option>
+                  <option value="Alloy 20">Alloy 20</option>
+                  <option value="Hast. C">Hast. C</option>
+                  <option value="PVC">PVC</option>
+                  <option value="PVDF">PVDF</option>
+                </select>
+              </div>
+              <div>
+                <label for="degassing">Degassing:</label>
+                <select id="degassing" name="degassing" required>
+                  <option value="No">No</option>
+                  <option value="Yes">Yes</option>
+                </select>
+              </div>
+              <div>
+                <label for="flange">Flange:</label>
+                <select id="flange" name="flange" required>
+                  <option value="No">No</option>
+                  <option value="Yes">Yes</option>
+                </select>
+              </div>
+              <!-- Flange Size Options (Initially hidden) -->
+              <div class="flange-size-options">
+                <label for="suction_flange_size">Suction Flange Size:</label>
+                <select id="suction_flange_size" name="suction_flange_size">
+                  <option value="1/2&quot;">1/2"</option>
+                  <option value="3/4&quot;">3/4"</option>
+                  <option value="1&quot;">1"</option>
+                  <option value="1-1/4&quot;">1-1/4"</option>
+                  <option value="1-1/2&quot;">1-1/2"</option>
+                  <option value="2&quot;">2"</option>
+                  <option value="2-1/2&quot;">2-1/2"</option>
+                  <option value="3&quot;">3"</option>
+                  <option value="4&quot;">4"</option>
+                </select>
+              </div>
+              <div class="flange-size-options">
+                <label for="discharge_flange_size">Discharge Flange Size:</label>
+                <select id="discharge_flange_size" name="discharge_flange_size">
+                  <option value="1/2&quot;">1/2"</option>
+                  <option value="3/4&quot;">3/4"</option>
+                  <option value="1&quot;">1"</option>
+                  <option value="1-1/4&quot;">1-1/4"</option>
+                  <option value="1-1/2&quot;">1-1/2"</option>
+                  <option value="2&quot;">2"</option>
+                  <option value="2-1/2&quot;">2-1/2"</option>
+                  <option value="3&quot;">3"</option>
+                  <option value="4&quot;">4"</option>
+                </select>
+              </div>
+              <div>
+                <label for="balls_type">Balls Type:</label>
+                <select id="balls_type" name="balls_type" required>
+                  <option value="Std.">Std.</option>
+                  <option value="Tungsten">Tungsten</option>
+                  <option value="Ceramic">Ceramic</option>
+                </select>
+              </div>
+              <div>
+                <label for="suction_lift">Suction Lift:</label>
+                <select id="suction_lift" name="suction_lift" required>
+                  <option value="No">No</option>
+                  <option value="Yes">Yes</option>
+                </select>
+              </div>
+              <div>
+                <label for="ball_size">Ball Size:</label>
+                <select id="ball_size" name="ball_size" required>
+                  <!-- Options will be dynamically populated here -->
+                </select>
+              </div>
+              <div>
+                <label for="food_graded_oil">Food Graded Oil:</label>
+                <select id="food_graded_oil" name="food_graded_oil" required>
+                  <option value="No">No</option>
+                  <option value="Yes">Yes</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- =============================
+               Motor Specifications
+          ============================== -->
+          <div class="form-category">
+            <h3 class="category-header">Motor Specifications</h3>
+            <div class="form-grid">
+              <div>
+                <label for="want_motor">Want Motor?</label>
+                <select id="want_motor" name="want_motor" required>
+                  <option value="No">No</option>
+                  <option value="Yes">Yes</option>
+                </select>
+              </div>
+              <div class="motor-option" style="display: none;">
+                <label for="motor_type">Motor Type:</label>
+                <select id="motor_type" name="motor_type">
+                  <option value="TEFC">TEFC</option>
+                  <option value="XPFC">XPFC</option>
+                </select>
+              </div>
+              <div class="motor-option" style="display: none;">
+                <label for="motor_power">Motor Power:</label>
+                <select id="motor_power" name="motor_power">
+                  <option value="AC">AC</option>
+                  <option value="DC">DC</option>
+                </select>
+              </div>
+              <div class="motor-option" style="display: none;">
+                <label for="phase">Motor Phase:</label>
+                <select id="phase" name="phase">
+                  <option value="1 Ph">1 Ph</option>
+                  <option value="3 Ph">3 Ph</option>
+                </select>
+              </div>
+            </div>
+            <h2>Optional Accessories</h2>
+            <div class="form-grid">
+              <div>
+                <label for="spare_parts_kit">Spare Parts Kit:</label>
+                <select id="spare_parts_kit" name="spare_parts_kit" required>
+                  <option value="No">No</option>
+                  <option value="Yes">Yes</option>
+                </select>
+              </div>
+              <div>
+                <label for="back_pressure_valve">Back Pressure Valve:</label>
+                <select id="back_pressure_valve" name="back_pressure_valve" required>
+                  <option value="No">No</option>
+                  <option value="Yes">Yes</option>
+                </select>
+              </div>
+              <div>
+                <label for="pressure_relief_valve">Pressure Relief Valve:</label>
+                <select id="pressure_relief_valve" name="pressure_relief_valve" required>
+                  <option value="No">No</option>
+                  <option value="Yes">Yes</option>
+                </select>
+              </div>
+              <div>
+                <label for="pulsation_dampener">Pulsation Dampener:</label>
+                <select id="pulsation_dampener" name="pulsation_dampener" required>
+                  <option value="No">No</option>
+                  <option value="Yes">Yes</option>
+                </select>
+              </div>
+              <div>
+                <label for="calibration_column">Calibration Column:</label>
+                <select id="calibration_column" name="calibration_column" required>
+                  <option value="No">No</option>
+                  <option value="Yes">Yes</option>
+                </select>
+              </div>
+              <div>
+                <label for="pressure_gauge">Pressure Gauge:</label>
+                <select id="pressure_gauge" name="pressure_gauge" required>
+                  <option value="No">No</option>
+                  <option value="Yes">Yes</option>
+                </select>
+              </div>
+              <div>
+                <label for="ecca">ECCA (Electronic Capacity Control Actuator):</label>
+                <select id="ecca" name="ecca" required>
+                  <option value="No">No</option>
+                  <option value="Yes">Yes</option>
+                </select>
+              </div>
+              <div>
+                <label for="vfd">VFD (Variable Frequency Drive):</label>
+                <select id="vfd" name="vfd" required>
+                  <option value="No">No</option>
+                  <option value="Yes">Yes</option>
+                </select>
+              </div>
+              <div>
+                <label for="leak_detection">Leak Detection System:</label>
+                <select id="leak_detection" name="leak_detection" required>
+                  <option value="No">No</option>
+                  <option value="Conductive">Conductive</option>
+                  <option value="Vacuum">Vacuum</option>
+                </select>
+              </div>
+              <div class="form-group" id="relay-option-group" style="display: none;">
+                <label for="relay_option">Relay for Conductive Leak Detection System:</label>
+                <select class="form-control" id="relay_option" name="relay_option">
+                  <option value="No">No</option>
+                  <option value="Yes">Yes</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </form>
+        <div class="button-container">
+          <button type="submit" form="pumpForm">Find Pump</button>
+        </div>
+      </div><!-- .form-section -->
+
+      <!-- RIGHT COLUMN: Results -->
+      <div class="results-section">
+        <h2 class="section-header">Results</h2>
+        <div id="result" style="display: none;">
+          <div id="result-content"></div>
+          <div id="download-section">
+            <button id="getQuotePDF" class="button" type="button" style="display: none;">Get Quote PDF</button>
+            <div id="email-status"></div>
+          </div>
+        </div>
+      </div><!-- .results-section -->
+    </div><!-- .pump-grid -->
+  </div><!-- #pump-tool -->
+
+  <!-- Optionally link your JS file here if needed, e.g. -->
+  <script src="call_api.js?v=1"></script>
+
+</body>
+</html>
