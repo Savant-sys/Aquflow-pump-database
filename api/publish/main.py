@@ -797,8 +797,11 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
             "simplex_duplex": pump["Simplex_Duplex"],
             "gph": float(pump["GPH_60Hz"]) if hz == 60 else float(pump["GPH_50Hz"]),
             "lph": float(pump["LPH_60Hz"]) if hz == 60 else float(pump["LPH_50Hz"]),
+            "lph_50hz": float(pump["LPH_50Hz"]),
+            "lph_60hz": float(pump["LPH_60Hz"]),
             "psi": float(pump["Max_Pressure_PSI"]),
             "bar": float(pump["Max_Pressure_Bar"]),
+            "max_pressure_bar": float(pump["Max_Pressure_Bar"]),
             "high_pressure_psi": float(pump["Max_Pressure_PSI_High_Pressure_Adder"]),
             "high_pressure_bar": float(pump["Max_Pressure_Bar_High_Pressure_Adder"]),
             "max_spm": float(pump["Max_SPM"]),
@@ -1560,11 +1563,13 @@ def generate_pdf(pump_data, filename="pump_quote.pdf", quote_number=None):
     diaphragm = pump_data.get("diaphragm", "N/A")
     suction_lift_text = "High Suction Lift " if pump_data.get("suction_lift", "") == "Yes" else ""
 
-    LPH_calculated  = pump_data.get('gph') / 0.2641721
-    Bar_calculated = pump_data.get('psi') / 14.50377
+    # Use database values for LPH and calculate Bar from PSI, rounding both values
+    LPH_value = pump_data.get('lph_50hz' if pump_data.get('hz') == 50 else 'lph_60hz', 0)
+    psi_value = math.ceil(float(pump_data.get('psi', 0)))  # Round up PSI to whole number
+    Bar_value = math.ceil(psi_value / 14.5038)  # Convert rounded PSI to Bar and round up
 
     if pump_data.get("flange", "") == "Yes":
-        psi = pump_data.get("psi", 0)
+        psi = psi_value
         flange_size_id = get_flange_size_id(psi)
 
         description = (
@@ -1573,8 +1578,8 @@ def generate_pdf(pump_data, filename="pump_quote.pdf", quote_number=None):
             f"It features {ball_type} balls and a {diaphragm} diaphragm. "
             f"The pump includes {pump_data.get('suction_flange_size', 'N/A')} ANSI RF Type #{flange_size_id} suction "
             f"and {pump_data.get('discharge_flange_size', 'N/A')} ANSI RF Type #{flange_size_id} discharge flanges. "
-            f"The pump has a maximum flow capacity of {pump_data.get('gph', 'N/A')} GPH ({LPH_calculated} LPH) at {pump_data.get('hz', 'N/A')} Hz "
-            f"and a design pressure of {pump_data.get('psi', 'N/A')} PSI ({Bar_calculated} Bar)."
+            f"The pump has a maximum flow capacity of {pump_data.get('gph', 'N/A')} GPH ({LPH_value} LPH) at {pump_data.get('hz', 'N/A')} Hz "
+            f"and a design pressure of {psi_value} PSI ({Bar_value} Bar)."
         )
     else:
         description = (
@@ -1582,8 +1587,8 @@ def generate_pdf(pump_data, filename="pump_quote.pdf", quote_number=None):
             f"hydraulic diaphragm metering pump with {suction_lift_text}liquid end in {pump_data.get('liquid_end_material', 'N/A')}. "
             f"It features {ball_type} balls and a {diaphragm} diaphragm. "
             f"The pump includes {pump_data.get('Liq_Inlet', 'N/A')} suction and {pump_data.get('Liq_Outlet', 'N/A')} discharge check valve connections. "
-            f"The pump has a maximum flow capacity of {pump_data.get('gph', 'N/A')} GPH ({LPH_calculated} LPH) at {pump_data.get('hz', 'N/A')} Hz "
-            f"and a design pressure of {pump_data.get('psi', 'N/A')} PSI ({Bar_calculated} Bar)."
+            f"The pump has a maximum flow capacity of {pump_data.get('gph', 'N/A')} GPH ({LPH_value} LPH) at {pump_data.get('hz', 'N/A')} Hz "
+            f"and a design pressure of {psi_value} PSI ({Bar_value} Bar)."
         )
 
     if pump_data.get("want_motor", "") == "Yes":
@@ -2164,7 +2169,7 @@ The quote has been sent to the customer's email address.
                 print(f"Error sending emails: {str(e)}")
             finally:
                 # Schedule file deletion after 1 hour (30 seconds for testing)
-                delete_file_after_delay(pdf_filename, delay=3600)
+                delete_file_after_delay(pdf_filename, delay=2)
 
         # Start email sending in background thread
         email_thread = threading.Thread(target=send_emails_background)
