@@ -340,6 +340,12 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
                    discharge_flange_size=None, food_graded_oil=None, spare_parts_kit=None, 
                    back_pressure_valve=None, pressure_relief_valve=None, pulsation_dampener=None,
                    calibration_column=None, pressure_gauge=None, ecca=None, vfd=None, relay_option=None):
+    # Store original inputs for PDF generation
+    original_gph = gph
+    original_lph = lph
+    original_psi = psi
+    original_bar = bar
+    
     # Ensure either GPH or LPH is provided
     if gph is None and lph is None:
         return {"error": "Either GPH or LPH is required. Please provide one."}
@@ -1356,6 +1362,12 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
             else:
                 best_pump["final_total_price"] = f"${price_str}"
 
+        # Store original inputs in the result
+        best_pump['input_gph'] = original_gph
+        best_pump['input_lph'] = original_lph
+        best_pump['input_psi'] = original_psi
+        best_pump['input_bar'] = original_bar
+
         return best_pump
     else:
         return {"error": "No suitable pump found for the given specifications."}
@@ -1503,14 +1515,54 @@ def generate_pdf(pump_data, filename="pump_quote.pdf", quote_number=None):
     diaphragm = pump_data.get("diaphragm", "N/A")
     suction_lift_text = "High Suction Lift " if pump_data.get("suction_lift", "") == "Yes" else ""
 
-    # Use database values for LPH and calculate Bar from PSI, rounding both values
-    LPH_value = pump_data.get('lph_50hz' if pump_data.get('hz') == 50 else 'lph_60hz', 0)
-    psi_value = math.ceil(float(pump_data.get('psi', 0)))  # Round up PSI to whole number
-    Bar_value = math.ceil(psi_value / 14.5038)  # Convert rounded PSI to Bar and round up
+    # Use user input values for flow and pressure
+    input_gph = pump_data.get('input_gph')
+    input_lph = pump_data.get('input_lph')
+    input_psi = pump_data.get('input_psi')
+    input_bar = pump_data.get('input_bar')
+
+    # Determine flow value and unit to display
+    if input_gph is not None:
+        display_flow = input_gph
+        display_flow_unit = "GPH"
+        # Calculate LPH if not provided directly
+        if input_lph is None:
+            input_lph = input_gph * 3.78541
+        display_lph = round(input_lph, 2) # Round LPH for display
+    elif input_lph is not None:
+        display_lph = input_lph
+        # Calculate GPH if not provided directly
+        if input_gph is None:
+            input_gph = input_lph / 3.78541
+        display_flow = round(input_gph, 2) # Round GPH for display
+        display_flow_unit = "LPH"
+    else:
+        # Fallback to database values if no input provided (should not happen with validation)
+        display_flow = pump_data.get('gph', 'N/A')
+        display_flow_unit = "GPH"
+        display_lph = pump_data.get('lph', 'N/A')
+
+    # Determine pressure value and unit to display
+    if input_psi is not None:
+        display_psi = math.ceil(float(input_psi))
+        # Calculate Bar if not provided directly
+        if input_bar is None:
+             input_bar = input_psi / 14.5038
+        display_bar = math.ceil(float(input_bar))
+    elif input_bar is not None:
+        display_bar = math.ceil(float(input_bar))
+        # Calculate PSI if not provided directly
+        if input_psi is None:
+            input_psi = input_bar * 14.5038
+        display_psi = math.ceil(float(input_psi))
+    else:
+        # Fallback to database values if no input provided (should not happen with validation)
+        display_psi = math.ceil(float(pump_data.get('psi', 0)))
+        display_bar = math.ceil(display_psi / 14.5038)
 
     if pump_data.get("flange", "") == "Yes":
-        psi = psi_value
-        flange_size_id = get_flange_size_id(psi)
+        psi_for_flange = display_psi # Use the calculated display PSI for flange size
+        flange_size_id = get_flange_size_id(psi_for_flange)
 
         description = (
             f"Acuflow {pump_data.get('series', 'N/A')} ({pump_data.get('simplex_duplex', 'N/A')}) "
@@ -1518,8 +1570,8 @@ def generate_pdf(pump_data, filename="pump_quote.pdf", quote_number=None):
             f"It features {ball_type} balls and a {diaphragm} diaphragm. "
             f"The pump includes {pump_data.get('suction_flange_size', 'N/A')} ANSI RF Type #{flange_size_id} suction "
             f"and {pump_data.get('discharge_flange_size', 'N/A')} ANSI RF Type #{flange_size_id} discharge flanges. "
-            f"The pump has a maximum flow capacity of {pump_data.get('gph', 'N/A')} GPH ({LPH_value} LPH) at {pump_data.get('hz', 'N/A')} Hz "
-            f"and a design pressure of {psi_value} PSI ({Bar_value} Bar)."
+            f"The pump has a maximum flow capacity of {display_flow} {display_flow_unit} ({display_lph} LPH) at {pump_data.get('hz', 'N/A')} Hz "
+            f"and a design pressure of {display_psi} PSI ({display_bar} Bar)."
         )
     else:
         description = (
@@ -1527,8 +1579,8 @@ def generate_pdf(pump_data, filename="pump_quote.pdf", quote_number=None):
             f"hydraulic diaphragm metering pump with {suction_lift_text}liquid end in {pump_data.get('liquid_end_material', 'N/A')}. "
             f"It features {ball_type} balls and a {diaphragm} diaphragm. "
             f"The pump includes {pump_data.get('Liq_Inlet', 'N/A')} suction and {pump_data.get('Liq_Outlet', 'N/A')} discharge check valve connections. "
-            f"The pump has a maximum flow capacity of {pump_data.get('gph', 'N/A')} GPH ({LPH_value} LPH) at {pump_data.get('hz', 'N/A')} Hz "
-            f"and a design pressure of {psi_value} PSI ({Bar_value} Bar)."
+            f"The pump has a maximum flow capacity of {display_flow} {display_flow_unit} ({display_lph} LPH) at {pump_data.get('hz', 'N/A')} Hz "
+            f"and a design pressure of {display_psi} PSI ({display_bar} Bar)."
         )
 
     if pump_data.get("want_motor", "") == "Yes":
@@ -1603,14 +1655,14 @@ def generate_pdf(pump_data, filename="pump_quote.pdf", quote_number=None):
     back_pressure_desc = split_long_description(
         f"Back Pressure Valve in {liquid_end_material} with "
         f"{pump_data.get('back_pressure_valve_message', '').split('with ')[-1].split('.')[0]}. "
-        f"Max pressure is {psi} PSI."
+        f"Max pressure is {display_psi} PSI." # Use display_psi here
     )
 
     pressure_relief_desc = split_long_description(pump_data.get("pressure_relief_valve_message", "Not included"))
 
     pulsation_dampener_desc = split_long_description(
         f"Pulsation Dampener in {liquid_end_material} with a Viton bladder "
-        f"and Max Pressure of {psi} PSI."
+        f"and Max Pressure of {display_psi} PSI." # Use display_psi here
     )
 
     calibration_column_desc = split_long_description(
