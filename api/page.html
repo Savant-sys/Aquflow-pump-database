@@ -38,12 +38,50 @@
             <h3 class="category-header">Pump Specifications</h3>
             <div class="form-grid">
               <div>
-                <label for="gph">GPH:</label>
+                <div class="unit-selection">
+                  <label for="gph">Flow Rate:</label>
+                  <div class="unit-options">
+                    <label class="unit-option">
+                      <input type="radio" name="flow_unit" value="gph" checked>
+                      <div class="unit-content">
+                        <span class="bullet">•</span>
+                        <span class="unit-text">GPH</span>
+                      </div>
+                    </label>
+                    <label class="unit-option">
+                      <input type="radio" name="flow_unit" value="lph">
+                      <div class="unit-content">
+                        <span class="bullet">•</span>
+                        <span class="unit-text">LPH</span>
+                      </div>
+                    </label>
+                  </div>
+                </div>
                 <input type="number" id="gph" name="gph" step="any" required>
+                <input type="hidden" id="flow_unit" name="flow_unit" value="gph">
               </div>
               <div>
-                <label for="psi">PSI:</label>
+                <div class="unit-selection">
+                  <label for="psi">Pressure:</label>
+                  <div class="unit-options">
+                    <label class="unit-option">
+                      <input type="radio" name="pressure_unit" value="psi" checked>
+                      <div class="unit-content">
+                        <span class="bullet">•</span>
+                        <span class="unit-text">PSI</span>
+                      </div>
+                    </label>
+                    <label class="unit-option">
+                      <input type="radio" name="pressure_unit" value="bar">
+                      <div class="unit-content">
+                        <span class="bullet">•</span>
+                        <span class="unit-text">Bar</span>
+                      </div>
+                    </label>
+                  </div>
+                </div>
                 <input type="number" id="psi" name="psi" step="any" required>
+                <input type="hidden" id="pressure_unit" name="pressure_unit" value="psi">
               </div>
               <div>
                 <label for="hz">Hz:</label>

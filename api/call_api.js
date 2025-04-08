@@ -83,6 +83,48 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("balls_type").addEventListener("change", updateBallSizeOptions);
     document.getElementById("flange").addEventListener("change", toggleFlangeSizeOptions);
     toggleFlangeSizeOptions();
+
+    // Add this to your HTML or JavaScript initialization
+    document.querySelectorAll('.unit-toggle-btn').forEach(button => {
+        const unitType = button.dataset.unit;
+        const options = button.querySelectorAll('.unit-option');
+        const hiddenInput = document.getElementById(`${unitType}_unit`);
+
+        // Set initial active state
+        options.forEach(option => {
+            if (option.dataset.value === hiddenInput.value) {
+                option.classList.add('active');
+            }
+        });
+
+        // Toggle on click
+        button.addEventListener('click', (e) => {
+            const clickedOption = e.target.closest('.unit-option');
+            if (!clickedOption) return;
+
+            const newValue = clickedOption.dataset.value;
+            hiddenInput.value = newValue;
+
+            // Update active states
+            options.forEach(option => {
+                option.classList.toggle('active', option.dataset.value === newValue);
+            });
+
+            // Convert the value if needed
+            const inputField = document.getElementById(unitType);
+            if (inputField.value) {
+                if (unitType === 'gph') {
+                    inputField.value = newValue === 'gph' ? 
+                        convertLPHtoGPH(parseFloat(inputField.value)) : 
+                        convertGPHtoLPH(parseFloat(inputField.value));
+                } else if (unitType === 'psi') {
+                    inputField.value = newValue === 'psi' ? 
+                        convertBarToPSI(parseFloat(inputField.value)) : 
+                        convertPSItoBar(parseFloat(inputField.value));
+                }
+            }
+        });
+    });
 });
 
 // Update your existing leak detection event listener to use the new ID
@@ -104,7 +146,22 @@ function downloadPDF(pdfUrl) {
 // Store pump data globally
 let storedPumpData = null;
 
-// Function to handle finding pump
+// Add conversion functions
+function convertFlowRate(value, fromUnit) {
+    if (fromUnit === 'lph') {
+        return value * 0.2641721; // Convert LPH to GPH
+    }
+    return value; // Already in GPH
+}
+
+function convertPressure(value, fromUnit) {
+    if (fromUnit === 'bar') {
+        return value * 14.50377; // Convert Bar to PSI
+    }
+    return value; // Already in PSI
+}
+
+// Update the callAPI function to handle unit conversions
 async function callAPI() {
     const form = document.getElementById('pumpForm');
     const resultSection = document.querySelector('.results-section');
@@ -152,9 +209,33 @@ async function callAPI() {
         // Collect form data
         const formData = new FormData(form);
         const params = {};
+        
+        // Get the selected units from hidden inputs
+        const flowUnit = document.getElementById('flow_unit').value;
+        const pressureUnit = document.getElementById('pressure_unit').value;
+        
+        // Convert values to standard units (GPH and PSI)
+        const flowValue = parseFloat(formData.get('gph'));
+        const pressureValue = parseFloat(formData.get('psi'));
+        
+        // Convert values to standard units
+        const convertedFlow = convertFlowRate(flowValue, flowUnit);
+        const convertedPressure = convertPressure(pressureValue, pressureUnit);
+        
+        // Add converted values to params
         for (let [key, value] of formData.entries()) {
-            params[key] = value;
+            if (key === 'gph') {
+                params[key] = convertedFlow;
+            } else if (key === 'psi') {
+                params[key] = convertedPressure;
+            } else {
+                params[key] = value;
+            }
         }
+        
+        // Add the original units to the params
+        params.flow_unit = flowUnit;
+        params.pressure_unit = pressureUnit;
 
         // Convert to query string
         const queryString = Object.keys(params)
@@ -376,6 +457,38 @@ document.addEventListener('DOMContentLoaded', function() {
         pdfButton.style.display = 'none';
         pdfButton.addEventListener('click', handleGetQuotePDF);
     }
+
+    // Handle flow unit changes
+    document.querySelectorAll('input[name="flow_unit"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            const hiddenInput = document.getElementById('flow_unit');
+            hiddenInput.value = this.value;
+            
+            // Convert the value if needed
+            const inputField = document.getElementById('gph');
+            if (inputField.value) {
+                inputField.value = this.value === 'gph' ? 
+                    convertLPHtoGPH(parseFloat(inputField.value)) : 
+                    convertGPHtoLPH(parseFloat(inputField.value));
+            }
+        });
+    });
+
+    // Handle pressure unit changes
+    document.querySelectorAll('input[name="pressure_unit"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            const hiddenInput = document.getElementById('pressure_unit');
+            hiddenInput.value = this.value;
+            
+            // Convert the value if needed
+            const inputField = document.getElementById('psi');
+            if (inputField.value) {
+                inputField.value = this.value === 'psi' ? 
+                    convertBarToPSI(parseFloat(inputField.value)) : 
+                    convertPSItoBar(parseFloat(inputField.value));
+            }
+        });
+    });
 });
 
 // Helper functions for generating HTML and formatting prices
@@ -430,7 +543,6 @@ function formatNumberWithCommas(number) {
 
 // Add this function to generate the optional accessories section
 function generateOptionalAccessoriesSection(data) {
-    // Create array of accessory HTML strings
     const accessories = [
         data.spare_parts_kit === 'Yes' ? 
             `<p>Spare Parts Kit ${data.spare_parts_kit_price === "C/F" ? "C/F" : `$${formatNumberWithCommas(data.spare_parts_kit_price || 0)}`}</p>` 
@@ -445,7 +557,7 @@ function generateOptionalAccessoriesSection(data) {
             `<p>Pressure Relief Valve ${data.pressure_relief_valve_price === "C/F" ? "C/F" : `$${formatNumberWithCommas(data.pressure_relief_valve_price || 0)}`}</p>` 
             : '',
         data.pulsation_dampener === 'Yes' ? 
-            `<p>Pulsation Dampener ${data.pulsation_dampener_price === "C/F" ? "C/F" : `$${formatNumberWithCommas(data.pulsation_dampener_price || 0)}`}</p>` 
+            `<p>Pulsation Dampener ${data.pulsation_dampener_price === "C/F" ? "C/F" : `$${formatNumberWithCommas(data.pulsation_dampener_price || 0)}`}</p>`
             : '',
         data.calibration_column === 'Yes' ? 
             `<p>Calibration Column ${data.calibration_column_price === "C/F" ? "C/F" : `$${formatNumberWithCommas(data.calibration_column_price || 0)}`}</p>` 
@@ -477,4 +589,21 @@ function generateOptionalAccessoriesSection(data) {
     
     // Return empty string if no accessories
     return '';
+}
+
+// Conversion functions
+function convertGPHtoLPH(gph) {
+    return gph * 3.78541; // 1 GPH = 3.78541 LPH
+}
+
+function convertLPHtoGPH(lph) {
+    return lph / 3.78541;
+}
+
+function convertPSItoBar(psi) {
+    return psi / 14.5038; // 1 PSI = 0.0689476 Bar
+}
+
+function convertBarToPSI(bar) {
+    return bar * 14.5038;
 }
