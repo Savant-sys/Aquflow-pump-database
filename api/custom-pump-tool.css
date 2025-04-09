@@ -253,14 +253,14 @@ body {
 
 /* Unit Selection Styles */
 .unit-selection {
-  margin-bottom: 15px;
+    margin-bottom: 15px;
 }
 
 .unit-options {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  margin-top: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 8px;
 }
 
 .unit-option {
@@ -272,28 +272,50 @@ body {
     border-radius: 4px;
     transition: all 0.2s ease;
     position: relative;
+    min-height: 44px;
 }
 
-.unit-option:hover {
+/* Make unselected options clickable */
+.unit-option:not(.selected) {
+    cursor: pointer;
+}
+
+/* Make selected options unclickable */
+.unit-option.selected {
+    cursor: default;
+    background-color: #e9ecef;
+}
+
+.unit-option:hover:not(.selected) {
     background-color: #e9ecef;
 }
 
 .unit-option input[type="radio"] {
-    margin-right: 10px;
+    margin: 0;
+    margin-right: 12px;
     cursor: pointer;
     width: 16px;
     height: 16px;
     accent-color: #003A63;
+    flex-shrink: 0;
+    align-self: flex-start;
+    margin-top: 4px;
 }
 
-.unit-text {
-    font-size: 16px;
-    color: #333;
-    cursor: pointer;
+/* Make radio button unclickable when selected */
+.unit-option.selected input[type="radio"] {
+    cursor: default;
+    pointer-events: none;
+}
+
+/* Make text unclickable when selected */
+.unit-option.selected .unit-text {
+    cursor: default;
+    pointer-events: none;
 }
 
 /* Selected state */
-.unit-option input[type="radio"]:checked + .unit-text {
+.unit-option.selected .unit-text {
     color: #003A63;
     font-weight: 500;
 }
@@ -303,18 +325,6 @@ body {
 .unit-option input[type="radio"][value="psi"]:checked + .unit-text {
     color: #003A63;
     font-weight: 500;
-}
-
-/* Highlight selected option */
-.unit-option input[type="radio"]:checked {
-    background-color: #003A63;
-    border-color: #003A63;
-}
-
-.unit-option input[type="radio"]:checked + .unit-text {
-    background-color: #e6f0f7;
-    padding: 4px 8px;
-    border-radius: 4px;
 }
 
 /* Remove conflicting styles */
@@ -335,32 +345,22 @@ body {
 }
 
 .input-container input {
-    padding-right: 55px; /* Make space for the unit display */
-    margin-bottom: 0; /* Remove margin as hint is now separate */
+    padding-right: 12px; /* Reduced padding since we're removing the unit display */
+    margin-bottom: 0;
+    width: 100%;
 }
 
+/* Remove the unit display */
 .unit-display {
-    position: absolute;
-    right: 1px;
-    top: 1px;
-    bottom: 1px;
-    background-color: #e9ecef;
-    color: #495057;
-    padding: 0 12px;
-    display: flex;
-    align-items: center;
-    border-left: 1px solid #ced4da;
-    border-radius: 0 4px 4px 0;
-    font-size: 0.9em;
-    font-weight: 500;
+    display: none;
 }
 
 .input-hint {
     font-size: 0.85em;
     color: #6c757d;
-    margin-top: 5px; /* Space above hint */
-    display: block; /* Ensure it takes its own line */
-    margin-bottom: 15px; /* Space below hint before next element */
+    margin-top: 5px;
+    display: block;
+    margin-bottom: 15px;
 }
 
 /* Validation Styles */
@@ -370,4 +370,15 @@ input:invalid {
 
 input:invalid:focus {
     box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+}
+
+.unit-text {
+    font-size: 16px;
+    color: #333;
+    cursor: pointer;
+    text-align: left;
+    flex: 1;
+    white-space: normal;
+    word-wrap: break-word;
+    line-height: 1.4;
 }
