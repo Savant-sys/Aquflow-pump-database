@@ -9,270 +9,267 @@ body {
 }
 
 #pump-tool {
-  /* padding: 20px; */ /* Changed padding */
-  padding: 20px 0; /* Remove left/right padding */
-  height: 100vh; /* Occupy full viewport height */
-  box-sizing: border-box; /* Include padding in height */
-  display: flex; /* Use flex to make grid take full height */
+  padding: 20px 1px; /* Minimal left and right padding */
+  max-width: 1400px;
+  margin: 0 auto;
+  display: flex;
+  box-sizing: border-box;
 }
 
 /* Container that creates a two-column layout (Form left, Results right) */
 #pump-tool .pump-grid {
-    display: grid;
-    grid-template-columns: 45% 55%; /* Left col 45%, right col 55% */
-    gap: 30px; /* Increased gap */
-    /* max-width: 1500px; */ /* Removed max-width */
-    margin: 0 auto; /* Keep centered if max-width is ever re-added */
-    align-items: stretch; /* Stretch items to fill height */
-    width: 100%; /* Take full width of parent */
-    height: 100%; /* Take full height of parent */
-  }
-  
-  /* Left Form */
-  #pump-tool .form-section {
-    background-color: #fff;
-    padding: 25px; /* Increased padding */
-    border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.08); /* Softer shadow */
-    display: flex;
-    flex-direction: column;
-    position: relative;
-    /* max-height: calc(100vh - 40px); */ /* Remove vh-based max-height */
-    overflow-y: auto; /* enable scrolling if form is very tall */
-    height: 100%; /* Rely on grid stretch */
-    box-sizing: border-box; /* Include padding in height */
-  }
-  
-  /* Right Results */
-  #pump-tool .results-section {
-    background-color: #fff;
-    padding: 25px; /* Increased padding */
-    border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.08); /* Softer shadow */
-    display: flex;
-    flex-direction: column;
-    position: relative;
-    /* min-height: 300px; */ /* Remove min-height */
-    overflow-y: auto; /* Enable scrolling for results */
-    height: 100%; /* Rely on grid stretch */
-    box-sizing: border-box; /* Include padding in height */
-  }
-  
-  /* Section headers */
-  #pump-tool .section-header {
-    color: #003A63;
-    border-bottom: 2px solid #003A63;
-    padding-bottom: 8px; /* Increased padding */
-    margin: 0 0 25px 0; /* Adjusted margin */
-    font-size: 1.4em; /* Slightly larger */
-    display: flex;
-    align-items: center;
-    gap: 10px; /* Space between icon and text */
-  }
-  
-  /* Form Category */
-  #pump-tool .form-category {
-    margin-bottom: 30px; /* Increased margin */
-    padding: 20px; /* Increased padding */
-    background-color: #f8f9fa;
-    border: 1px solid #e9ecef; /* Add a subtle border */
-    border-radius: 6px; /* Slightly adjusted radius */
-  }
-  
-  #pump-tool .category-header {
-    color: #003A63;
-    margin-top: 0; /* Remove top margin */
-    margin-bottom: 20px; /* Increased margin */
-    padding-bottom: 10px; /* Increased padding */
-    border-bottom: 1px solid #dee2e6; /* Lighter border */
-    font-size: 1.2em; /* Slightly larger */
-    display: flex;
-    align-items: center;
-    gap: 8px; /* Space between icon and text */
-  }
-  
-  /* Label and Inputs */
-  #pump-tool label {
-    display: flex; /* Use flex for icon alignment */
-    align-items: center;
-    gap: 8px; /* Space between icon and text */
-    margin-bottom: 8px; /* Increased margin */
-    font-weight: 600; /* Slightly bolder */
-    color: #495057; /* Darker grey */
-    font-size: 0.95em;
-  }
-  
-  #pump-tool label i {
-    color: #003A63; /* Icon color */
-    width: 16px; /* Fixed width for alignment */
-    text-align: center;
-  }
-  
-  #pump-tool input[type="text"],
-  #pump-tool input[type="email"],
-  #pump-tool input[type="number"],
-  #pump-tool select {
-    width: 100%;
-    padding: 10px 12px; /* Increased padding */
-    border: 1px solid #ced4da; /* Standard border color */
-    border-radius: 4px;
-    box-sizing: border-box;
-    margin-bottom: 5px; /* Reduced margin below input, added hint below */
-    font-size: 1em;
-    transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-  }
-  
-  #pump-tool input:focus,
-  #pump-tool select:focus {
-      border-color: #003A63;
-      box-shadow: 0 0 0 0.2rem rgba(0, 58, 99, 0.25);
-      outline: none;
-  }
-  
-  /* Adjust margin specifically for selects within the grid */
-  #pump-tool .form-grid select {
-      margin-bottom: 15px;
-  }
-  
-  /* Buttons */
-  #pump-tool button {
-    background-color: #003A63;
-    color: white;
-    padding: 12px 20px;
-    border: none;
-    border-radius: 5px; /* Slightly more rounded */
-    cursor: pointer;
-    font-size: 1.05em; /* Slightly larger */
-    font-weight: 600;
-    transition: background-color 0.3s, transform 0.1s;
-    width: auto; /* Allow button to size naturally */
-    display: inline-flex; /* Align icon and text */
-    align-items: center;
-    gap: 8px; /* Space between icon and text */
-  }
-  
-  #pump-tool .button-container {
-    /* position: sticky; */ /* Removing sticky positioning by default */
-    bottom: 0;
-    background-color: #fff; /* Or transparent if no sticky */
-    padding: 20px 0 0 0; /* Adjusted padding */
-    margin-top: auto;
-    border-top: 1px solid #eee;
-    text-align: center; /* Center the button */
-  }
-  
-  #pump-tool button:hover {
-    background-color: #00284a; /* Darker blue on hover */
-    transform: translateY(-1px); /* Subtle lift effect */
-  }
-  
-  #pump-tool button:disabled {
-    background-color: #cccccc;
-    cursor: not-allowed;
-  }
-  
-  /* Flange and relay options, hidden by default */
-  #pump-tool .flange-size-options {
-    display: none;
-    margin-top: 10px;
-    padding: 10px;
-    background-color: #f8f9fa;
-    border-radius: 4px;
-  }
-  
-  #pump-tool #relay-option-group {
-    display: none;
-    margin-top: 10px;
-    padding: 10px;
-    background-color: #f8f9fa;
-    border-radius: 4px;
-  }
-  
-  /* The form grid, 2 columns inside each category */
-  #pump-tool .form-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 20px 15px; /* Row gap, Column gap */
-  }
-  
-  /* For mobile: single-column layout */
-  @media (max-width: 992px) { /* Adjusted breakpoint */
-    body {
-        overflow: auto; /* Allow body scroll on smaller screens */
-    }
-    #pump-tool {
-        height: auto; /* Allow height to adjust to content */
-        display: block; /* Revert flex for mobile */
-    }
-    #pump-tool .pump-grid {
-      grid-template-columns: 1fr; /* stack form & results */
-      gap: 20px;
-      height: auto; /* Allow height to adjust */
-      align-items: start; /* Revert stretch */
-    }
-    #pump-tool .form-section,
-    #pump-tool .results-section {
-        max-height: none; /* Remove max-height */
-        overflow-y: visible; /* Disable internal scroll */
-        height: auto; /* Allow height to adjust */
-    }
-  }
-  
-  @media (max-width: 768px) {
-    #pump-tool .form-grid {
-      grid-template-columns: 1fr; /* single column form fields */
-    }
-    #pump-tool .form-section, #pump-tool .results-section {
-        padding: 15px; /* Reduce padding */
-    }
-    #pump-tool .section-header { font-size: 1.2em; }
-    #pump-tool .category-header { font-size: 1.1em; }
-  }
-  
-  /* Example: styling the results (optional) */
-  #pump-tool #result {
-    display: none; /* hidden until we reveal it with JS */
-  }
-  
-  #pump-tool #result-content {
-    margin-top: 20px;
-    min-height: 100px; /* Minimum height for content area */
-    padding: 15px;
-    background-color: #f8f9fa;
-    border-radius: 4px;
-    border: 1px solid #e9ecef;
-  }
+  display: grid;
+  grid-template-columns: 45% 55%;
+  gap: 5px; /* Minimal gap between columns */
+  margin: 0 auto;
+  align-items: start;
+  width: 100%;
+}
 
-  /* Style for the placeholder text */
-  #pump-tool #result-content .placeholder-text {
-      color: #6c757d; /* Bootstrap's muted text color */
-      font-style: italic;
-      text-align: center;
-      padding: 20px;
+/* Left Form */
+#pump-tool .form-section {
+  background-color: #fff;
+  padding: 10px; /* Reduced padding */
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.08);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  max-height: calc(100vh - 200px); /* Account for header/footer */
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* Right Results */
+#pump-tool .results-section {
+  background-color: #fff;
+  padding: 10px; /* Reduced padding */
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.08);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  max-height: calc(100vh - 200px); /* Account for header/footer */
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* Section headers */
+#pump-tool .section-header {
+  color: #003A63;
+  border-bottom: 2px solid #003A63;
+  padding-bottom: 4px; /* Reduced from 8px */
+  margin: 0 0 12px 0; /* Reduced from 25px */
+  font-size: 1.4em;
+  display: flex;
+  align-items: center;
+  gap: 8px; /* Reduced from 10px */
+}
+
+/* Form Category */
+#pump-tool .form-category {
+  margin-bottom: 15px; /* Reduced from 30px */
+  padding: 10px; /* Reduced from 20px */
+  background-color: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 6px;
+}
+
+#pump-tool .category-header {
+  color: #003A63;
+  margin-top: 0;
+  margin-bottom: 10px; /* Reduced from 20px */
+  padding-bottom: 5px; /* Reduced from 10px */
+  border-bottom: 1px solid #dee2e6;
+  font-size: 1.2em;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Label and Inputs */
+#pump-tool label {
+  display: flex;
+  align-items: center;
+  gap: 4px; /* Reduced from 8px */
+  margin-bottom: 4px; /* Reduced from 8px */
+  font-weight: 600;
+  color: #495057;
+  font-size: 0.95em;
+}
+
+#pump-tool label i {
+  color: #003A63; /* Icon color */
+  width: 16px; /* Fixed width for alignment */
+  text-align: center;
+}
+
+#pump-tool input[type="text"],
+#pump-tool input[type="email"],
+#pump-tool input[type="number"],
+#pump-tool select {
+  width: 100%;
+  padding: 6px 8px; /* Reduced from 10px 12px */
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  box-sizing: border-box;
+  margin-bottom: 2px; /* Reduced from 5px */
+  font-size: 1em;
+  transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+#pump-tool input:focus,
+#pump-tool select:focus {
+    border-color: #003A63;
+    box-shadow: 0 0 0 0.2rem rgba(0, 58, 99, 0.25);
+    outline: none;
+}
+
+/* Adjust margin specifically for selects within the grid */
+#pump-tool .form-grid select {
+    margin-bottom: 8px; /* Reduced from 15px */
+}
+
+/* Buttons */
+#pump-tool button {
+  background-color: #003A63;
+  color: white;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 5px; /* Slightly more rounded */
+  cursor: pointer;
+  font-size: 1.05em; /* Slightly larger */
+  font-weight: 600;
+  transition: background-color 0.3s, transform 0.1s;
+  width: auto; /* Allow button to size naturally */
+  display: inline-flex; /* Align icon and text */
+  align-items: center;
+  gap: 8px; /* Space between icon and text */
+}
+
+/* Button container should stick to bottom of form */
+#pump-tool .button-container {
+  position: sticky;
+  bottom: 0;
+  background-color: #fff;
+  padding: 10px 0 0 0; /* Reduced from 20px */
+  margin-top: auto;
+  border-top: 1px solid #eee;
+  text-align: center;
+}
+
+#pump-tool button:hover {
+  background-color: #00284a; /* Darker blue on hover */
+  transform: translateY(-1px); /* Subtle lift effect */
+}
+
+#pump-tool button:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+}
+
+/* Flange and relay options, hidden by default */
+#pump-tool .flange-size-options {
+  display: none;
+  margin-top: 5px; /* Reduced from 10px */
+  padding: 5px; /* Reduced from 10px */
+  background-color: #f8f9fa;
+  border-radius: 4px;
+}
+
+#pump-tool #relay-option-group {
+  display: none;
+  margin-top: 5px; /* Reduced from 10px */
+  padding: 5px; /* Reduced from 10px */
+  background-color: #f8f9fa;
+  border-radius: 4px;
+}
+
+/* The form grid, 2 columns inside each category */
+#pump-tool .form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px 8px; /* Reduced from 20px 15px */
+}
+
+/* For mobile: single-column layout */
+@media (max-width: 992px) {
+  #pump-tool {
+    padding: 20px 1px; /* Consistent minimal padding on mobile */
   }
+  #pump-tool .pump-grid {
+    grid-template-columns: 1fr;
+    gap: 4px; /* Minimal gap on mobile */
+  }
+  #pump-tool .form-section,
+  #pump-tool .results-section {
+    max-height: 60vh;
+  }
+}
+
+@media (max-width: 768px) {
+  #pump-tool {
+    padding: 15px 1px; /* Minimal padding on smaller screens */
+  }
+  #pump-tool .form-grid {
+    grid-template-columns: 1fr;
+  }
+  #pump-tool .form-section, 
+  #pump-tool .results-section {
+    padding: 10px;
+  }
+  #pump-tool .section-header { 
+    font-size: 1.2em; 
+  }
+  #pump-tool .category-header { 
+    font-size: 1.1em; 
+  }
+}
+
+/* Example: styling the results (optional) */
+#pump-tool #result {
+  display: none; /* hidden until we reveal it with JS */
+}
+
+#pump-tool #result-content {
+  margin-top: 20px;
+  min-height: 100px; /* Minimum height for content area */
+  padding: 15px;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+  border: 1px solid #e9ecef;
+}
+
+/* Style for the placeholder text */
+#pump-tool #result-content .placeholder-text {
+    color: #6c757d; /* Bootstrap's muted text color */
+    font-style: italic;
+    text-align: center;
+    padding: 20px;
+}
 
 /* Unit Selection Styles */
 .unit-selection {
-    margin-bottom: 15px;
+    margin-bottom: 8px; /* Reduced from 15px */
 }
 
 .unit-options {
     display: flex;
     flex-direction: column;
-    gap: 8px;
-    margin-top: 8px;
+    gap: 4px; /* Reduced from 8px */
+    margin-top: 4px; /* Reduced from 8px */
 }
 
 .unit-option {
     display: flex;
     align-items: center;
-    padding: 8px 12px;
+    padding: 4px 8px; /* Reduced from 8px 12px */
     cursor: pointer;
     background-color: #f8f9fa;
     border-radius: 4px;
     transition: all 0.2s ease;
     position: relative;
-    min-height: 44px;
+    min-height: 36px; /* Reduced from 44px */
 }
 
 /* Make unselected options clickable */
@@ -358,9 +355,9 @@ body {
 .input-hint {
     font-size: 0.85em;
     color: #6c757d;
-    margin-top: 5px;
+    margin-top: 2px; /* Reduced from 5px */
     display: block;
-    margin-bottom: 15px;
+    margin-bottom: 8px; /* Reduced from 15px */
 }
 
 /* Validation Styles */
