@@ -42,17 +42,15 @@
               <div>
                 <div class="unit-selection">
                   <label for="gph"><i class="fas fa-water"></i> Flow Rate:</label>
-                  <div class="unit-toggle-container">
-                    <div class="unit-toggle-btn" data-unit="flow">
-                      <div class="unit-option active" data-value="gph">
-                        <span class="unit-text">GPH</span>
-                        <span class="unit-tooltip">Gallons per Hour</span>
-                      </div>
-                      <div class="unit-option" data-value="lph">
-                        <span class="unit-text">LPH</span>
-                        <span class="unit-tooltip">Liters per Hour</span>
-                      </div>
-                    </div>
+                  <div class="unit-options">
+                    <label class="unit-option">
+                      <input type="radio" name="flow_unit" value="gph" checked>
+                      <span class="unit-text">GPH</span>
+                    </label>
+                    <label class="unit-option">
+                      <input type="radio" name="flow_unit" value="lph">
+                      <span class="unit-text">LPH</span>
+                    </label>
                   </div>
                 </div>
                 <div class="input-container">
@@ -66,17 +64,15 @@
               <div>
                 <div class="unit-selection">
                   <label for="psi"><i class="fas fa-compress-arrows-alt"></i> Pressure:</label>
-                  <div class="unit-toggle-container">
-                    <div class="unit-toggle-btn" data-unit="pressure">
-                      <div class="unit-option active" data-value="psi">
-                        <span class="unit-text">PSI</span>
-                        <span class="unit-tooltip">Pounds per Square Inch</span>
-                      </div>
-                      <div class="unit-option" data-value="bar">
-                        <span class="unit-text">Bar</span>
-                        <span class="unit-tooltip">Bar (Metric Pressure Unit)</span>
-                      </div>
-                    </div>
+                  <div class="unit-options">
+                    <label class="unit-option">
+                      <input type="radio" name="pressure_unit" value="psi" checked>
+                      <span class="unit-text">PSI</span>
+                    </label>
+                    <label class="unit-option">
+                      <input type="radio" name="pressure_unit" value="bar">
+                      <span class="unit-text">Bar</span>
+                    </label>
                   </div>
                 </div>
                 <div class="input-container">

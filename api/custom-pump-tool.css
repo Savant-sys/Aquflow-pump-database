@@ -264,73 +264,57 @@ body {
 }
 
 .unit-option {
-  display: flex;
-  align-items: center;
-  padding: 8px 12px;
-  cursor: pointer;
-  background-color: #f8f9fa;
-  border-radius: 4px;
-  transition: all 0.2s ease;
-  position: relative;
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    cursor: pointer;
+    background-color: #f8f9fa;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+    position: relative;
 }
 
 .unit-option:hover {
-  background-color: #e9ecef;
+    background-color: #e9ecef;
 }
 
-/* Make active (selected) option non-clickable */
-.unit-option.active {
-  cursor: default;
-  pointer-events: none;
+.unit-option input[type="radio"] {
+    margin-right: 10px;
+    cursor: pointer;
+    width: 16px;
+    height: 16px;
+    accent-color: #003A63;
 }
 
 .unit-text {
-  font-size: 16px;
-  color: #333;
-  margin-left: 10px;
-  position: relative;
-  padding-left: 25px;
+    font-size: 16px;
+    color: #333;
+    cursor: pointer;
 }
 
-.unit-text::before {
-  content: "○";
-  color: #003A63;
-  font-size: 20px;
-  position: absolute;
-  left: 0;
-  top: 50%;
-  transform: translateY(-50%);
-  font-weight: bold;
-}
-
-/* Selected state for active unit option */
-.unit-option.active .unit-text::before {
-  content: "●";
-  color: #003A63;
-  font-weight: bold;
-}
-
-.unit-option.active .unit-text {
-  color: #003A63;
-  font-weight: 500;
+/* Selected state */
+.unit-option input[type="radio"]:checked + .unit-text {
+    color: #003A63;
+    font-weight: 500;
 }
 
 /* Default selected state for GPH and PSI */
-.unit-option[data-value="gph"].active .unit-text::before,
-.unit-option[data-value="psi"].active .unit-text::before {
-  content: "●";
-  color: #003A63;
-  font-weight: bold;
+.unit-option input[type="radio"][value="gph"]:checked + .unit-text,
+.unit-option input[type="radio"][value="psi"]:checked + .unit-text {
+    color: #003A63;
+    font-weight: 500;
 }
 
-.unit-option[data-value="gph"].active .unit-text,
-.unit-option[data-value="psi"].active .unit-text {
-  color: #003A63;
-  font-weight: 500;
+/* Highlight selected option */
+.unit-option input[type="radio"]:checked {
+    background-color: #003A63;
+    border-color: #003A63;
 }
 
-.unit-tooltip {
-  display: none;
+.unit-option input[type="radio"]:checked + .unit-text {
+    background-color: #e6f0f7;
+    padding: 4px 8px;
+    border-radius: 4px;
 }
 
 /* Remove conflicting styles */
@@ -340,7 +324,7 @@ body {
 .unit-dropdown,
 .unit-btn,
 .unit-separator {
-  display: none;
+    display: none;
 }
 
 /* Input Container Styles */
