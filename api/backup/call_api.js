@@ -2,7 +2,7 @@
 console.log('call_api.js loaded');
 
 // Add API base URL constant
-const API_BASE_URL = 'http://localhost:5000';
+const API_BASE_URL = 'https://quote-api-server-95d1a0cadf67.herokuapp.com';
 
 // Add this at the top of your file with other global variables
 let pdfUrl = null;
@@ -84,6 +84,61 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("flange").addEventListener("change", toggleFlangeSizeOptions);
     toggleFlangeSizeOptions();
 
+    // Handle unit selection changes
+    document.querySelectorAll('input[name="flow_unit"]').forEach(radio => {
+        radio.addEventListener('change', (e) => {
+            const newValue = e.target.value;
+            const inputField = document.getElementById('gph');
+            const unitDisplaySpan = inputField.closest('.input-container').querySelector('.unit-display');
+
+            // Update the visual unit display
+            if (unitDisplaySpan) {
+                unitDisplaySpan.textContent = newValue.toUpperCase();
+            }
+
+            // Convert the existing value if needed
+            if (inputField && inputField.value) {
+                const currentValue = parseFloat(inputField.value);
+                if (!isNaN(currentValue)) {
+                    let convertedValue;
+                    if (newValue === 'lph') {
+                        convertedValue = convertGPHtoLPH(currentValue);
+                    } else {
+                        convertedValue = convertLPHtoGPH(currentValue);
+                    }
+                    inputField.value = parseFloat(convertedValue.toFixed(3));
+                }
+            }
+        });
+    });
+
+    document.querySelectorAll('input[name="pressure_unit"]').forEach(radio => {
+        radio.addEventListener('change', (e) => {
+            const newValue = e.target.value;
+            const inputField = document.getElementById('psi');
+            const unitDisplaySpan = inputField.closest('.input-container').querySelector('.unit-display');
+
+            // Update the visual unit display
+            if (unitDisplaySpan) {
+                unitDisplaySpan.textContent = newValue.toUpperCase();
+            }
+
+            // Convert the existing value if needed
+            if (inputField && inputField.value) {
+                const currentValue = parseFloat(inputField.value);
+                if (!isNaN(currentValue)) {
+                    let convertedValue;
+                    if (newValue === 'bar') {
+                        convertedValue = convertPSItoBar(currentValue);
+                    } else {
+                        convertedValue = convertBarToPSI(currentValue);
+                    }
+                    inputField.value = parseFloat(convertedValue.toFixed(3));
+                }
+            }
+        });
+    });
+
     // Add this to your HTML or JavaScript initialization
     document.querySelectorAll('.unit-toggle-btn').forEach(button => {
         const unitType = button.dataset.unit;
@@ -110,17 +165,46 @@ document.addEventListener("DOMContentLoaded", () => {
                 option.classList.toggle('active', option.dataset.value === newValue);
             });
 
-            // Convert the value if needed
-            const inputField = document.getElementById(unitType);
-            if (inputField.value) {
-                if (unitType === 'gph') {
-                    inputField.value = newValue === 'gph' ? 
-                        convertLPHtoGPH(parseFloat(inputField.value)) : 
-                        convertGPHtoLPH(parseFloat(inputField.value));
-                } else if (unitType === 'psi') {
-                    inputField.value = newValue === 'psi' ? 
-                        convertBarToPSI(parseFloat(inputField.value)) : 
-                        convertPSItoBar(parseFloat(inputField.value));
+            // Determine the correct input field ID and unit display span
+            const inputFieldId = (unitType === 'flow') ? 'gph' : 'psi';
+            const inputField = document.getElementById(inputFieldId);
+            const parentDiv = button.closest('.form-grid > div'); // Get the parent div in the grid
+            let unitDisplaySpan = null;
+            if (parentDiv) {
+                unitDisplaySpan = parentDiv.querySelector('.input-container .unit-display');
+            }
+
+            // Update the visual unit display next to the input
+            if (unitDisplaySpan) {
+                unitDisplaySpan.textContent = newValue.toUpperCase();
+            }
+
+            // Convert the existing value in the input field
+            if (inputField && inputField.value) {
+                const currentValue = parseFloat(inputField.value);
+                if (!isNaN(currentValue)) { // Check if conversion is possible
+                    let convertedValue;
+                    const previousUnit = Array.from(options).find(opt => !opt.classList.contains('active')).dataset.value;
+
+                    if (unitType === 'flow') {
+                        if (newValue === 'lph') { // Switched GPH -> LPH
+                            convertedValue = convertGPHtoLPH(currentValue);
+                        } else { // Switched LPH -> GPH
+                            convertedValue = convertLPHtoGPH(currentValue);
+                        }
+                    } else if (unitType === 'pressure') {
+                        if (newValue === 'bar') { // Switched PSI -> Bar
+                            convertedValue = convertPSItoBar(currentValue);
+                        } else { // Switched Bar -> PSI
+                            convertedValue = convertBarToPSI(currentValue);
+                        }
+                    }
+
+                    // Update input field with potentially rounded value
+                    if (convertedValue !== undefined) {
+                        // Round to a reasonable number of decimal places (e.g., 3)
+                        inputField.value = parseFloat(convertedValue.toFixed(3));
+                    }
                 }
             }
         });
@@ -242,10 +326,10 @@ async function callAPI() {
             .map(key => `${encodeURIComponent(key)}=${encodeURIComponent(params[key])}`)
             .join('&');
 
-        console.log('Sending request to:', `http://localhost:5000/get_pump?${queryString}`);
+        console.log('Sending request to:', `https://quote-api-server-95d1a0cadf67.herokuapp.com/get_pump?${queryString}`);
 
         // Make API call
-        const response = await fetch(`http://localhost:5000/get_pump?${queryString}`);
+        const response = await fetch(`https://quote-api-server-95d1a0cadf67.herokuapp.com/get_pump?${queryString}`);
         const data = await response.json();
 
         if (data.error) {
