@@ -354,7 +354,7 @@ async function callAPI() {
                 <h3 style="color: #003A63; margin-bottom: 15px;">Recommended Pump:</h3>
                 <p><strong>Model:</strong> ${data.pump_model || data.model}</p>
                 <p><strong>Motor:</strong> ${data.want_motor === 'Yes' ? 
-                    `${data.motor_type || ''} ${data.motor_power || ''} HP, ${data.phase || ''}` 
+                    `${data.motor_type || ''} ${data.Motor_HP_AC || data.Motor_HP_AC_High_Pressure || data.Motor_HP_DC_TEFC || data.Motor_HP_DC_XPFC || 'N/A'} HP, ${data.phase || ''}` 
                     : 'Without Motor'}</p>
                 <p><strong>Series:</strong> ${data.series || ''}</p>
                 <p><strong>List Price:</strong> $${formatNumberWithCommas(data.base_price || 0)}</p>
