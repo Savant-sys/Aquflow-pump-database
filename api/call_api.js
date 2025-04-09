@@ -354,7 +354,7 @@ async function callAPI() {
                 <h3 style="color: #003A63; margin-bottom: 15px;">Recommended Pump:</h3>
                 <p><strong>Model:</strong> ${data.pump_model || data.model}</p>
                 <p><strong>Motor:</strong> ${data.want_motor === 'Yes' ? 
-                    `${data.motor_type}, ${data.Motor_HP_AC || data.Motor_HP_AC_High_Pressure || data.Motor_HP_DC_TEFC || data.Motor_HP_DC_XPFC || 'N/A'} HP, ${data.phase || ''}`
+                    `${data.motor_type} ${getMotorHP(data)} HP, ${data.phase}` 
                     : 'Without Motor'}</p>
                 <p><strong>Series:</strong> ${data.series || ''}</p>
                 <p><strong>List Price:</strong> $${formatNumberWithCommas(data.base_price || 0)}</p>
@@ -690,4 +690,18 @@ function convertPSItoBar(psi) {
 
 function convertBarToPSI(bar) {
     return bar * 14.5038;
+}
+
+// Add this helper function to get the correct motor HP
+function getMotorHP(data) {
+    if (data.motor_type === 'TEFC' && data.motor_power === 'AC') {
+        return data.use_hp ? data.Motor_HP_AC_High_Pressure : data.Motor_HP_AC;
+    } else if (data.motor_type === 'XPFC' && data.motor_power === 'AC') {
+        return data.use_hp ? data.Motor_HP_AC_High_Pressure : data.Motor_HP_AC;
+    } else if (data.motor_type === 'TEFC' && data.motor_power === 'DC') {
+        return data.Motor_HP_DC_TEFC;
+    } else if (data.motor_type === 'XPFC' && data.motor_power === 'DC') {
+        return data.Motor_HP_DC_XPFC;
+    }
+    return 'N/A';
 }
