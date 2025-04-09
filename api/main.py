@@ -465,13 +465,11 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
         if pump["Liquid_End_Material"] != liquid_end_material:
             continue
 
-        # Select the correct column for GPH/LPH based on Hz
-        if gph is not None:
-            pump_flow = float(pump["GPH_60Hz"]) if hz == 60 else float(pump["GPH_50Hz"])
-            input_flow = gph
-        else:
-            pump_flow = float(pump["LPH_60Hz"]) if hz == 60 else float(pump["LPH_50Hz"])
-            input_flow = lph
+        # Convert spare parts kit price to float if it exists and is numeric
+        try:
+            spare_parts_kit_price_value = float(pump["Spare_Parts_Kit_Price"]) if pump["Spare_Parts_Kit_Price"] not in [None, "0", 0] else 0
+        except (ValueError, TypeError):
+            spare_parts_kit_price_value = 0
 
         # Select the correct column for GPH/LPH based on Hz
         if gph is not None:
@@ -878,12 +876,12 @@ def find_best_pump(customer_name=None, gph=None, lph=None, psi=None, bar=None, h
 
         # --- Spare Parts Kit (first optional accessory) ---
         if spare_parts_kit == "Yes":
-            if best_pump["spare_parts_kit_price_value"] == 0:
+            if spare_parts_kit_price_value == 0:
                 best_pump["spare_parts_kit_price"] = "C/F"
                 best_pump["spare_parts_kit_message"] = "C/F (Spare Parts Kit)"
                 optional_accessories_notes.append("C/F (Spare Parts Kit)")
             else:
-                best_pump["spare_parts_kit_price"] = math.ceil(best_pump["spare_parts_kit_price_value"])
+                best_pump["spare_parts_kit_price"] = math.ceil(spare_parts_kit_price_value)
                 best_pump["spare_parts_kit_message"] = best_pump["spare_parts_kit_info"]
                 optional_accessories_total_price += best_pump["spare_parts_kit_price"]
         else:
