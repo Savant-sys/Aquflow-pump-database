@@ -629,7 +629,7 @@ function formatNumberWithCommas(number) {
 function generateOptionalAccessoriesSection(data) {
     const accessories = [
         data.spare_parts_kit === 'Yes' ? 
-            `<p>Spare Parts Kit: ${data.spare_parts_kit_price === "C/F" ? "C/F" : `$${formatNumberWithCommas(data.spare_parts_kit_price || 0)}`}</p>` 
+            `<p>Spare Parts Kit: ${data.spare_parts_kit_price_value === "C/F" ? "C/F" : `$${formatNumberWithCommas(Math.ceil(data.spare_parts_kit_price_value || 0))}`}</p>` 
             : '',
         data.degassing === 'Yes' ? 
             `<p>Degassing Valve: ${data.degassing_price === "C/F" ? "C/F" : `$${formatNumberWithCommas(data.degassing_price || 0)}`}</p>` 
@@ -692,7 +692,7 @@ function convertBarToPSI(bar) {
     return bar * 14.5038;
 }
 
-// Add this helper function to get the correct motor HP
+// Update the getMotorHP function to handle the HP values correctly
 function getMotorHP(data) {
     if (data.motor_type === 'TEFC' && data.motor_power === 'AC') {
         return data.use_hp ? data.Motor_HP_AC_High_Pressure : data.Motor_HP_AC;
