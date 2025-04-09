@@ -84,6 +84,61 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("flange").addEventListener("change", toggleFlangeSizeOptions);
     toggleFlangeSizeOptions();
 
+    // Handle unit selection changes
+    document.querySelectorAll('input[name="flow_unit"]').forEach(radio => {
+        radio.addEventListener('change', (e) => {
+            const newValue = e.target.value;
+            const inputField = document.getElementById('gph');
+            const unitDisplaySpan = inputField.closest('.input-container').querySelector('.unit-display');
+
+            // Update the visual unit display
+            if (unitDisplaySpan) {
+                unitDisplaySpan.textContent = newValue.toUpperCase();
+            }
+
+            // Convert the existing value if needed
+            if (inputField && inputField.value) {
+                const currentValue = parseFloat(inputField.value);
+                if (!isNaN(currentValue)) {
+                    let convertedValue;
+                    if (newValue === 'lph') {
+                        convertedValue = convertGPHtoLPH(currentValue);
+                    } else {
+                        convertedValue = convertLPHtoGPH(currentValue);
+                    }
+                    inputField.value = parseFloat(convertedValue.toFixed(3));
+                }
+            }
+        });
+    });
+
+    document.querySelectorAll('input[name="pressure_unit"]').forEach(radio => {
+        radio.addEventListener('change', (e) => {
+            const newValue = e.target.value;
+            const inputField = document.getElementById('psi');
+            const unitDisplaySpan = inputField.closest('.input-container').querySelector('.unit-display');
+
+            // Update the visual unit display
+            if (unitDisplaySpan) {
+                unitDisplaySpan.textContent = newValue.toUpperCase();
+            }
+
+            // Convert the existing value if needed
+            if (inputField && inputField.value) {
+                const currentValue = parseFloat(inputField.value);
+                if (!isNaN(currentValue)) {
+                    let convertedValue;
+                    if (newValue === 'bar') {
+                        convertedValue = convertPSItoBar(currentValue);
+                    } else {
+                        convertedValue = convertBarToPSI(currentValue);
+                    }
+                    inputField.value = parseFloat(convertedValue.toFixed(3));
+                }
+            }
+        });
+    });
+
     // Add this to your HTML or JavaScript initialization
     document.querySelectorAll('.unit-toggle-btn').forEach(button => {
         const unitType = button.dataset.unit;
